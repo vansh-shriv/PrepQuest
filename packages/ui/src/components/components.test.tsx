@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { Button } from "./Button";
+import { Checkbox } from "./Checkbox";
 import { Chip } from "./Chip";
 import { Input } from "./Input";
 import { LoadingBar, StageBar } from "./LoadingBar";
@@ -91,5 +92,17 @@ describe("Tabs", () => {
 describe("Chip", () => {
   it("adds tone class", () => {
     expect(html(<Chip tone="hard">Hard</Chip>)).toContain("pq-chip--hard");
+  });
+});
+
+describe("Checkbox", () => {
+  it("is a real labelled checkbox input", () => {
+    const out = html(
+      <Checkbox label="Show my bio" helper="Visible to everyone" defaultChecked id="b" />,
+    );
+    expect(out).toContain('type="checkbox"');
+    expect(out).toContain('for="b"');
+    expect(out).toContain("Show my bio");
+    expect(out).toContain("checked");
   });
 });

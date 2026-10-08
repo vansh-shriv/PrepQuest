@@ -28,7 +28,9 @@ describe("GET /me", () => {
       hintMode: "strict",
       defaultLanguage: "cpp",
     });
-    expect(JSON.stringify(me)).not.toMatch(/password|hash/i);
+    // flags are fine; credentials and secrets are not
+    expect(me).toMatchObject({ hasPassword: true, twoFactorEnabled: false });
+    expect(JSON.stringify(me)).not.toMatch(/passwordHash|password_hash|tokenHash|argon2|secret/i);
   });
 });
 

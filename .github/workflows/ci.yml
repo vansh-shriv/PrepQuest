@@ -18,9 +18,15 @@ jobs:
         ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U prepquest" --health-interval 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s --health-retries 10
     env:
       # API integration tests create and reset this database themselves
       TEST_DATABASE_URL: postgresql://prepquest:prepquest@localhost:5432/prepquest_test
+      REDIS_URL: redis://localhost:6379
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -34,4 +40,50 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
-  # TODO: e2e job (Postgres + Redis + Mailpit services, `pnpm test:e2e`). Verified locally only so far.
+
+  # Browser tests against the real web app + API + Postgres + Redis + Mailpit.
+  # NOTE: written alongside the suite but only exercised locally so far; expect to tune on first run.
+  e2e:
+    runs-on: ubuntu-latest
+    needs: verify
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: prepquest
+          POSTGRES_PASSWORD: prepquest
+          POSTGRES_DB: prepquest
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U prepquest" --health-interval 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s --health-retries 10
+      mailpit:
+        image: axllent/mailpit:latest
+        ports: ["1025:1025", "8025:8025"]
+    env:
+      DATABASE_URL: postgresql://prepquest:prepquest@localhost:5432/prepquest
+      REDIS_URL: redis://localhost:6379
+      SMTP_URL: smtp://localhost:1025
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm db:migrate
+      - run: pnpm --filter @prepquest/web exec playwright install --with-deps chrome
+      - run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces
+          path: apps/web/test-results
+          retention-days: 7

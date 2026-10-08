@@ -10,7 +10,13 @@ import {
   type ReactNode,
 } from "react";
 import { applyTheme } from "@prepquest/ui";
-import type { LoginInput, LoginResponse, MeResponse, SignupInput } from "@prepquest/shared";
+import type {
+  LoginInput,
+  LoginResponse,
+  MeResponse,
+  MfaRequiredResponse,
+  SignupInput,
+} from "@prepquest/shared";
 import { api, refreshSession, setAccessToken } from "./api";
 
 type Status = "loading" | "authed" | "anon";
@@ -18,7 +24,10 @@ type Status = "loading" | "authed" | "anon";
 interface AuthValue {
   status: Status;
   user: MeResponse | null;
-  login: (input: LoginInput) => Promise<void>;
+  /** Resolves to `{ mfaToken }` when the account needs a second factor, or `null` once signed in. */
+  login: (input: LoginInput) => Promise<{ mfaToken: string } | null>;
+  /** Second step of a 2FA login (also used after social sign-in). */
+  completeMfa: (input: { mfaToken: string; code?: string; recoveryCode?: string }) => Promise<void>;
   signup: (input: SignupInput) => Promise<void>;
   logout: () => Promise<void>;
   /** Replace the cached user after a profile/settings change. */
@@ -45,6 +54,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (me.settings.theme !== "system") applyTheme(me.settings.theme, me.settings.readableMode);
   }, []);
 
+  const adoptSession = useCallback(
+    (res: LoginResponse) => {
+      setAccessToken(res.accessToken);
+      adopt(res.user);
+    },
+    [adopt],
+  );
+
   useEffect(() => {
     let alive = true;
     void refreshSession().then((res) => {
@@ -59,11 +76,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (input: LoginInput) => {
-      const res = await api<LoginResponse>("/auth/login", { method: "POST", json: input });
-      setAccessToken(res.accessToken);
-      adopt(res.user);
+      const res = await api<LoginResponse | MfaRequiredResponse>("/auth/login", {
+        method: "POST",
+        json: input,
+      });
+      if ("mfaRequired" in res) return { mfaToken: res.mfaToken };
+      adoptSession(res);
+      return null;
     },
-    [adopt],
+    [adoptSession],
+  );
+
+  const completeMfa = useCallback(
+    async (input: { mfaToken: string; code?: string; recoveryCode?: string }) => {
+      adoptSession(await api<LoginResponse>("/auth/2fa/login", { method: "POST", json: input }));
+    },
+    [adoptSession],
   );
 
   const signup = useCallback(
@@ -89,8 +117,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [adopt]);
 
   const value = useMemo<AuthValue>(
-    () => ({ status, user, login, signup, logout, setUser: setUserState, reload }),
-    [status, user, login, signup, logout, reload],
+    () => ({ status, user, login, completeMfa, signup, logout, setUser: setUserState, reload }),
+    [status, user, login, completeMfa, signup, logout, reload],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

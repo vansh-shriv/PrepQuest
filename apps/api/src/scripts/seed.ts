@@ -1,4 +1,4 @@
-import { createPool, newId, seedReferenceData, withTransaction } from "@prepquest/db";
+import { createDatabase, newId, seedReferenceData, withTransaction } from "@prepquest/db";
 import { parseServerEnv } from "@prepquest/shared";
 import { hashPassword } from "../modules/auth/password.js";
 import * as repo from "../modules/auth/repo.js";
@@ -14,27 +14,31 @@ const DEMO = {
   displayName: "Demo Player",
 };
 
-const pool = createPool(env.DATABASE_URL, 2);
+const db = createDatabase(env.DATABASE_URL, 2);
 try {
-  const { tags } = await seedReferenceData(pool);
+  const { tags } = await seedReferenceData(db);
   console.log(`Tags: ${tags} inserted`);
 
-  if (await repo.findUserByEmail(pool, DEMO.email)) {
+  if (await repo.findUserByEmail(db, DEMO.email)) {
     console.log("Demo user already exists.");
   } else {
     const userId = newId();
     const passwordHash = await hashPassword(DEMO.password);
-    await withTransaction(pool, async (tx) => {
-      await repo.insertUser(tx, { id: userId, email: DEMO.email, passwordHash });
+    await withTransaction(db, async (tx) => {
+      await repo.insertUser(tx, {
+        id: userId,
+        email: DEMO.email,
+        passwordHash,
+        emailVerified: true,
+      });
       await repo.insertProfile(tx, {
         userId,
         handle: DEMO.handle,
         displayName: DEMO.displayName,
       });
-      await repo.markEmailVerified(tx, userId);
     });
     console.log(`Demo user created: ${DEMO.email} / ${DEMO.password}`);
   }
 } finally {
-  await pool.end();
+  await db.$client.end();
 }

@@ -1,67 +1,82 @@
-import type { Db } from "@prepquest/db";
-import type { MeResponse, SessionInfo, UserRole } from "@prepquest/shared";
+import { and, desc, eq, gt, isNull, sql } from "drizzle-orm";
+import {
+  authSessions,
+  emailTokens,
+  profiles,
+  userSettings,
+  userTotp,
+  users,
+  type Db,
+} from "@prepquest/db";
+import type { MeResponse, ProfileUpdate, SessionInfo, SettingsUpdate } from "@prepquest/shared";
 
-export interface UserRow {
-  id: string;
-  email: string;
-  password_hash: string | null;
-  role: UserRole;
-  status: string;
-  email_verified_at: Date | null;
-}
+export type UserRow = typeof users.$inferSelect;
+export type SessionRow = typeof authSessions.$inferSelect;
+
+// ---- users ----
 
 export async function insertUser(
   db: Db,
-  u: { id: string; email: string; passwordHash: string },
+  u: { id: string; email: string; passwordHash: string | null; emailVerified?: boolean },
 ): Promise<void> {
-  await db.query("INSERT INTO users (id, email, password_hash) VALUES ($1, $2, $3)", [
-    u.id,
-    u.email,
-    u.passwordHash,
-  ]);
+  await db.insert(users).values({
+    id: u.id,
+    email: u.email,
+    passwordHash: u.passwordHash,
+    emailVerifiedAt: u.emailVerified ? new Date() : null,
+  });
 }
 
+/** Creates the profile and default settings rows for a new user. */
 export async function insertProfile(
   db: Db,
   p: { userId: string; handle: string; displayName: string },
 ): Promise<void> {
-  await db.query("INSERT INTO profiles (user_id, handle, display_name) VALUES ($1, $2, $3)", [
-    p.userId,
-    p.handle,
-    p.displayName,
-  ]);
-  await db.query("INSERT INTO user_settings (user_id) VALUES ($1)", [p.userId]);
+  await db
+    .insert(profiles)
+    .values({ userId: p.userId, handle: p.handle, displayName: p.displayName });
+  await db.insert(userSettings).values({ userId: p.userId });
 }
 
 export async function findUserByEmail(db: Db, email: string): Promise<UserRow | undefined> {
-  const res = await db.query<UserRow>(
-    "SELECT id, email, password_hash, role, status, email_verified_at FROM users WHERE email = $1",
-    [email],
-  );
-  return res.rows[0];
+  const [row] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  return row;
 }
 
 export async function findUserById(db: Db, id: string): Promise<UserRow | undefined> {
-  const res = await db.query<UserRow>(
-    "SELECT id, email, password_hash, role, status, email_verified_at FROM users WHERE id = $1",
-    [id],
-  );
-  return res.rows[0];
+  const [row] = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  return row;
+}
+
+export async function handleExists(db: Db, handle: string): Promise<boolean> {
+  const [row] = await db
+    .select({ id: profiles.userId })
+    .from(profiles)
+    .where(eq(profiles.handle, handle))
+    .limit(1);
+  return Boolean(row);
 }
 
 export async function touchLogin(db: Db, userId: string): Promise<void> {
-  await db.query("UPDATE users SET last_login_at = now() WHERE id = $1", [userId]);
+  await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, userId));
+}
+
+export async function markEmailVerified(db: Db, userId: string): Promise<void> {
+  await db
+    .update(users)
+    .set({ emailVerifiedAt: sql`COALESCE(${users.emailVerifiedAt}, now())` })
+    .where(eq(users.id, userId));
+}
+
+export async function setPasswordHash(
+  db: Db,
+  userId: string,
+  passwordHash: string | null,
+): Promise<void> {
+  await db.update(users).set({ passwordHash }).where(eq(users.id, userId));
 }
 
 // ---- sessions (refresh token families) ----
-
-export interface SessionRow {
-  id: string;
-  user_id: string;
-  family_id: string;
-  expires_at: Date;
-  revoked_at: Date | null;
-}
 
 export async function createSession(
   db: Db,
@@ -72,57 +87,59 @@ export async function createSession(
     tokenHash: string;
     userAgent: string | null;
     ip: string | null;
+    mfaVerified: boolean;
     expiresAt: Date;
   },
 ): Promise<void> {
-  await db.query(
-    `INSERT INTO auth_sessions (id, user_id, family_id, token_hash, user_agent, ip, expires_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-    [s.id, s.userId, s.familyId, s.tokenHash, s.userAgent, s.ip, s.expiresAt],
-  );
+  await db.insert(authSessions).values(s);
 }
 
 export async function findSessionByHash(
   db: Db,
   tokenHash: string,
 ): Promise<SessionRow | undefined> {
-  const res = await db.query<SessionRow>(
-    "SELECT id, user_id, family_id, expires_at, revoked_at FROM auth_sessions WHERE token_hash = $1",
-    [tokenHash],
-  );
-  return res.rows[0];
+  const [row] = await db
+    .select()
+    .from(authSessions)
+    .where(eq(authSessions.tokenHash, tokenHash))
+    .limit(1);
+  return row;
 }
 
 /** Revokes a session if still active. Returns false if it was already revoked (lost a rotation race). */
 export async function revokeSession(db: Db, id: string, replacedBy?: string): Promise<boolean> {
-  const res = await db.query(
-    "UPDATE auth_sessions SET revoked_at = now(), replaced_by = $2 WHERE id = $1 AND revoked_at IS NULL",
-    [id, replacedBy ?? null],
-  );
-  return (res.rowCount ?? 0) > 0;
+  const rows = await db
+    .update(authSessions)
+    .set({ revokedAt: new Date(), replacedBy: replacedBy ?? null })
+    .where(and(eq(authSessions.id, id), isNull(authSessions.revokedAt)))
+    .returning({ id: authSessions.id });
+  return rows.length > 0;
 }
 
 export async function revokeFamily(db: Db, familyId: string): Promise<void> {
-  await db.query(
-    "UPDATE auth_sessions SET revoked_at = now() WHERE family_id = $1 AND revoked_at IS NULL",
-    [familyId],
-  );
+  await db
+    .update(authSessions)
+    .set({ revokedAt: new Date() })
+    .where(and(eq(authSessions.familyId, familyId), isNull(authSessions.revokedAt)));
 }
 
 export async function revokeAllForUser(db: Db, userId: string): Promise<void> {
-  await db.query(
-    "UPDATE auth_sessions SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL",
-    [userId],
-  );
+  await db
+    .update(authSessions)
+    .set({ revokedAt: new Date() })
+    .where(and(eq(authSessions.userId, userId), isNull(authSessions.revokedAt)));
 }
 
 /** Revokes one session owned by the user. Returns false when it doesn't exist or isn't theirs. */
 export async function revokeUserSession(db: Db, userId: string, id: string): Promise<boolean> {
-  const res = await db.query(
-    "UPDATE auth_sessions SET revoked_at = now() WHERE id = $1 AND user_id = $2 AND revoked_at IS NULL",
-    [id, userId],
-  );
-  return (res.rowCount ?? 0) > 0;
+  const rows = await db
+    .update(authSessions)
+    .set({ revokedAt: new Date() })
+    .where(
+      and(eq(authSessions.id, id), eq(authSessions.userId, userId), isNull(authSessions.revokedAt)),
+    )
+    .returning({ id: authSessions.id });
+  return rows.length > 0;
 }
 
 export async function listActiveSessions(
@@ -130,23 +147,29 @@ export async function listActiveSessions(
   userId: string,
   currentId: string,
 ): Promise<SessionInfo[]> {
-  const res = await db.query<{
-    id: string;
-    user_agent: string | null;
-    ip: string | null;
-    created_at: Date;
-    expires_at: Date;
-  }>(
-    `SELECT id, user_agent, host(ip) AS ip, created_at, expires_at FROM auth_sessions
-     WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > now() ORDER BY created_at DESC`,
-    [userId],
-  );
-  return res.rows.map((r) => ({
+  const rows = await db
+    .select({
+      id: authSessions.id,
+      userAgent: authSessions.userAgent,
+      ip: sql<string | null>`host(${authSessions.ip})`,
+      createdAt: authSessions.createdAt,
+      expiresAt: authSessions.expiresAt,
+    })
+    .from(authSessions)
+    .where(
+      and(
+        eq(authSessions.userId, userId),
+        isNull(authSessions.revokedAt),
+        gt(authSessions.expiresAt, new Date()),
+      ),
+    )
+    .orderBy(desc(authSessions.createdAt));
+  return rows.map((r) => ({
     id: r.id,
-    userAgent: r.user_agent,
+    userAgent: r.userAgent,
     ip: r.ip,
-    createdAt: r.created_at.toISOString(),
-    expiresAt: r.expires_at.toISOString(),
+    createdAt: r.createdAt.toISOString(),
+    expiresAt: r.expiresAt.toISOString(),
     current: r.id === currentId,
   }));
 }
@@ -160,14 +183,17 @@ export async function createEmailToken(
   t: { id: string; userId: string; kind: EmailTokenKind; tokenHash: string; expiresAt: Date },
 ): Promise<void> {
   // one live token per kind: invalidate older unused ones
-  await db.query(
-    "UPDATE email_tokens SET used_at = now() WHERE user_id = $1 AND kind = $2 AND used_at IS NULL",
-    [t.userId, t.kind],
-  );
-  await db.query(
-    "INSERT INTO email_tokens (id, user_id, kind, token_hash, expires_at) VALUES ($1, $2, $3, $4, $5)",
-    [t.id, t.userId, t.kind, t.tokenHash, t.expiresAt],
-  );
+  await db
+    .update(emailTokens)
+    .set({ usedAt: new Date() })
+    .where(
+      and(
+        eq(emailTokens.userId, t.userId),
+        eq(emailTokens.kind, t.kind),
+        isNull(emailTokens.usedAt),
+      ),
+    );
+  await db.insert(emailTokens).values(t);
 }
 
 /** Atomically consumes a valid, unused, unexpired token. Returns the owning user id, or undefined. */
@@ -176,109 +202,95 @@ export async function consumeEmailToken(
   kind: EmailTokenKind,
   tokenHash: string,
 ): Promise<string | undefined> {
-  const res = await db.query<{ user_id: string }>(
-    `UPDATE email_tokens SET used_at = now()
-     WHERE token_hash = $1 AND kind = $2 AND used_at IS NULL AND expires_at > now()
-     RETURNING user_id`,
-    [tokenHash, kind],
-  );
-  return res.rows[0]?.user_id;
-}
-
-export async function markEmailVerified(db: Db, userId: string): Promise<void> {
-  await db.query(
-    "UPDATE users SET email_verified_at = COALESCE(email_verified_at, now()) WHERE id = $1",
-    [userId],
-  );
-}
-
-export async function setPasswordHash(db: Db, userId: string, passwordHash: string): Promise<void> {
-  await db.query("UPDATE users SET password_hash = $2 WHERE id = $1", [userId, passwordHash]);
+  const [row] = await db
+    .update(emailTokens)
+    .set({ usedAt: new Date() })
+    .where(
+      and(
+        eq(emailTokens.tokenHash, tokenHash),
+        eq(emailTokens.kind, kind),
+        isNull(emailTokens.usedAt),
+        gt(emailTokens.expiresAt, new Date()),
+      ),
+    )
+    .returning({ userId: emailTokens.userId });
+  return row?.userId ?? undefined;
 }
 
 // ---- me ----
 
-interface MeRow {
-  id: string;
-  email: string;
-  email_verified_at: Date | null;
-  role: UserRole;
-  handle: string;
-  display_name: string;
-  bio: string | null;
-  college: string | null;
-  branch: string | null;
-  grad_year: number | null;
-  timezone: string;
-  xp: string;
-  level: number;
-  streak_current: number;
-  streak_best: number;
-  theme: MeResponse["settings"]["theme"];
-  readable_mode: boolean;
-  retro_cursor: boolean;
-  sound: boolean;
-  reduced_motion: boolean;
-  hint_mode: "strict" | "relaxed";
-  default_language: string;
-}
-
 export async function getMe(db: Db, userId: string): Promise<MeResponse | undefined> {
-  const res = await db.query<MeRow>(
-    `SELECT u.id, u.email, u.email_verified_at, u.role,
-            p.handle, p.display_name, p.bio, p.college, p.branch, p.grad_year, p.timezone,
-            p.xp, p.level, p.streak_current, p.streak_best,
-            s.theme, s.readable_mode, s.retro_cursor, s.sound, s.reduced_motion, s.hint_mode, s.default_language
-     FROM users u
-     JOIN profiles p ON p.user_id = u.id
-     JOIN user_settings s ON s.user_id = u.id
-     WHERE u.id = $1`,
-    [userId],
-  );
-  const r = res.rows[0];
+  const [r] = await db
+    .select({
+      user: users,
+      profile: profiles,
+      settings: userSettings,
+      totpConfirmedAt: userTotp.confirmedAt,
+    })
+    .from(users)
+    .innerJoin(profiles, eq(profiles.userId, users.id))
+    .innerJoin(userSettings, eq(userSettings.userId, users.id))
+    .leftJoin(userTotp, eq(userTotp.userId, users.id))
+    .where(eq(users.id, userId))
+    .limit(1);
   if (!r) return undefined;
+
+  const { user, profile, settings } = r;
   return {
-    id: r.id,
-    email: r.email,
-    emailVerified: r.email_verified_at !== null,
-    role: r.role,
+    id: user.id,
+    email: user.email,
+    emailVerified: user.emailVerifiedAt !== null,
+    role: user.role,
+    twoFactorEnabled: r.totpConfirmedAt !== null,
+    hasPassword: user.passwordHash !== null,
+    deletionRequestedAt: user.deletionRequestedAt?.toISOString() ?? null,
     profile: {
-      handle: r.handle,
-      displayName: r.display_name,
-      bio: r.bio,
-      college: r.college,
-      branch: r.branch,
-      gradYear: r.grad_year,
-      timezone: r.timezone,
-      xp: Number(r.xp),
-      level: r.level,
-      streakCurrent: r.streak_current,
-      streakBest: r.streak_best,
+      handle: profile.handle,
+      displayName: profile.displayName,
+      bio: profile.bio,
+      college: profile.college,
+      branch: profile.branch,
+      gradYear: profile.gradYear,
+      timezone: profile.timezone,
+      xp: profile.xp,
+      level: profile.level,
+      streakCurrent: profile.streakCurrent,
+      streakBest: profile.streakBest,
+      publicProfile: profile.publicProfile,
+      privacy: {
+        showBio: profile.privacy.showBio ?? true,
+        showCollege: profile.privacy.showCollege ?? true,
+        showStats: profile.privacy.showStats ?? true,
+      },
     },
     settings: {
-      theme: r.theme,
-      readableMode: r.readable_mode,
-      retroCursor: r.retro_cursor,
-      sound: r.sound,
-      reducedMotion: r.reduced_motion,
-      hintMode: r.hint_mode,
-      defaultLanguage: r.default_language,
+      theme: settings.theme as MeResponse["settings"]["theme"],
+      readableMode: settings.readableMode,
+      retroCursor: settings.retroCursor,
+      sound: settings.sound,
+      reducedMotion: settings.reducedMotion,
+      hintMode: settings.hintMode as "strict" | "relaxed",
+      defaultLanguage: settings.defaultLanguage,
     },
   };
 }
 
-/** Applies a partial update using a fixed column whitelist (never interpolates caller keys). */
-export async function updateColumns(
+export async function updateProfile(db: Db, userId: string, update: ProfileUpdate): Promise<void> {
+  const { privacy, ...rest } = update;
+  const set = {
+    ...rest,
+    // merge privacy toggles instead of replacing the whole object
+    ...(privacy ? { privacy: sql`${profiles.privacy} || ${JSON.stringify(privacy)}::jsonb` } : {}),
+  };
+  if (Object.keys(set).length === 0) return;
+  await db.update(profiles).set(set).where(eq(profiles.userId, userId));
+}
+
+export async function updateSettings(
   db: Db,
-  table: "profiles" | "user_settings",
   userId: string,
-  columns: Record<string, unknown>,
+  update: SettingsUpdate,
 ): Promise<void> {
-  const entries = Object.entries(columns);
-  if (entries.length === 0) return;
-  const sets = entries.map(([col], i) => `${col} = $${i + 2}`).join(", ");
-  await db.query(`UPDATE ${table} SET ${sets} WHERE user_id = $1`, [
-    userId,
-    ...entries.map(([, v]) => v),
-  ]);
+  if (Object.keys(update).length === 0) return;
+  await db.update(userSettings).set(update).where(eq(userSettings.userId, userId));
 }

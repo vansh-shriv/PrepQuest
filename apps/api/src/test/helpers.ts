@@ -1,7 +1,10 @@
 import type { FastifyInstance, LightMyRequestResponse } from "fastify";
-import { createPool } from "@prepquest/db";
+import { sql } from "drizzle-orm";
+import { createDatabase, type Database } from "@prepquest/db";
 import { parseServerEnv, type LoginResponse, type ServerEnv } from "@prepquest/shared";
 import { buildApp } from "../app.js";
+import { NoopBreachChecker, type BreachChecker } from "../lib/breach.js";
+import { MemoryKv, type Kv } from "../lib/kv.js";
 import { MemoryMailer } from "../lib/mailer.js";
 import { loadJwtKeys } from "../modules/auth/keys.js";
 import { REFRESH_COOKIE } from "../modules/auth/routes.js";
@@ -10,29 +13,62 @@ import { TEST_DATABASE_URL } from "./db-url.js";
 export interface TestApp {
   app: FastifyInstance;
   mailer: MemoryMailer;
-  pool: ReturnType<typeof createPool>;
+  db: Database;
+  /** The underlying pg pool, for raw SQL in assertions and fixtures. */
+  pool: Database["$client"];
+  kv: Kv;
+  env: ServerEnv;
   close: () => Promise<void>;
 }
 
-export async function makeTestApp(overrides: Record<string, string> = {}): Promise<TestApp> {
+export interface TestOptions {
+  env?: Record<string, string>;
+  breach?: BreachChecker;
+  fetchFn?: typeof fetch;
+  kv?: Kv;
+}
+
+export async function makeTestApp(options: TestOptions = {}): Promise<TestApp> {
   const env: ServerEnv = parseServerEnv({
     NODE_ENV: "test",
     DATABASE_URL: TEST_DATABASE_URL,
     REDIS_URL: "redis://localhost:6379",
+    // generous limits so unrelated tests never trip them; limit tests lower these explicitly
     RL_AUTH_PER_MIN: "1000",
-    ...overrides,
+    RL_LOGIN_PER_10MIN: "1000",
+    RL_FORGOT_PER_HOUR: "1000",
+    RL_ANON_PER_MIN: "10000",
+    RL_USER_PER_MIN: "10000",
+    GOOGLE_CLIENT_ID: "google-id",
+    GOOGLE_CLIENT_SECRET: "google-secret",
+    GITHUB_CLIENT_ID: "github-id",
+    GITHUB_CLIENT_SECRET: "github-secret",
+    ...options.env,
   });
-  const pool = createPool(TEST_DATABASE_URL, 5);
-  await pool.query("TRUNCATE users CASCADE");
+  const db = createDatabase(TEST_DATABASE_URL, 5);
+  await db.execute(sql`TRUNCATE users CASCADE`);
   const mailer = new MemoryMailer();
-  const app = await buildApp({ env, pool, mailer, keys: await loadJwtKeys(env), checks: {} });
+  const kv = options.kv ?? new MemoryKv();
+  const app = await buildApp({
+    env,
+    db,
+    mailer,
+    kv,
+    keys: await loadJwtKeys(env),
+    checks: {},
+    breach: options.breach ?? new NoopBreachChecker(),
+    ...(options.fetchFn ? { fetchFn: options.fetchFn } : {}),
+  });
   return {
     app,
     mailer,
-    pool,
+    db,
+    pool: db.$client,
+    kv,
+    env,
     close: async () => {
       await app.close();
-      await pool.end();
+      await db.$client.end();
     },
   };
 }
@@ -78,4 +114,11 @@ export function tokenFromMail(mailer: MemoryMailer, needle: string): string {
   const match = msg?.text.match(/token=([\w-]+)/);
   if (!match?.[1]) throw new Error(`no email with a ${needle} link`);
   return match[1];
+}
+
+/** Marks every account verified (most tests don't care about verification). */
+export async function verifyAllEmails(t: TestApp): Promise<void> {
+  await t.db.execute(
+    sql`UPDATE users SET email_verified_at = now() WHERE email_verified_at IS NULL`,
+  );
 }

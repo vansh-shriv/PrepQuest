@@ -101,3 +101,16 @@ export async function api<T = void>(path: string, options: ApiOptions = {}): Pro
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
 }
+
+/** Authenticated POST/GET that returns a file (e.g. the data export) with its suggested filename. */
+export async function apiDownload(
+  path: string,
+  options: ApiOptions = {},
+): Promise<{ blob: Blob; filename: string }> {
+  const send = () => request(path, { method: options.method ?? "POST", json: options.json });
+  let res = await send();
+  if (res.status === 401 && accessToken && (await refreshSession())) res = await send();
+  if (!res.ok) throw await toError(res);
+  const match = res.headers.get("content-disposition")?.match(/filename="([^"]+)"/);
+  return { blob: await res.blob(), filename: match?.[1] ?? "download" };
+}

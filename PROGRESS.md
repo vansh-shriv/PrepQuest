@@ -2,16 +2,17 @@
 
 Phase-by-phase build log. Plan source: `docs/18-ROADMAP-AND-SPRINTS.md`. Each phase ends with lint + typecheck + test green, `CLAUDE.md`/docs updated, and a suggested commit message.
 
-| Phase | Scope                                                                | Milestone | Status                |
-| ----- | -------------------------------------------------------------------- | --------- | --------------------- |
-| 0     | Foundation: monorepo, CI, Docker Compose, env validation, health API | -         | Done (committed)      |
-| 1     | Design system: tokens, `packages/ui`, sprites, Storybook, 3 themes   | -         | Done (committed)      |
-| 2     | DB schema v1, auth, app shell                                        | M0        | Done (pending commit) |
-| 3     | Problem bank, content pipeline, Monaco editor, admin v0              | M1        | Not started           |
-| 4     | Judge (`isolate`), submissions, verdict UI, history/bookmarks/notes  | M2        | Not started           |
-| 5     | Hints, editorials, XP/streaks, dashboard, sheets                     | M3        | Not started           |
-| 6     | AI interview MVP, resume parse, scorecards                           | M4        | Not started           |
-| 7+    | Voice, analytics, planning, SRS, contests, peer, hardening           | M5-M12    | Planned               |
+| Phase | Scope                                                                                                                                       | Milestone | Status                |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------- | --------------------- |
+| 0     | Foundation: monorepo, CI, Docker Compose, env validation, health API                                                                        | -         | Done (committed)      |
+| 1     | Design system: tokens, `packages/ui`, sprites, Storybook, 3 themes                                                                          | -         | Done (committed)      |
+| 2     | DB schema v1, auth, app shell                                                                                                               | M0        | Done (committed)      |
+| 2b    | Completion pass: Drizzle ORM, verified-email gate, rate limiting, OAuth, 2FA, breach check, export/deletion, public profiles, Husky, CI e2e | -         | Done (pending commit) |
+| 3     | Problem bank, content pipeline, Monaco editor, admin v0                                                                                     | M1        | Not started           |
+| 4     | Judge (`isolate`), submissions, verdict UI, history/bookmarks/notes                                                                         | M2        | Not started           |
+| 5     | Hints, editorials, XP/streaks, dashboard, sheets                                                                                            | M3        | Not started           |
+| 6     | AI interview MVP, resume parse, scorecards                                                                                                  | M4        | Not started           |
+| 7+    | Voice, analytics, planning, SRS, contests, peer, hardening                                                                                  | M5-M12    | Planned               |
 
 ## Phase 0 - Foundation
 
@@ -66,7 +67,7 @@ Done:
 
 Decisions / gotchas:
 
-- No ORM: plain SQL migrations + `pg` repositories (docs 09/10 updated). Revisit only if query volume makes it painful.
+- ORM decision superseded in Phase 2b: Drizzle (see below).
 - Login does not require a verified email (flag exposed, UI nudges); gate costly features on it later.
 - `@fastify/cors` defaults to GET/HEAD/POST only; PATCH/DELETE must be listed explicitly (found by e2e, now covered by an API test).
 - Next.js renders its own `role="alert"` route announcer: e2e locators for error messages must target text, not the role.
@@ -76,6 +77,42 @@ Decisions / gotchas:
 
 Deferred / next:
 
-- OAuth (Google/GitHub), 2FA, breached-password check, account export/deletion, public profiles, Husky + lint-staged.
-- CI e2e job (works locally; needs Postgres + Redis + Mailpit services).
-- Account lockout with exponential delay (only IP rate limiting for now).
+- All of the above were completed in Phase 2b.
+
+## Phase 2b - completion pass (before Phase 3)
+
+Requested follow-up: use an ORM, require verified email for AI interviews, apply rate limiting, and finish everything left in Phase 2's "deferred" list.
+
+Done:
+
+- **Drizzle ORM** replaces hand-written SQL. Schema in `packages/db/src/schema/*` (25 tables), migrations regenerated as `0000_extensions` (custom), `0001_baseline` (generated), `0002_triggers` (custom). All API repositories rewritten on the query builder; the 30 pre-existing API tests passed unchanged on the new layer. A schema guard test fails if a table lacks `created_at`/`updated_at` or the `updated_at` trigger. New scripts: `db:generate`, `db:studio`.
+- **Verified-email gate:** `app.requireVerifiedEmail` (reads the DB, so verifying applies instantly) protects `/v1/interviews/*`; the web `/interview` page shows a resend prompt until verified. Login still works unverified.
+- **Rate limiting** (doc 11 section 15 has the table): global per-user / per-IP budget with `RateLimit-*` headers, per IP+email login limit, per-address reset-email limit, per-user verification-email and export limits, failure-only 2FA attempt budget, exponential account lockout, Redis-backed (`RedisKv`) with in-memory fallback, fail-open on store errors, `TRUST_PROXY` support.
+- **Breached-password check** via HIBP range API (k-anonymity), fail-open, `BREACH_CHECK` toggle; verified once against the live service.
+- **2FA (TOTP):** own RFC 6238 implementation (checked against the RFC vectors), AES-GCM encrypted seeds, replay-safe, 10 hashed recovery codes, setup/verify/login/disable endpoints and settings UI with QR code, `mfa` claim on tokens (carried through refresh), MFA required for admin/moderator.
+- **OAuth (Google, GitHub):** PKCE, server-side single-use state bound to the browser by cookie, verified-email-only sign-in, pre-hijack-safe account linking, 2FA hand-off, buttons shown only for configured providers. Tested against a fake provider; **not yet tried against real Google/GitHub credentials**.
+- **Account data:** `/me/prep`, JSON export, deletion with 14-day grace and re-authentication, cancel-by-login, `db:purge` hard-delete job, public profiles with per-field privacy and a `/u/[handle]` page.
+- **Web:** MFA step on login and after social sign-in, `/oauth/callback`, settings split into Profile / Data / Appearance / Security / Devices, pixel `Checkbox`, deletion banner on the dashboard.
+- **Tooling:** Husky pre-commit (lint-staged: prettier + eslint on staged files) and commit-msg (commitlint, Conventional Commits). CI gained Redis for the verify job and a new `e2e` job.
+- **Tests:** API 114 (12 files, real Postgres; Redis tests run when Redis is up), UI 45, shared 3, e2e 15 (real web + API + Mailpit).
+
+Bugs found by the new tests and fixed:
+
+- Zod 4 `z.record` with enum keys demands every key; prep hours use `z.partialRecord`.
+- The 2FA attempt limit counted successful codes, so setup + login could lock a legitimate user out. Now only wrong codes count (`AttemptGuard`).
+- `Content-Disposition` wasn't exposed over CORS, so the browser fell back to `download.json`. Now exposed and covered by an API test.
+- `@fastify/rate-limit`: routes with their own `config.rateLimit` use a separate bucket from the global one (expected; the tests now assert the real behaviour).
+- Playwright gives every test a fresh page; specs that assumed an earlier test's session had to sign in again. A 30 s TOTP step boundary could flake the setup test; it now waits out the last second of a step.
+
+Decisions / gotchas:
+
+- Drizzle over Prisma: no codegen step, TS-first schema, easy escape to raw SQL for the later analytics queries. `drizzle-kit` can't express extensions or triggers, so those are custom SQL migrations; **new tables must add their own `updated_at` trigger** (guard test).
+- `lint-staged --diff` stages the files it fixes; running it manually can touch your index (I unstaged the one file it staged).
+- Account lockout is per email (not per IP) so it works against distributed guessing, at the cost that someone can lock a victim out for up to 15 minutes. Documented in doc 11.
+- The export is built inline and returned directly (no worker yet); revisit when BullMQ arrives in Phase 4.
+- OAuth-only accounts delete with confirmation alone (no password to check); they have no stronger re-auth available yet.
+
+Still open:
+
+- Real-provider OAuth smoke test (needs Google/GitHub app credentials), CAPTCHA, disposable-email blocking, security headers/CSP on the web app, gitleaks in CI, the generated auth/authorization matrix test.
+- The CI `e2e` job has not run on GitHub yet.

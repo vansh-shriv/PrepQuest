@@ -1,5 +1,6 @@
-import { newId } from "./ids.js";
 import type { Db } from "./client.js";
+import { newId } from "./ids.js";
+import { tags } from "./schema/index.js";
 
 const title = (slug: string) =>
   slug
@@ -47,17 +48,14 @@ export const PATTERN_TAGS = [
 
 /** Idempotent: inserts topic and pattern tags that don't exist yet. */
 export async function seedReferenceData(db: Db): Promise<{ tags: number }> {
-  let inserted = 0;
-  const rows: Array<[string, (typeof TOPIC_TAGS)[number] | (typeof PATTERN_TAGS)[number]]> = [
-    ...TOPIC_TAGS.map((s) => ["topic", s] as [string, (typeof TOPIC_TAGS)[number]]),
-    ...PATTERN_TAGS.map((s) => ["pattern", s] as [string, (typeof PATTERN_TAGS)[number]]),
+  const rows = [
+    ...TOPIC_TAGS.map((slug) => ({ id: newId(), kind: "topic", slug, name: title(slug) })),
+    ...PATTERN_TAGS.map((slug) => ({ id: newId(), kind: "pattern", slug, name: title(slug) })),
   ];
-  for (const [kind, slug] of rows) {
-    const res = await db.query(
-      "INSERT INTO tags (id, kind, slug, name) VALUES ($1, $2, $3, $4) ON CONFLICT (slug) DO NOTHING",
-      [newId(), kind, slug, title(slug)],
-    );
-    inserted += res.rowCount ?? 0;
-  }
-  return { tags: inserted };
+  const inserted = await db
+    .insert(tags)
+    .values(rows)
+    .onConflictDoNothing({ target: tags.slug })
+    .returning({ id: tags.id });
+  return { tags: inserted.length };
 }

@@ -22,15 +22,19 @@
     "typecheck": "tsc --noEmit",
     "test": "echo \"db is covered by api integration tests\"",
     "db:migrate": "tsx --env-file-if-exists=../../.env src/cli.ts migrate",
-    "db:reset": "tsx --env-file-if-exists=../../.env src/cli.ts reset"
+    "db:reset": "tsx --env-file-if-exists=../../.env src/cli.ts reset",
+    "db:generate": "drizzle-kit generate",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "drizzle-orm": "^0.45.4",
     "pg": "^8.23.1",
     "uuid": "^14.0.2"
   },
   "devDependencies": {
     "@prepquest/config": "workspace:*",
     "@types/pg": "^8.23.1",
+    "drizzle-kit": "^0.31.11",
     "tsx": "^4.23.15"
   }
 }

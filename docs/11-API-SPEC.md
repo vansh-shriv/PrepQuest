@@ -371,16 +371,50 @@ Reconnect: client sends `sync` with last event id; server replays from Redis str
 
 ## 15. Implementation status
 
-**Built (auth + account, Phase 2):** `POST /auth/signup`, `/auth/verify-email`, `/auth/resend-verification` (auth required), `/auth/login`, `/auth/refresh`, `/auth/logout`, `/auth/logout-all`, `/auth/forgot-password`, `/auth/reset-password`; `GET /me`, `PATCH /me/profile`, `PATCH /me/settings`, `GET /me/sessions`, `DELETE /me/sessions/:id`; `GET /health`, `GET /health/ready`.
+**Built (auth, account, privacy):**
 
-**Not built yet:** OAuth, 2FA, `/me/prep`, `/me/export`, `DELETE /me`, `/u/:handle`, `/me/badges`, and all later sections.
+| Area | Endpoints |
+| ---- | --------- |
+| Account lifecycle | `POST /auth/signup`, `/auth/verify-email`, `/auth/resend-verification` (auth), `/auth/forgot-password`, `/auth/reset-password` |
+| Sessions | `POST /auth/login`, `/auth/refresh`, `/auth/logout`, `/auth/logout-all` (auth) |
+| Two-factor (TOTP) | `POST /auth/2fa/setup` (auth), `/auth/2fa/verify` (auth, returns recovery codes), `/auth/2fa/login`, `/auth/2fa/disable` (auth) |
+| OAuth | `GET /auth/oauth/providers`, `/auth/oauth/:provider/start`, `/auth/oauth/:provider/callback` (Google, GitHub) |
+| Me | `GET /me`, `PATCH /me/profile`, `PATCH /me/settings`, `GET/PUT /me/prep`, `GET /me/sessions`, `DELETE /me/sessions/:id` |
+| Data rights | `POST /me/export`, `DELETE /me`, `POST /me/cancel-deletion` |
+| Public | `GET /u/:handle` |
+| AI interview gate | `GET /interviews/access` (verified email required; placeholder until the interview engine) |
+| Health | `GET /health`, `GET /health/ready` |
+
+**Not built yet:** `/me/badges` and every later section. `/healthz`, `/readyz`, `/status` from §13 are served as `/v1/health` and `/v1/health/ready` for now.
+
+**Login with 2FA.** `POST /auth/login` returns `{ accessToken, user }`, or for an account with 2FA `{ mfaRequired: true, mfaToken }` (5-minute token; not usable as an access token). Finish with `POST /auth/2fa/login { mfaToken, code | recoveryCode }`. Social sign-in redirects to `/oauth/callback?mfa=<token>` in that case.
 
 **Behavior notes**
-- Login does not require a verified email; `emailVerified` is returned and the UI nudges. Features that cost money (AI interviews) will require it.
-- Access token: EdDSA JWT, 15 min, claims `sub`, `role`, `sid` (session id). Refresh token: random 256-bit, only its SHA-256 is stored, httpOnly `pq_rt` cookie (`SameSite=Lax`, `Path=/v1/auth`, `Secure` in production). Refresh rotates on every use; replaying a rotated token revokes the whole family. Concurrent refreshes with the same token count as replay, so the web client shares one in-flight refresh.
-- Cookie endpoints (`/auth/refresh`, `/auth/logout`) reject requests whose `Origin` is not in `CORS_ORIGINS` (403).
-- Rate limits: credential endpoints `RL_AUTH_PER_MIN` per IP per minute (default 20), `/auth/refresh` 6x that; exceeding returns 429 `RATE_LIMITED` with `Retry-After`.
+- Login does not require a verified email; `emailVerified` is returned and the UI nudges. **AI interviews require it**: every `/interviews/*` route runs `requireVerifiedEmail` (403 `EMAIL_NOT_VERIFIED`), read from the database so verifying takes effect immediately.
+- Access token: EdDSA JWT, 15 min, claims `sub`, `role`, `sid` (session id), `mfa`. Refresh token: random 256-bit, only its SHA-256 is stored, httpOnly `pq_rt` cookie (`SameSite=Lax`, `Path=/v1/auth`, `Secure` in production). Refresh rotates on every use; replaying a rotated token revokes the whole family; `mfa` carries over. The web client shares one in-flight refresh.
+- Cookie endpoints (`/auth/refresh`, `/auth/logout`) reject requests whose `Origin` is not in `CORS_ORIGINS` (403). CORS allows GET/HEAD/POST/PUT/PATCH/DELETE and exposes `x-request-id`, `retry-after`, `ratelimit-*`, `content-disposition`.
+- **Roles:** `admin` and `moderator` tokens must carry `mfa: true` (403 `MFA_REQUIRED` otherwise).
+- **Rate limits** (429 `RATE_LIMITED` with `Retry-After`; `RateLimit-Limit/Remaining/Reset` headers on every response):
+
+  | Scope | Default | Env |
+  | ----- | ------- | --- |
+  | Anonymous, per IP | 120/min | `RL_ANON_PER_MIN` |
+  | Signed in, per user | 600/min | `RL_USER_PER_MIN` |
+  | Credential endpoints, per IP | 20/min (`/auth/refresh` 6x) | `RL_AUTH_PER_MIN` |
+  | Login, per IP + email | 10 / 10 min | `RL_LOGIN_PER_10MIN` |
+  | Password-reset emails, per address | 3/hour (silently dropped beyond that) | `RL_FORGOT_PER_HOUR` |
+  | Verification emails, per user | 3/hour | |
+  | Wrong 2FA codes, per user | 5 / 10 min (successes don't count) | |
+  | Data exports, per user | 3/day | |
+
+  Health checks are exempt. Counters live in Redis when available (per-process memory otherwise) and **fail open** if the store errors, so an outage degrades protection instead of blocking sign-in. Set `TRUST_PROXY=true` behind a reverse proxy so IP limits see real client addresses.
+- **Account lockout:** after 5 failed logins for an email within 15 min, further attempts are refused for 30 s, doubling per failure up to 15 min (429 `ACCOUNT_LOCKED`). Keyed by the submitted email whether or not it exists (no enumeration); a success clears it. Trade-off: someone can lock a victim out for up to 15 min.
+- **Passwords:** min 10 chars; Argon2id (64 MiB, t=3, p=1); checked against Have I Been Pwned with k-anonymity (only a 5-char hash prefix leaves the server) at signup and reset (422 `fields.password`); fails open if HIBP is unreachable; disable with `BREACH_CHECK=off`.
+- **OAuth:** authorization-code flow with PKCE (S256); `state` is stored server-side (single use, 10 min) and bound to the browser with an httpOnly cookie. Only providers that vouch for the email can sign in. Linking: existing verified account with the same email is linked; an existing **unverified** account (possible pre-hijack) has its password cleared and sessions revoked, then is linked; otherwise a new verified, password-less account is created. A provider is enabled when its `*_CLIENT_ID` and `*_CLIENT_SECRET` are set; redirect URI is `${API_URL}/v1/auth/oauth/:provider/callback`.
+- **2FA:** RFC 6238 TOTP (SHA-1, 6 digits, ±1 step). Seeds are AES-256-GCM encrypted (`DATA_ENCRYPTION_KEY`, required in production). 10 single-use recovery codes, stored hashed. A code's time step can't be reused.
+- **Public profile:** private by default; private, missing, suspended and pending-deletion profiles all return the same 404. Fields shown follow `profile.privacy` (`showBio`, `showCollege`, `showStats`).
+- **Export:** `POST /me/export` returns the JSON as an attachment (built inline for now; becomes an async job when the worker exists). No hashes or secrets included.
+- **Deletion:** `DELETE /me { confirm: "DELETE", password?, code? }` needs the password if the account has one and a current 2FA code if 2FA is on; schedules deletion in 14 days, signs out everywhere and emails. Signing in during the grace period works (`deletionRequestedAt` is returned) and `POST /me/cancel-deletion` reverts it.
 - `PATCH /me/*` bodies are strict: unknown fields (e.g. `role`, `xp`) return 422. Validation errors: `error.details.fields` maps field name to message.
-- Signup returns 409 with `details.field` (`email` or `handle`) on conflicts, which discloses that an email is registered; rate limiting is the mitigation for now.
+- Signup returns 409 with `details.field` (`email` or `handle`) on conflicts, which discloses that an email is registered; rate limiting is the mitigation.
 - Unknown routes return 404 `NOT_FOUND`; malformed requests return `BAD_REQUEST`. Every response carries `x-request-id` (an incoming value is reused).
-- Passwords: min 10 chars, Argon2id (64 MiB, t=3, p=1). The breached-password check from doc 14 is still to do.

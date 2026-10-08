@@ -1,4 +1,4 @@
-import { createPool, resetDatabase } from "@prepquest/db";
+import { createDatabase, createPool, resetDatabase } from "@prepquest/db";
 import { adminDatabaseUrl, databaseName, TEST_DATABASE_URL } from "./db-url.js";
 
 /** Creates the test database if needed and rebuilds its schema from the migrations. */
@@ -14,10 +14,10 @@ export default async function setup(): Promise<void> {
     await admin.end();
   }
 
-  const pool = createPool(TEST_DATABASE_URL, 1);
+  const db = createDatabase(TEST_DATABASE_URL, 1);
   try {
-    await resetDatabase(pool);
+    await resetDatabase(db);
   } finally {
-    await pool.end();
+    await db.$client.end();
   }
 }

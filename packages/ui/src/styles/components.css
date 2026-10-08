@@ -488,3 +488,61 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
 }
+
+/* ---------- Checkbox ---------- */
+.pq-check {
+  position: relative;
+}
+.pq-check__input {
+  position: absolute;
+  opacity: 0;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+}
+.pq-check__label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 44px;
+  padding: 8px 0;
+  cursor: pointer;
+}
+.pq-check__box {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin: 3px;
+  background: var(--surface);
+  box-shadow:
+    0 calc(var(--border) * -1) 0 0 var(--ink),
+    0 var(--border) 0 0 var(--ink),
+    calc(var(--border) * -1) 0 0 0 var(--ink),
+    var(--border) 0 0 0 var(--ink);
+}
+.pq-check__input:checked + .pq-check__label .pq-check__box {
+  background: var(--leaf);
+  /* pixel tick drawn with an inset box-shadow stack */
+  background-image:
+    linear-gradient(var(--on-olive), var(--on-olive)),
+    linear-gradient(var(--on-olive), var(--on-olive)),
+    linear-gradient(var(--on-olive), var(--on-olive));
+  background-size:
+    4px 4px,
+    4px 4px,
+    12px 4px;
+  background-position:
+    4px 12px,
+    8px 16px,
+    12px 8px;
+  background-repeat: no-repeat;
+}
+.pq-check__input:focus-visible + .pq-check__label .pq-check__box {
+  outline: 3px solid var(--sky);
+  outline-offset: 3px;
+}
+.pq-check__helper {
+  display: block;
+  color: var(--ink-soft);
+  font-size: 14px;
+}

@@ -3,15 +3,22 @@ import {
   AppError,
   forgotPasswordSchema,
   loginSchema,
+  mfaDisableSchema,
+  mfaLoginSchema,
   resetPasswordSchema,
   signupSchema,
+  totpCodeSchema,
   tokenSchema,
 } from "@prepquest/shared";
+import { z } from "zod";
 import { parse } from "../../lib/validate.js";
+import * as mfa from "./mfa.js";
+import * as oauth from "./oauth.js";
 import * as service from "./service.js";
-import type { AuthContext, ClientMeta, SessionIssued } from "./service.js";
+import type { AuthContext, ClientMeta, LoginOutcome, SessionIssued } from "./service.js";
 
 export const REFRESH_COOKIE = "pq_rt";
+const OAUTH_COOKIE = "pq_oauth";
 const COOKIE_PATH = "/v1/auth";
 
 export interface AuthRouteOptions {
@@ -26,7 +33,13 @@ export const authRoutes: FastifyPluginAsync<AuthRouteOptions> = async (
 ) => {
   const { env } = ctx;
   const limited = { config: { rateLimit: { max: rateLimitPerMin, timeWindow: "1 minute" } } };
+  // Runs on every page load, so it gets a looser budget than credential endpoints.
+  const refreshLimit = {
+    config: { rateLimit: { max: rateLimitPerMin * 6, timeWindow: "1 minute" } },
+  };
   const allowedOrigins = env.CORS_ORIGINS.split(",");
+  const secure = env.NODE_ENV === "production";
+  const domain = env.COOKIE_DOMAIN ? { domain: env.COOKIE_DOMAIN } : {};
 
   const meta = (req: FastifyRequest): ClientMeta => ({
     userAgent: req.headers["user-agent"] ?? null,
@@ -36,19 +49,16 @@ export const authRoutes: FastifyPluginAsync<AuthRouteOptions> = async (
   const setRefreshCookie = (reply: FastifyReply, issued: SessionIssued) => {
     reply.setCookie(REFRESH_COOKIE, issued.refreshToken, {
       httpOnly: true,
-      secure: env.NODE_ENV === "production",
+      secure,
       sameSite: "lax",
       path: COOKIE_PATH,
       expires: issued.refreshExpiresAt,
-      ...(env.COOKIE_DOMAIN ? { domain: env.COOKIE_DOMAIN } : {}),
+      ...domain,
     });
   };
 
   const clearRefreshCookie = (reply: FastifyReply) => {
-    reply.clearCookie(REFRESH_COOKIE, {
-      path: COOKIE_PATH,
-      ...(env.COOKIE_DOMAIN ? { domain: env.COOKIE_DOMAIN } : {}),
-    });
+    reply.clearCookie(REFRESH_COOKIE, { path: COOKIE_PATH, ...domain });
   };
 
   /** CSRF defense for cookie-authenticated endpoints: a cross-site Origin is rejected outright. */
@@ -60,6 +70,14 @@ export const authRoutes: FastifyPluginAsync<AuthRouteOptions> = async (
   };
 
   const asLoginBody = ({ accessToken, user }: SessionIssued) => ({ accessToken, user });
+
+  const respondToLogin = (reply: FastifyReply, outcome: LoginOutcome) => {
+    if (outcome.kind === "mfa") return outcome.body;
+    setRefreshCookie(reply, outcome.session);
+    return asLoginBody(outcome.session);
+  };
+
+  // ---- account lifecycle ----
 
   app.post("/auth/signup", limited, async (req, reply) => {
     await service.signup(ctx, parse(signupSchema, req.body));
@@ -80,16 +98,22 @@ export const authRoutes: FastifyPluginAsync<AuthRouteOptions> = async (
     },
   );
 
-  app.post("/auth/login", limited, async (req, reply) => {
-    const issued = await service.login(ctx, parse(loginSchema, req.body), meta(req));
-    setRefreshCookie(reply, issued);
-    return asLoginBody(issued);
+  app.post("/auth/forgot-password", limited, async (req, reply) => {
+    await service.forgotPassword(ctx, parse(forgotPasswordSchema, req.body).email);
+    return reply.status(202).send({ ok: true });
   });
 
-  // Runs on every page load, so it gets a looser budget than credential endpoints.
-  const refreshLimit = {
-    config: { rateLimit: { max: rateLimitPerMin * 6, timeWindow: "1 minute" } },
-  };
+  app.post("/auth/reset-password", limited, async (req, reply) => {
+    const { token, password } = parse(resetPasswordSchema, req.body);
+    await service.resetPassword(ctx, token, password);
+    return reply.status(204).send();
+  });
+
+  // ---- sessions ----
+
+  app.post("/auth/login", limited, async (req, reply) => {
+    return respondToLogin(reply, await service.login(ctx, parse(loginSchema, req.body), meta(req)));
+  });
 
   app.post("/auth/refresh", refreshLimit, async (req, reply) => {
     checkOrigin(req);
@@ -116,14 +140,79 @@ export const authRoutes: FastifyPluginAsync<AuthRouteOptions> = async (
     return reply.status(204).send();
   });
 
-  app.post("/auth/forgot-password", limited, async (req, reply) => {
-    await service.forgotPassword(ctx, parse(forgotPasswordSchema, req.body).email);
-    return reply.status(202).send({ ok: true });
+  // ---- two-factor authentication (TOTP) ----
+
+  app.post("/auth/2fa/setup", { preHandler: app.authenticate }, async (req) =>
+    mfa.beginSetup(ctx, req.auth!.userId),
+  );
+
+  app.post("/auth/2fa/verify", { ...limited, preHandler: app.authenticate }, async (req) => {
+    const { code } = parse(z.object({ code: totpCodeSchema }), req.body);
+    return { recoveryCodes: await mfa.confirmSetup(ctx, req.auth!.userId, code) };
   });
 
-  app.post("/auth/reset-password", limited, async (req, reply) => {
-    const { token, password } = parse(resetPasswordSchema, req.body);
-    await service.resetPassword(ctx, token, password);
-    return reply.status(204).send();
+  app.post("/auth/2fa/login", limited, async (req, reply) => {
+    const session = await mfa.completeLogin(ctx, parse(mfaLoginSchema, req.body), meta(req));
+    setRefreshCookie(reply, session);
+    return asLoginBody(session);
+  });
+
+  app.post(
+    "/auth/2fa/disable",
+    { ...limited, preHandler: app.authenticate },
+    async (req, reply) => {
+      await mfa.disable(ctx, req.auth!.userId, parse(mfaDisableSchema, req.body));
+      return reply.status(204).send();
+    },
+  );
+
+  // ---- OAuth (Google, GitHub) ----
+
+  app.get("/auth/oauth/providers", async () => ({
+    providers: oauth.configuredProviders(env).map((p) => p.id),
+  }));
+
+  app.get<{ Params: { provider: string } }>(
+    "/auth/oauth/:provider/start",
+    limited,
+    async (req, reply) => {
+      const { url, state } = await oauth.start(ctx, req.params.provider);
+      reply.setCookie(OAUTH_COOKIE, state, {
+        httpOnly: true,
+        secure,
+        sameSite: "lax", // must accompany the top-level redirect back from the provider
+        path: `${COOKIE_PATH}/oauth`,
+        maxAge: 600,
+        ...domain,
+      });
+      return reply.redirect(url);
+    },
+  );
+
+  app.get<{
+    Params: { provider: string };
+    Querystring: { code?: string; state?: string; error?: string };
+  }>("/auth/oauth/:provider/callback", limited, async (req, reply) => {
+    const web = (path: string) => reply.redirect(`${env.APP_URL}${path}`);
+    reply.clearCookie(OAUTH_COOKIE, { path: `${COOKIE_PATH}/oauth`, ...domain });
+    try {
+      const outcome = await oauth.handleCallback(
+        ctx,
+        req.params.provider,
+        req.query,
+        req.cookies[OAUTH_COOKIE],
+        meta(req),
+      );
+      if (outcome.kind === "mfa") {
+        return web(`/oauth/callback?mfa=${encodeURIComponent(outcome.body.mfaToken)}`);
+      }
+      setRefreshCookie(reply, outcome.session);
+      return web("/oauth/callback");
+    } catch (err) {
+      if (err instanceof oauth.OAuthFailure) return web(`/login?error=oauth_${err.reason}`);
+      if (err instanceof AppError && err.httpStatus === 404)
+        return web("/login?error=oauth_provider");
+      throw err;
+    }
   });
 };

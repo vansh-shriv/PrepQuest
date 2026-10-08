@@ -117,3 +117,9 @@ Trust boundaries: Browser ⟷ Edge/API ⟷ internal services ⟷ data stores; **
 - Fuzz tests on parsers (resume, markdown, checker inputs).
 - Judge malicious suite on privileged runner nightly.
 - Prompt-injection and solution-leak eval suite on each prompt change.
+
+## 12. Implementation status (as built)
+
+Built and covered by automated tests: Argon2id passwords, rotating refresh tokens with reuse detection, breached-password check (HIBP k-anonymity), per-IP / per-user / per-email rate limits with Redis-backed counters, exponential account lockout, TOTP 2FA with encrypted seeds and hashed recovery codes (required for admin/moderator tokens), OAuth with PKCE, state and pre-hijack-safe linking, CSRF Origin check on cookie endpoints, strict CORS allowlist, verified-email gate for AI features, data export, account deletion with a 14-day grace period and purge job, privacy-filtered public profiles, request ids on every response, redacted auth headers in logs. Passwords, tokens and TOTP seeds are never returned by any endpoint or written to logs.
+
+Not built yet: CSP and security headers on the web app, CAPTCHA, disposable-email blocking, WebSocket tickets, upload scanning, SSRF-safe fetcher, markdown sanitization, admin impersonation, secret scanning (gitleaks) in CI, `security.txt`, the judge hardening checklist (§8), and the auth/authorization matrix test from §11 (route-by-route tests exist for auth; a generated matrix does not).

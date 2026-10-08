@@ -3,38 +3,46 @@ import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
 import Fastify, { type FastifyError, type FastifyInstance } from "fastify";
 import type { Redis } from "ioredis";
-import type pg from "pg";
+import type { Database } from "@prepquest/db";
 import { AppError, type ServerEnv } from "@prepquest/shared";
+import { NoopBreachChecker, HibpBreachChecker, type BreachChecker } from "./lib/breach.js";
+import { SecretBox } from "./lib/encryption.js";
+import { MemoryKv, RedisKv, type Kv } from "./lib/kv.js";
+import { AttemptGuard, LoginLockout, RateLimiter } from "./lib/limiter.js";
 import type { Mailer } from "./lib/mailer.js";
-import { authRoutes } from "./modules/auth/routes.js";
+import { verifyAccessToken } from "./modules/auth/access-token.js";
 import type { JwtKeys } from "./modules/auth/keys.js";
+import { authRoutes } from "./modules/auth/routes.js";
+import type { AuthContext } from "./modules/auth/service.js";
 import { healthRoutes, type HealthChecks } from "./modules/health/routes.js";
+import { interviewRoutes } from "./modules/interviews/routes.js";
 import { meRoutes } from "./modules/me/routes.js";
+import { userRoutes } from "./modules/users/routes.js";
 import { registerAuth } from "./plugins/auth.js";
 
 export interface AppDeps {
   env: ServerEnv;
-  pool: pg.Pool;
+  db: Database;
   keys: JwtKeys;
   mailer: Mailer;
   checks: HealthChecks;
-  /** When set, rate-limit counters live in Redis (shared across instances); otherwise in memory. */
+  /** When set, rate-limit counters, lockouts and OAuth state live in Redis (shared across instances). */
   redis?: Redis;
+  /** Overrides for tests. */
+  kv?: Kv;
+  breach?: BreachChecker;
+  fetchFn?: typeof fetch;
 }
 
-export async function buildApp({
-  env,
-  pool,
-  keys,
-  mailer,
-  checks,
-  redis,
-}: AppDeps): Promise<FastifyInstance> {
+export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
+  const { env, db, keys, mailer, checks, redis } = deps;
+
   const app = Fastify({
     logger:
       env.NODE_ENV === "test"
         ? false
         : { level: env.LOG_LEVEL, redact: ["req.headers.authorization", "req.headers.cookie"] },
+    trustProxy: env.TRUST_PROXY,
     genReqId: (req) => {
       const incoming = req.headers["x-request-id"];
       return typeof incoming === "string" && incoming.length <= 100
@@ -50,32 +58,52 @@ export async function buildApp({
   await app.register(cors, {
     origin: env.CORS_ORIGINS.split(","),
     credentials: true,
-    // the plugin defaults to GET/HEAD/POST only, which blocks PATCH and DELETE preflights
-    methods: ["GET", "HEAD", "POST", "PATCH", "DELETE", "OPTIONS"],
+    // the plugin defaults to GET/HEAD/POST only, which blocks PATCH, PUT and DELETE preflights
+    methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    exposedHeaders: [
+      "x-request-id",
+      "retry-after",
+      "ratelimit-limit",
+      "ratelimit-remaining",
+      "ratelimit-reset",
+      "content-disposition", // lets the web app read the export's suggested filename
+    ],
   });
   await app.register(cookie);
+
+  // Global budget: per signed-in user (token verified here) or per IP for everyone else (doc 11 §14).
+  // Route-level `config.rateLimit` overrides it for credential endpoints.
   await app.register(rateLimit, {
-    global: false,
+    global: true,
+    timeWindow: "1 minute",
     ...(redis ? { redis } : {}),
+    enableDraftSpec: true, // RateLimit-Limit / -Remaining / -Reset headers
+    allowList: (req) => req.url.startsWith("/v1/health"),
+    keyGenerator: async (req) => {
+      const header = req.headers.authorization;
+      if (header?.startsWith("Bearer ")) {
+        try {
+          return `user:${(await verifyAccessToken(keys, header.slice(7))).userId}`;
+        } catch {
+          /* invalid token: fall through to the IP budget */
+        }
+      }
+      return `ip:${req.ip}`;
+    },
+    max: async (_req, key) => (key.startsWith("user:") ? env.RL_USER_PER_MIN : env.RL_ANON_PER_MIN),
     errorResponseBuilder: (_req, ctx) =>
       new AppError(
         "RATE_LIMITED",
         429,
         `Too many requests. Try again in ${Math.ceil(ctx.ttl / 1000)}s.`,
-        {
-          retryAfterSeconds: Math.ceil(ctx.ttl / 1000),
-        },
+        { retryAfterSeconds: Math.ceil(ctx.ttl / 1000) },
       ),
   });
 
   app.setErrorHandler((err: FastifyError | AppError, req, reply) => {
     if (err instanceof AppError) {
-      if (err.httpStatus === 429 && err.details) {
-        reply.header(
-          "retry-after",
-          String((err.details as { retryAfterSeconds: number }).retryAfterSeconds),
-        );
-      }
+      const retry = (err.details as { retryAfterSeconds?: number } | undefined)?.retryAfterSeconds;
+      if (err.httpStatus === 429 && retry) reply.header("retry-after", String(retry));
       return reply.status(err.httpStatus).send({
         error: { code: err.code, message: err.message, details: err.details, requestId: req.id },
       });
@@ -102,15 +130,37 @@ export async function buildApp({
     }),
   );
 
-  registerAuth(app, keys);
+  registerAuth(app, { keys, db });
 
-  const authCtx = { pool, env, keys, mailer, log: app.log };
+  const kv = deps.kv ?? (redis ? new RedisKv(redis) : new MemoryKv());
+  const reportStoreError = (err: unknown) => app.log.error({ err }, "rate-limit store unavailable");
+  const ctx: AuthContext = {
+    db,
+    env,
+    keys,
+    mailer,
+    log: app.log,
+    kv,
+    limiter: new RateLimiter(kv, reportStoreError),
+    lockout: new LoginLockout(kv, reportStoreError),
+    mfaGuard: new AttemptGuard(kv, 5, 600, reportStoreError),
+    breach:
+      deps.breach ??
+      (env.BREACH_CHECK === "on"
+        ? new HibpBreachChecker(deps.fetchFn ?? fetch, (err) =>
+            app.log.warn({ err }, "breached-password check unavailable; allowing"),
+          )
+        : new NoopBreachChecker()),
+    box: env.DATA_ENCRYPTION_KEY
+      ? new SecretBox(env.DATA_ENCRYPTION_KEY)
+      : SecretBox.insecureDevelopmentBox(),
+    fetchFn: deps.fetchFn ?? fetch,
+  };
+
   await app.register(healthRoutes, { prefix: "/v1", checks });
-  await app.register(authRoutes, {
-    prefix: "/v1",
-    ctx: authCtx,
-    rateLimitPerMin: env.RL_AUTH_PER_MIN,
-  });
-  await app.register(meRoutes, { prefix: "/v1", pool });
+  await app.register(authRoutes, { prefix: "/v1", ctx, rateLimitPerMin: env.RL_AUTH_PER_MIN });
+  await app.register(meRoutes, { prefix: "/v1", ctx });
+  await app.register(userRoutes, { prefix: "/v1", db });
+  await app.register(interviewRoutes, { prefix: "/v1" });
   return app;
 }

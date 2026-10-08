@@ -267,7 +267,7 @@ describe("password reset", () => {
 
 describe("rate limiting", () => {
   it("returns 429 with Retry-After after too many attempts", async () => {
-    const limited = await makeTestApp({ RL_AUTH_PER_MIN: "3" });
+    const limited = await makeTestApp({ env: { RL_AUTH_PER_MIN: "3" } });
     const attempt = () =>
       limited.app.inject({
         method: "POST",

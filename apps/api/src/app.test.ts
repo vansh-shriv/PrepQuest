@@ -46,6 +46,23 @@ describe("health routes", () => {
     expect(evil.headers["access-control-allow-origin"]).toBeUndefined();
   });
 
+  it("exposes the response headers the web app reads cross-origin", async () => {
+    const res = await t.app.inject({
+      method: "GET",
+      url: "/v1/health",
+      headers: { origin: "http://localhost:3000" },
+    });
+    const exposed = String(res.headers["access-control-expose-headers"]).toLowerCase();
+    for (const header of [
+      "content-disposition",
+      "retry-after",
+      "x-request-id",
+      "ratelimit-remaining",
+    ]) {
+      expect(exposed).toContain(header);
+    }
+  });
+
   it("unknown routes use the standard error shape", async () => {
     const res = await t.app.inject({ method: "GET", url: "/v1/nope" });
     expect(res.statusCode).toBe(404);

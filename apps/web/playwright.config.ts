@@ -22,6 +22,14 @@ export default defineConfig({
       url: "http://localhost:4000/v1/health",
       reuseExistingServer: true,
       timeout: 60_000,
+      // the suite signs in many times from one IP and uses made-up passwords; keep it offline-safe
+      env: {
+        BREACH_CHECK: "off",
+        RL_LOGIN_PER_10MIN: "1000",
+        RL_AUTH_PER_MIN: "1000",
+        RL_ANON_PER_MIN: "10000",
+        RL_USER_PER_MIN: "10000",
+      },
     },
     {
       command: "pnpm --filter @prepquest/web start",

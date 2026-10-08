@@ -14,7 +14,7 @@
 | Charts           | visx or Recharts with custom pixel shapes                           | Pixel-style charts                                                |
 | Markdown         | `react-markdown`, `remark-math`, `rehype-katex`, `rehype-highlight` | Problem statements                                                |
 | Backend          | Fastify + TypeScript, Zod type provider                             | Fast, schema-first                                                |
-| ORM/DB access    | `pg` + plain SQL migrations and repository functions (built; see doc 10 §7) | Doc DDL is the source of truth; no codegen step            |
+| ORM/DB access    | **Drizzle ORM** (`drizzle-orm` + `drizzle-kit`) on `pg`, raw SQL for analytics (built; see doc 10 §7) | TS schema is the source of truth, typed queries, no codegen step |
 | DB               | PostgreSQL 16 + pgvector + pg_trgm                                  | Relational + vectors + fuzzy search                               |
 | Cache/Queue      | Redis 7 + BullMQ                                                    | Queues, rate limits, ZSET leaderboards                            |
 | Realtime         | Socket.IO (Redis adapter) or `ws`                                   | Interview, submissions, contests                                  |
@@ -64,7 +64,7 @@ prepquest/
 ├─ packages/
 │  ├─ ui/                       # pixel design system + Storybook
 │  ├─ shared/                   # Zod schemas, types, constants, enums
-│  ├─ db/                       # SQL migrations (NNN_name.sql), migrate runner, pool/tx helpers, reference seed data
+│  ├─ db/                       # Drizzle schema (src/schema), generated + custom SQL migrations, migrate runner, db/tx helpers, seed data
 │  ├─ config/                   # eslint, tsconfig, tailwind presets
 │  ├─ prompts/                  # versioned prompt templates + eval fixtures
 │  ├─ judge-core/               # verdict logic, checkers, language configs

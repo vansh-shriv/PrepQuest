@@ -1,77 +1,79 @@
 import type { FastifyPluginAsync } from "fastify";
-import type pg from "pg";
 import { z } from "zod";
 import {
   AppError,
+  deleteAccountSchema,
+  prepSchema,
   profileUpdateSchema,
   settingsUpdateSchema,
-  type ProfileUpdate,
-  type SettingsUpdate,
 } from "@prepquest/shared";
 import { parse } from "../../lib/validate.js";
 import * as repo from "../auth/repo.js";
+import type { AuthContext } from "../auth/service.js";
+import * as me from "./service.js";
 
-const PROFILE_COLUMNS: Record<keyof ProfileUpdate, string> = {
-  displayName: "display_name",
-  bio: "bio",
-  college: "college",
-  branch: "branch",
-  gradYear: "grad_year",
-  timezone: "timezone",
-};
-
-const SETTINGS_COLUMNS: Record<keyof SettingsUpdate, string> = {
-  theme: "theme",
-  readableMode: "readable_mode",
-  retroCursor: "retro_cursor",
-  sound: "sound",
-  reducedMotion: "reduced_motion",
-  hintMode: "hint_mode",
-  defaultLanguage: "default_language",
-};
-
-function toColumns<T extends object>(
-  input: T,
-  map: Record<keyof T, string>,
-): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
-  for (const key of Object.keys(input) as Array<keyof T>) out[map[key]] = input[key];
-  return out;
-}
-
-export const meRoutes: FastifyPluginAsync<{ pool: pg.Pool }> = async (app, { pool }) => {
+export const meRoutes: FastifyPluginAsync<{ ctx: AuthContext }> = async (app, { ctx }) => {
+  const { db } = ctx;
   app.addHook("preHandler", app.authenticate);
 
   const currentUser = async (userId: string) => {
-    const me = await repo.getMe(pool, userId);
-    if (!me) throw new AppError("UNAUTHENTICATED", 401, "Account not found");
-    return me;
+    const user = await repo.getMe(db, userId);
+    if (!user) throw new AppError("UNAUTHENTICATED", 401, "Account not found");
+    return user;
   };
 
   app.get("/me", async (req) => currentUser(req.auth!.userId));
 
   app.patch("/me/profile", async (req) => {
     const userId = req.auth!.userId;
-    const update = parse(profileUpdateSchema, req.body);
-    await repo.updateColumns(pool, "profiles", userId, toColumns(update, PROFILE_COLUMNS));
+    await repo.updateProfile(db, userId, parse(profileUpdateSchema, req.body));
     return currentUser(userId);
   });
 
   app.patch("/me/settings", async (req) => {
     const userId = req.auth!.userId;
-    const update = parse(settingsUpdateSchema, req.body);
-    await repo.updateColumns(pool, "user_settings", userId, toColumns(update, SETTINGS_COLUMNS));
+    await repo.updateSettings(db, userId, parse(settingsUpdateSchema, req.body));
     return currentUser(userId);
   });
 
+  app.get("/me/prep", async (req) => me.getPrep(db, req.auth!.userId));
+
+  app.put("/me/prep", async (req) => me.putPrep(db, req.auth!.userId, parse(prepSchema, req.body)));
+
   app.get("/me/sessions", async (req) => ({
-    items: await repo.listActiveSessions(pool, req.auth!.userId, req.auth!.sessionId),
+    items: await repo.listActiveSessions(db, req.auth!.userId, req.auth!.sessionId),
   }));
 
   app.delete("/me/sessions/:id", async (req, reply) => {
     const { id } = parse(z.object({ id: z.uuid() }), req.params);
-    const revoked = await repo.revokeUserSession(pool, req.auth!.userId, id);
+    const revoked = await repo.revokeUserSession(db, req.auth!.userId, id);
     if (!revoked) throw new AppError("NOT_FOUND", 404, "Session not found");
+    return reply.status(204).send();
+  });
+
+  // ---- data rights (doc 14 §7) ----
+
+  /** Full JSON export. Built inline for now; moves to a background job once the worker exists. */
+  app.post("/me/export", async (req, reply) => {
+    const userId = req.auth!.userId;
+    await ctx.limiter.enforce(`export:${userId}`, 3, 86_400, "data exports");
+    const data = await me.exportData(db, userId);
+    const handle = data.profile?.handle ?? "account";
+    return reply
+      .header("content-type", "application/json; charset=utf-8")
+      .header("content-disposition", `attachment; filename="prepquest-export-${handle}.json"`)
+      .header("cache-control", "no-store")
+      .send(JSON.stringify(data, null, 2));
+  });
+
+  app.delete("/me", async (req, reply) => {
+    const input = parse(deleteAccountSchema, req.body);
+    const purgeOn = await me.requestDeletion(ctx, req.auth!.userId, input);
+    return reply.status(202).send({ purgeOn: purgeOn.toISOString() });
+  });
+
+  app.post("/me/cancel-deletion", async (req, reply) => {
+    await me.cancelDeletion(db, req.auth!.userId);
     return reply.status(204).send();
   });
 };

@@ -19,6 +19,7 @@
     "@node-rs/argon2": "^2.2.2",
     "@prepquest/db": "workspace:*",
     "@prepquest/shared": "workspace:*",
+    "drizzle-orm": "^0.45.4",
     "fastify": "^5.12.5",
     "ioredis": "^6.0.0",
     "jose": "^6.2.12",

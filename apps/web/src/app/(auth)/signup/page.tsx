@@ -6,6 +6,7 @@ import { useState, type FormEvent } from "react";
 import { Button, Input } from "@prepquest/ui";
 import { signupSchema } from "@prepquest/shared";
 import { AuthCard, FormError } from "@/components/auth/AuthCard";
+import { OAuthButtons } from "@/components/auth/OAuthButtons";
 import { useAuth } from "@/lib/auth-context";
 import { useSubmit } from "@/lib/use-submit";
 
@@ -72,6 +73,7 @@ export default function SignupPage() {
         <Button type="submit" variant="accent" loading={pending}>
           Start quest
         </Button>
+        <OAuthButtons />
         <p className="m-0 text-sm">
           Already playing?{" "}
           <Link href="/login" className="underline">

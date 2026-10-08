@@ -48,10 +48,62 @@ export const profileUpdateSchema = z
     branch: z.string().trim().max(120).nullable(),
     gradYear: z.number().int().min(2000).max(2100).nullable(),
     timezone: z.string().trim().min(1).max(64),
+    publicProfile: z.boolean(),
+    privacy: z
+      .object({ showBio: z.boolean(), showCollege: z.boolean(), showStats: z.boolean() })
+      .partial()
+      .strict(),
   })
   .partial()
   .strict();
 export type ProfileUpdate = z.infer<typeof profileUpdateSchema>;
+
+export const TRACKS = ["sde", "fullstack", "ml", "embedded", "data"] as const;
+
+/** Prep settings (doc 11 GET/PUT /me/prep). PUT replaces all fields. */
+export const prepSchema = z
+  .object({
+    placementDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD")
+      .nullable(),
+    hoursPerDay: z
+      .partialRecord(
+        z.enum(["mon", "tue", "wed", "thu", "fri", "sat", "sun"]),
+        z.number().min(0).max(16),
+      )
+      .nullable(),
+    targetRoles: z.array(z.string().trim().min(1).max(60)).max(10),
+    targetCompanies: z.array(z.string().trim().min(1).max(60)).max(20),
+    track: z.enum(TRACKS).nullable(),
+  })
+  .strict();
+export type PrepSettings = z.infer<typeof prepSchema>;
+
+// ---- second factor, account deletion ----
+export const totpCodeSchema = z
+  .string()
+  .trim()
+  .regex(/^\d{6}$/, "Enter the 6-digit code");
+export const mfaLoginSchema = z
+  .object({
+    mfaToken: z.string().min(20).max(2000),
+    code: totpCodeSchema.optional(),
+    recoveryCode: z.string().trim().min(8).max(32).optional(),
+  })
+  .refine((v) => Boolean(v.code) !== Boolean(v.recoveryCode), {
+    message: "Provide a code or a recovery code",
+  });
+export const mfaDisableSchema = z.object({
+  password: z.string().min(1).max(128).optional(),
+  code: totpCodeSchema,
+});
+export const deleteAccountSchema = z.object({
+  confirm: z.literal("DELETE"),
+  password: z.string().min(1).max(128).optional(),
+  /** Current 2FA code, required when two-factor authentication is on. */
+  code: totpCodeSchema.optional(),
+});
 
 export const settingsUpdateSchema = z
   .object({
@@ -95,7 +147,13 @@ export interface MeResponse {
     level: number;
     streakCurrent: number;
     streakBest: number;
+    publicProfile: boolean;
+    privacy: { showBio: boolean; showCollege: boolean; showStats: boolean };
   };
+  twoFactorEnabled: boolean;
+  hasPassword: boolean;
+  /** ISO time the account was scheduled for deletion, or null. */
+  deletionRequestedAt: string | null;
   settings: {
     theme: (typeof THEME_CHOICES)[number];
     readableMode: boolean;
@@ -110,6 +168,22 @@ export interface MeResponse {
 export interface LoginResponse {
   accessToken: string;
   user: MeResponse;
+}
+
+/** Login for an account with 2FA: finish with POST /auth/2fa/login. */
+export interface MfaRequiredResponse {
+  mfaRequired: true;
+  mfaToken: string;
+}
+
+export interface PublicProfile {
+  handle: string;
+  displayName: string;
+  avatarKey: string | null;
+  bio: string | null;
+  college: string | null;
+  joinedAt: string;
+  stats: { xp: number; level: number; streakCurrent: number; streakBest: number } | null;
 }
 
 export interface SessionInfo {

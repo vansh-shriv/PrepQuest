@@ -13,7 +13,7 @@
 
 ## 2. First run
 
-> Built so far: Docker services, `pnpm db:migrate`, `pnpm db:seed`, `pnpm dev`, tests and e2e (below). Content import and the judge arrive in later phases. Postgres is published on host port **5433** (a native Postgres often owns 5432). The API generates dev JWT keys into `secrets/` on first start.
+> Built so far: Docker services, `pnpm db:migrate`, `pnpm db:seed`, `pnpm dev`, tests and e2e (below). Content import and the judge arrive in later phases. Postgres is published on host port **5433** (a native Postgres often owns 5432). The API generates dev JWT keys into `secrets/` on first start. Git hooks (Husky) install on `pnpm install`: staged files are formatted and linted, and commit messages must follow Conventional Commits.
 
 ```bash
 git clone <repo> prepquest && cd prepquest
@@ -38,7 +38,7 @@ docker compose up -d postgres            # API integration tests use a separate 
 pnpm test                                # unit + API integration
 docker compose up -d postgres redis mailpit && pnpm build && pnpm test:e2e   # Playwright against real web + API + Mailpit, uses installed Chrome
 ```
-Override the test database with `TEST_DATABASE_URL`.
+Override the test database with `TEST_DATABASE_URL`. CI runs the same suites (the e2e job is new and only verified locally). The e2e API server is started with `BREACH_CHECK=off` and generous rate limits so the suite is offline-safe.
 
 ## 3. Environment variables (`.env.example`)
 
@@ -54,15 +54,29 @@ DATABASE_URL=postgresql://prepquest:prepquest@localhost:5433/prepquest
 REDIS_URL=redis://localhost:6379
 
 # --- Auth ---
-JWT_PRIVATE_KEY_PATH=./secrets/jwt_ed25519_private.pem
-JWT_PUBLIC_KEY_PATH=./secrets/jwt_ed25519_public.pem
+JWT_PRIVATE_KEY_PATH=../../secrets/jwt_ed25519_private.pem   # relative to apps/api; auto-generated in dev if missing
+JWT_PUBLIC_KEY_PATH=../../secrets/jwt_ed25519_public.pem
 JWT_ACCESS_TTL_SECONDS=900
 REFRESH_TTL_DAYS=30
 COOKIE_DOMAIN=localhost
+TRUST_PROXY=false                   # true behind a reverse proxy/CDN so IP rate limits see real client IPs
+DATA_ENCRYPTION_KEY=                # base64, 32 bytes; encrypts TOTP seeds. REQUIRED in production
+                                    #   generate: node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+BREACH_CHECK=on                     # on | off: reject passwords found in breach data (HIBP, k-anonymity)
+
+# OAuth: a provider is enabled when both values are set.
+# Redirect URI to register with the provider: ${API_URL}/v1/auth/oauth/<google|github>/callback
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
+
+# --- Rate limits (per minute unless noted) ---
+RL_ANON_PER_MIN=120                 # anonymous, per IP
+RL_USER_PER_MIN=600                 # signed in, per user
+RL_AUTH_PER_MIN=20                  # credential endpoints per IP (refresh gets 6x)
+RL_LOGIN_PER_10MIN=10               # login attempts per IP+email per 10 minutes
+RL_FORGOT_PER_HOUR=3                # password-reset emails per address per hour
 
 # --- Storage ---
 S3_ENDPOINT=http://localhost:9000
@@ -154,7 +168,8 @@ On cgroup v1 hosts, enable cgroup v2 (`systemd.unified_cgroup_hierarchy=1`) or r
 pnpm dev:web | dev:api | dev:worker | dev:scheduler
 pnpm test | test:unit | test:int | test:e2e | test:judge | test:ai-eval
 pnpm lint | typecheck | format
-pnpm db:migrate | db:reset | db:seed | db:studio
+pnpm db:generate | db:migrate | db:reset | db:seed | db:studio   # generate = diff the Drizzle schema into a new migration
+pnpm --filter @prepquest/api db:purge   # hard-delete accounts past the 14-day deletion grace period (daily)
 pnpm content:validate | content:import | content:new-problem <slug>   # scaffolds a problem folder
 pnpm problem:validate <slug>    # run reference, validators, mutants for one problem locally
 pnpm sprites:build | storybook
@@ -202,4 +217,5 @@ pnpm llm:record                 # record LLM fixtures for tests
 - [ ] `docs/` (these 20 files) and `docs/adr/`
 - [ ] Issue/PR templates, CODEOWNERS
 - [ ] GitHub Actions workflows (ci, deploy, nightly)
-- [ ] Renovate config, gitleaks config, commit lint
+- [x] Commit lint + lint-staged (Husky)
+- [ ] Renovate config, gitleaks config
