@@ -482,3 +482,17 @@ All components live in `packages/ui` (or `apps/web/src/components/pixel`) with S
 5. Visual regression via Playwright screenshots for each component in 3 themes.
 6. Build composite components: `JudgePanel`, `VerdictBanner`, `InterviewerAvatar`, `Timer`, `SkillPlant`, `StreakSunflower`, `RadarScore`.
 7. Document usage rules (one accent CTA per screen, no more than 3 sprite types per view).
+
+---
+
+## 13. Implementation notes (as built in Phase 1)
+
+Where the implementation intentionally differs from the sketches above:
+
+- **Location:** `packages/ui` (`@prepquest/ui`), consumed from source. Styles: `src/styles/{tokens,base,components}.css`, imported via `@prepquest/ui/styles.css`. Class prefix `pq-`.
+- **Notched border technique:** four offset `box-shadow`s (`0 -3px`, `0 3px`, `-3px 0`, `3px 0` in `--ink`) leave the corner pixels empty, giving stepped corners without `clip-path`. The hard shadow is `filter: drop-shadow(4px 4px 0 var(--shadow))`, which follows that outline. Utilities: `.pq-box` (outline + margin) and `.pq-lift` (shadow). Pressed buttons drop the filter and translate by the shadow offset.
+- **Tailwind v4:** CSS-first `@theme inline` in `apps/web/src/app/globals.css` maps colors and shadows onto the tokens; there is no `tailwind.config.ts`. Fonts are applied through `.pq-font-display|ui|pixel` classes and tokens, loaded with `next/font` using the `--nf-*` variables (tokens fall back to the plain font names, e.g. in Storybook).
+- **Sprites:** character-grid art in `src/sprites/art.ts`, rendered as SVG `<rect>` runs by `<Sprite name scale animate label />`. Colors reference tokens. The PNG-to-SVG `sprites:build` pipeline is not needed yet.
+- **Themes:** `data-theme="cream|night|contrast"` and `data-readable="true"` on `<html>`; `THEME_INIT_SCRIPT` applies the saved choice before paint.
+- **Contrast theme:** `--surface-alt` is a light gray (not white) so empty progress blocks and stripes remain visible.
+- **Component inventory:** Button, Card, Window, Input, SearchPill, Tabs, LoadingBar, StageBar, Chip, FolderCard, Dialog, Toast, Sprite, ThemeSwitcher. Composite components listed in §12 step 6 are built alongside the features that need them.

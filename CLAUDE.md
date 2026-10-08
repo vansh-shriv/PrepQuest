@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Built in phases; see `PROGRESS.md` for status and `docs/18-ROADMAP-AND-SPRINTS.md` for the plan. The `docs/` folder (20 specs) is the source of truth for product, architecture, schema, API and design; update the relevant doc when a decision changes. Start with `docs/README.md` (doc map, feature ID index, vocabulary).
 
-**Implemented (Phase 0):** monorepo scaffold, `packages/shared` (env validation, `AppError`), `apps/api` (Fastify app + health routes), `apps/web` (Next.js placeholder), Docker Compose infra, CI. Everything else in the docs is still planned.
+**Implemented:** Phase 0 (monorepo scaffold, `packages/shared` env validation + `AppError`, `apps/api` Fastify app + health routes, Docker Compose infra, CI) and Phase 1 (`packages/ui` pixel design system + Storybook; `apps/web` has the home page and a `/design` component showcase). Everything else in the docs is still planned.
 
 **Phase workflow:** at the end of every phase run lint/typecheck/test, update `CLAUDE.md`, `PROGRESS.md` and affected docs, then propose a commit message. Do not commit unless asked. Reference images in `refrence/` plus `docs/07-DESIGN-SYSTEM-PIXEL-UI.md` drive the UI (redraw sprites originally; don't copy the reference artwork).
 
@@ -20,6 +20,7 @@ cp .env.example .env
 docker compose up -d postgres redis      # also minio, mailpit when needed
 pnpm dev            # turbo: api :4000, web :3000
 pnpm lint | typecheck | test | build | format | format:check
+pnpm --filter @prepquest/ui storybook                        # component workshop on :6006
 pnpm --filter @prepquest/shared test                         # one package
 pnpm --filter @prepquest/api exec vitest run -t "liveness"   # one test by name
 ```
@@ -37,6 +38,8 @@ apps/api       Fastify; src/app.ts (buildApp), src/modules/<module>/routes.ts, s
 apps/web       Next.js App Router (src/app)
 packages/config  shared tsconfig presets (base/node/next)
 packages/shared  Zod env schema, AppError (ESM, built with tsc to dist; imports use .js extensions)
+packages/ui    pixel design system, consumed as source (no build): src/styles (tokens/base/components CSS, `pq-` prefix),
+               src/components, src/sprites/art.ts (pixel-grid sprites), .storybook, src/stories
 docs/          specs; PROGRESS.md tracks phases
 ```
 
@@ -59,7 +62,8 @@ Later phases add `apps/{worker,judge,scheduler}` and `packages/{ui,db,prompts,ju
 ## Code conventions
 
 - TS `strict` (+ `noUncheckedIndexedAccess`), no uncommented `any` (lint-enforced), `consistent-type-imports`; kebab-case files, PascalCase components, plural snake_case tables, UUID v7 PKs, forward-only migrations (expand/contract for destructive changes).
-- Frontend: all colors/fonts via design tokens (doc 07), never hard-coded hex; feature folders; no business logic in components; `jsx-a11y` on.
+- Frontend: all colors/fonts via design tokens (doc 07), never hard-coded hex; feature folders; no business logic in components; `jsx-a11y` on. Use `@prepquest/ui` components; for a link that looks like a button use `buttonClasses()` (never wrap a button in a link). Pixel look: `.pq-box` (notched outline via box-shadows) + `.pq-lift` (hard `drop-shadow`), see doc 07 §13. Tailwind v4 is CSS-first in `apps/web/src/app/globals.css`. Pixel fonts for chrome only; long text uses the read font.
+- Verify UI visually: `pnpm build && npx next start` in `apps/web`, then headless Chrome `--screenshot` of `/design` (Chrome is at `C:\Program Files\Google\Chrome\Application\chrome.exe`).
 - API: cursor pagination, idempotency keys on expensive POSTs, OpenAPI from Zod.
 - Conventional Commits, trunk-based, squash merge. Never commit `.env` or `secrets/`.
 - Use TypeScript `~5.9` (typescript-eslint doesn't support TS 7). `docs/` and `CLAUDE.md` are prettier-ignored.

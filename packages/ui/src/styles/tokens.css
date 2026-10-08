@@ -1,0 +1,91 @@
+/* PrepQuest design tokens (docs/07-DESIGN-SYSTEM-PIXEL-UI.md §2-4).
+   Themes: cream (default), night, contrast. Readable mode swaps display fonts. */
+
+:root {
+  --px: 4px;
+  --border: 3px;
+  --shadow-offset: 4px;
+
+  --bg: #fbf4e3;
+  --surface: #ffffff;
+  --surface-alt: #f4ebd3;
+  --ink: #1a1a1a;
+  --ink-soft: #4a4a4a;
+  --shadow: #c9c0a8;
+  --sky: #2ba8e8;
+  --sky-light: #9adcf7;
+  --folder: #edeb7a;
+  --folder-dark: #c9c95a;
+  --leaf: #4fa23c;
+  --leaf-dark: #2a6b2e;
+  --lime: #8ee05a;
+  --olive: #6b8e4e;
+  --sun: #f2b820;
+  --coin: #f28c28;
+  --blossom: #e58bc7;
+  --cursor: #c8cdd2;
+  --danger: #d9483b;
+
+  /* text that sits on top of accent fills; constant across themes */
+  --on-olive: #fbf4e3;
+  --on-coin: #1a1a1a;
+  --on-danger: #ffffff;
+  --on-sky: #1a1a1a;
+
+  --font-display: var(--nf-display, "Press Start 2P"), monospace;
+  --font-ui: var(--nf-ui, "Silkscreen"), "Press Start 2P", monospace;
+  --font-pixel: var(--nf-pixel, "VT323"), monospace;
+  --font-read: var(--nf-read, "Inter"), "IBM Plex Sans", system-ui, sans-serif;
+  --font-code: var(--nf-code, "JetBrains Mono"), "Fira Code", monospace;
+
+  color-scheme: light;
+}
+
+[data-theme="night"] {
+  --bg: #14161f;
+  --surface: #1e2130;
+  --surface-alt: #262a3d;
+  --ink: #f5f0e1;
+  --ink-soft: #c9c4b5;
+  --shadow: #0a0b10;
+  --sky: #4fc3f7;
+  --leaf: #6fcf58;
+  --sun: #ffd04a;
+  --coin: #ff9e3d;
+  --danger: #ff6b5e;
+  --folder: #b8b65a;
+  --folder-dark: #8f8d3f;
+  --on-sky: #14161f;
+
+  color-scheme: dark;
+}
+
+[data-theme="contrast"] {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-alt: #e4e4e4; /* keeps empty loading blocks and stripes visible */
+  --ink: #000000;
+  --ink-soft: #000000;
+  --shadow: #000000;
+  --sky: #0057b8;
+  --sky-light: #ffffff;
+  --leaf: #14610f;
+  --olive: #2f4a1a;
+  --sun: #8a5a00;
+  --coin: #8a3a00;
+  --danger: #a30000;
+  --folder: #ffffff;
+  --folder-dark: #ffffff; /* no dither */
+  --border: 4px;
+  --on-coin: #ffffff;
+  --on-sky: #ffffff;
+
+  color-scheme: light;
+}
+
+/* Readable mode: keep borders and sprites, swap pixel fonts for the reading font */
+[data-readable="true"] {
+  --font-display: var(--nf-read, "Inter"), system-ui, sans-serif;
+  --font-ui: var(--nf-read, "Inter"), system-ui, sans-serif;
+  --font-pixel: var(--nf-read, "Inter"), system-ui, sans-serif;
+}

@@ -1,4 +1,4 @@
-# 19. Local Setup and Environment
+﻿# 19. Local Setup and Environment
 
 ## 1. Prerequisites
 
@@ -39,7 +39,7 @@ API_URL=http://localhost:4000
 CORS_ORIGINS=http://localhost:3000
 
 # --- Database / cache ---
-DATABASE_URL=postgresql://prepquest:prepquest@localhost:5432/prepquest
+DATABASE_URL=postgresql://prepquest:prepquest@localhost:5433/prepquest
 REDIS_URL=redis://localhost:6379
 
 # --- Auth ---
@@ -155,7 +155,7 @@ pnpm llm:record                 # record LLM fixtures for tests
 1. Branch from `main`: `feat/<short-name>`.
 2. Write tests first for core logic (analytics-core, judge-core).
 3. Run `pnpm lint && pnpm typecheck && pnpm test` before pushing.
-4. Open PR → preview deploy + CI → review checklist → squash merge.
+4. Open PR â†’ preview deploy + CI â†’ review checklist â†’ squash merge.
 5. After merge, staging auto-deploys; verify smoke checklist.
 
 ## 7. Mock modes for fast development

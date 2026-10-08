@@ -1,0 +1,28 @@
+@import "tailwindcss";
+@import "@prepquest/ui/styles.css";
+
+/* Tokens live in packages/ui (docs/07). Tailwind utilities map onto them. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-alt: var(--surface-alt);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-shadow: var(--shadow);
+  --color-sky: var(--sky);
+  --color-sky-light: var(--sky-light);
+  --color-folder: var(--folder);
+  --color-leaf: var(--leaf);
+  --color-leaf-dark: var(--leaf-dark);
+  --color-lime: var(--lime);
+  --color-olive: var(--olive);
+  --color-sun: var(--sun);
+  --color-coin: var(--coin);
+  --color-blossom: var(--blossom);
+  --color-cursor: var(--cursor);
+  --color-danger: var(--danger);
+
+  --shadow-pixel: 4px 4px 0 var(--shadow);
+  --shadow-pixel-sm: 2px 2px 0 var(--shadow);
+  --shadow-pixel-lg: 6px 6px 0 var(--shadow);
+}
