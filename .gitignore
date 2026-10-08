@@ -1,0 +1,14 @@
+node_modules
+.next
+dist
+.turbo
+coverage
+.env
+.env.*
+!.env.example
+secrets/
+*.log
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+storybook-static

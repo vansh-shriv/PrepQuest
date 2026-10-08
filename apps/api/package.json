@@ -1,0 +1,26 @@
+{
+  "name": "@prepquest/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=../../.env src/main.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.3.1",
+    "@prepquest/shared": "workspace:*",
+    "fastify": "^5.12.5",
+    "ioredis": "^6.0.0",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@prepquest/config": "workspace:*",
+    "@types/pg": "^8.23.1",
+    "tsx": "^4.23.15"
+  }
+}
