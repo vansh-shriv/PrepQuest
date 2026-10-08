@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Press_Start_2P, Silkscreen, VT323 } from "next/font/google";
 import type { ReactNode } from "react";
 import { THEME_INIT_SCRIPT } from "@prepquest/ui";
+import { AuthProvider } from "@/lib/auth-context";
 import "./globals.css";
 
 const display = Press_Start_2P({ weight: "400", subsets: ["latin"], variable: "--nf-display" });
@@ -22,7 +23,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
-      <body>{children}</body>
+      <body>
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

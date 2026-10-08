@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { buttonClasses, LoadingBar, Sprite, Window } from "@prepquest/ui";
+import { buttonClasses, Sprite, Window } from "@prepquest/ui";
 
 export default function HomePage() {
   return (
@@ -8,12 +8,16 @@ export default function HomePage() {
       <h1 className="pq-font-display text-2xl leading-relaxed">PrepQuest</h1>
       <p className="pq-font-pixel text-2xl">Level up for placements.</p>
       <Window title="Quest log" tone="sky" className="w-full max-w-md text-left">
-        <LoadingBar value={10} label="Build progress" />
-        <p className="mt-4">Design system is live. Auth, problems and the judge come next.</p>
+        <p className="mt-0">DSA practice, AI mock interviews and a plan that adapts to you.</p>
+        <div className="flex flex-wrap gap-4">
+          <Link href="/signup" className={buttonClasses({ variant: "accent" })}>
+            Start quest
+          </Link>
+          <Link href="/login" className={buttonClasses({ variant: "ghost" })}>
+            Log in
+          </Link>
+        </div>
       </Window>
-      <Link href="/design" className={buttonClasses({ variant: "accent", size: "lg" })}>
-        Design system
-      </Link>
     </main>
   );
 }

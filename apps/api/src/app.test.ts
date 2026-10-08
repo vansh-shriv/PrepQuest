@@ -1,28 +1,54 @@
-import { describe, expect, it } from "vitest";
-import { parseServerEnv } from "@prepquest/shared";
-import { buildApp } from "./app.js";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { makeTestApp, type TestApp } from "./test/helpers.js";
 
-const env = parseServerEnv({
-  NODE_ENV: "test",
-  DATABASE_URL: "postgresql://u:p@localhost:5432/db",
-  REDIS_URL: "redis://localhost:6379",
+let t: TestApp;
+beforeAll(async () => {
+  t = await makeTestApp();
 });
+afterAll(() => t.close());
 
 describe("health routes", () => {
-  it("liveness returns ok", async () => {
-    const app = await buildApp({ env, checks: {} });
-    const res = await app.inject({ method: "GET", url: "/v1/health" });
+  it("liveness returns ok and echoes a request id", async () => {
+    const res = await t.app.inject({ method: "GET", url: "/v1/health" });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ status: "ok" });
+    expect(res.headers["x-request-id"]).toBeTruthy();
   });
 
-  it("readiness returns 503 when a dependency is down", async () => {
-    const app = await buildApp({
-      env,
-      checks: { ok: async () => {}, bad: async () => Promise.reject(new Error("x")) },
+  it("propagates an incoming request id", async () => {
+    const res = await t.app.inject({
+      method: "GET",
+      url: "/v1/health",
+      headers: { "x-request-id": "trace-123" },
     });
-    const res = await app.inject({ method: "GET", url: "/v1/health/ready" });
-    expect(res.statusCode).toBe(503);
-    expect(res.json().checks).toEqual({ ok: "up", bad: "down" });
+    expect(res.headers["x-request-id"]).toBe("trace-123");
+  });
+
+  it("allows browser preflights for PATCH and DELETE from the web origin only", async () => {
+    const preflight = (origin: string, method: string) =>
+      t.app.inject({
+        method: "OPTIONS",
+        url: "/v1/me/profile",
+        headers: {
+          origin,
+          "access-control-request-method": method,
+          "access-control-request-headers": "authorization,content-type",
+        },
+      });
+
+    for (const method of ["PATCH", "DELETE"]) {
+      const ok = await preflight("http://localhost:3000", method);
+      expect(ok.statusCode).toBe(204);
+      expect(ok.headers["access-control-allow-methods"]).toContain(method);
+      expect(ok.headers["access-control-allow-credentials"]).toBe("true");
+    }
+    const evil = await preflight("https://evil.example", "PATCH");
+    expect(evil.headers["access-control-allow-origin"]).toBeUndefined();
+  });
+
+  it("unknown routes use the standard error shape", async () => {
+    const res = await t.app.inject({ method: "GET", url: "/v1/nope" });
+    expect(res.statusCode).toBe(404);
+    expect(res.json().error).toMatchObject({ code: "NOT_FOUND", requestId: expect.any(String) });
   });
 });

@@ -8,6 +8,19 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: prepquest
+          POSTGRES_PASSWORD: prepquest
+          POSTGRES_DB: prepquest
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U prepquest" --health-interval 5s --health-retries 10
+    env:
+      # API integration tests create and reset this database themselves
+      TEST_DATABASE_URL: postgresql://prepquest:prepquest@localhost:5432/prepquest_test
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -21,3 +34,4 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+  # TODO: e2e job (Postgres + Redis + Mailpit services, `pnpm test:e2e`). Verified locally only so far.

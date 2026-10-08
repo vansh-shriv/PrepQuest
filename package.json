@@ -12,7 +12,11 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "db:migrate": "pnpm --filter @prepquest/db db:migrate",
+    "db:reset": "pnpm --filter @prepquest/db db:reset",
+    "db:seed": "pnpm --filter @prepquest/api db:seed",
+    "test:e2e": "pnpm --filter @prepquest/web test:e2e"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -12,3 +12,9 @@ secrets/
 .vscode/*
 !.vscode/extensions.json
 storybook-static
+
+playwright-report
+test-results
+e2e-screenshots
+secrets
+*.tsbuildinfo

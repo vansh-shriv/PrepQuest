@@ -366,3 +366,21 @@ Reconnect: client sends `sync` with last event id; server replays from Redis str
 | `POST /auth/forgot-password`         | 3/hour per email                         |
 | Resume upload                        | 10/day                                   |
 | Anonymous GET                        | 120/min per IP                           |
+
+---
+
+## 15. Implementation status
+
+**Built (auth + account, Phase 2):** `POST /auth/signup`, `/auth/verify-email`, `/auth/resend-verification` (auth required), `/auth/login`, `/auth/refresh`, `/auth/logout`, `/auth/logout-all`, `/auth/forgot-password`, `/auth/reset-password`; `GET /me`, `PATCH /me/profile`, `PATCH /me/settings`, `GET /me/sessions`, `DELETE /me/sessions/:id`; `GET /health`, `GET /health/ready`.
+
+**Not built yet:** OAuth, 2FA, `/me/prep`, `/me/export`, `DELETE /me`, `/u/:handle`, `/me/badges`, and all later sections.
+
+**Behavior notes**
+- Login does not require a verified email; `emailVerified` is returned and the UI nudges. Features that cost money (AI interviews) will require it.
+- Access token: EdDSA JWT, 15 min, claims `sub`, `role`, `sid` (session id). Refresh token: random 256-bit, only its SHA-256 is stored, httpOnly `pq_rt` cookie (`SameSite=Lax`, `Path=/v1/auth`, `Secure` in production). Refresh rotates on every use; replaying a rotated token revokes the whole family. Concurrent refreshes with the same token count as replay, so the web client shares one in-flight refresh.
+- Cookie endpoints (`/auth/refresh`, `/auth/logout`) reject requests whose `Origin` is not in `CORS_ORIGINS` (403).
+- Rate limits: credential endpoints `RL_AUTH_PER_MIN` per IP per minute (default 20), `/auth/refresh` 6x that; exceeding returns 429 `RATE_LIMITED` with `Retry-After`.
+- `PATCH /me/*` bodies are strict: unknown fields (e.g. `role`, `xp`) return 422. Validation errors: `error.details.fields` maps field name to message.
+- Signup returns 409 with `details.field` (`email` or `handle`) on conflicts, which discloses that an email is registered; rate limiting is the mitigation for now.
+- Unknown routes return 404 `NOT_FOUND`; malformed requests return `BAD_REQUEST`. Every response carries `x-request-id` (an incoming value is reused).
+- Passwords: min 10 chars, Argon2id (64 MiB, t=3, p=1). The breached-password check from doc 14 is still to do.

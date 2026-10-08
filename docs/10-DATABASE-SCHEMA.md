@@ -620,3 +620,13 @@ At scale, partition by month: `submissions`, `submission_results`, `interview_ev
 ## 6. Seed data checklist
 
 Tags (topics, patterns), 150+ problems with tests, 3 sheets, 10 company packs, 6 roadmaps, 400 quiz questions, 200 aptitude items, 20 behavioral questions, 30 CS verbal questions per subject, 8 HLD and 8 LLD prompts, 10 flashcard decks, badges, interview templates, sample demo user with history.
+
+---
+
+## 7. Implementation notes (as built)
+
+- **Migrations:** plain SQL in `packages/db/migrations/NNN_name.sql`, applied in order by `pnpm db:migrate` (one transaction per file, tracked in `schema_migrations`, advisory-locked, forward-only). `pnpm db:reset` drops and rebuilds the dev database. There is no ORM; apps use `pg` with small repository functions. IDs are UUID v7 generated in the app (`newId()`).
+- **Applied so far:** `001_identity` (extensions, `set_updated_at()` trigger, users, profiles, user_settings, oauth_accounts, auth_sessions, email_tokens), `002_problem_bank` (problems with a maintained `search` tsvector, versions, tags, companies, languages, test_cases, hints, editorials, sheets), `003_submissions` (submissions, results, drafts, custom_tests, problem_events, user_problem_state).
+- **Differences from the DDL above:** every table has `created_at`/`updated_at` (trigger-maintained); `NOT NULL` added to defaulted columns; `CHECK` constraints on `theme`, `hint_mode`, `checker`, `visibility`, `email_tokens.kind`; `auth_sessions.token_hash` and `email_tokens.token_hash` are `UNIQUE` (looked up by hash); `editorials.problem_id` is `UNIQUE`. Only SHA-256 hashes of refresh and email tokens are stored.
+- **Not yet created:** hint_usage, bookmarks, notes, SRS, contests, interviews and everything after §2.4. Each arrives in a migration with its feature.
+- **Seed:** `pnpm db:seed` inserts 22 topic and 10 pattern tags and a local demo user (`demo@prepquest.dev` / `demo-password`, verified). It is idempotent and refuses to run when `NODE_ENV=production`.

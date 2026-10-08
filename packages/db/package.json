@@ -1,0 +1,36 @@
+{
+  "name": "@prepquest/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "migrations"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"db is covered by api integration tests\"",
+    "db:migrate": "tsx --env-file-if-exists=../../.env src/cli.ts migrate",
+    "db:reset": "tsx --env-file-if-exists=../../.env src/cli.ts reset"
+  },
+  "dependencies": {
+    "pg": "^8.23.1",
+    "uuid": "^14.0.2"
+  },
+  "devDependencies": {
+    "@prepquest/config": "workspace:*",
+    "@types/pg": "^8.23.1",
+    "tsx": "^4.23.15"
+  }
+}

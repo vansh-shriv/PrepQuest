@@ -5,8 +5,8 @@ Phase-by-phase build log. Plan source: `docs/18-ROADMAP-AND-SPRINTS.md`. Each ph
 | Phase | Scope                                                                | Milestone | Status                |
 | ----- | -------------------------------------------------------------------- | --------- | --------------------- |
 | 0     | Foundation: monorepo, CI, Docker Compose, env validation, health API | -         | Done (committed)      |
-| 1     | Design system: tokens, `packages/ui`, sprites, Storybook, 3 themes   | -         | Done (pending commit) |
-| 2     | DB schema v1, auth, app shell                                        | M0        | Not started           |
+| 1     | Design system: tokens, `packages/ui`, sprites, Storybook, 3 themes   | -         | Done (committed)      |
+| 2     | DB schema v1, auth, app shell                                        | M0        | Done (pending commit) |
 | 3     | Problem bank, content pipeline, Monaco editor, admin v0              | M1        | Not started           |
 | 4     | Judge (`isolate`), submissions, verdict UI, history/bookmarks/notes  | M2        | Not started           |
 | 5     | Hints, editorials, XP/streaks, dashboard, sheets                     | M3        | Not started           |
@@ -53,3 +53,29 @@ Decisions / gotchas:
 - Sprite colors are CSS variables, so sprites follow the active theme.
 - Contrast theme uses a light-gray `--surface-alt` so empty loading blocks stay visible.
 - Not done yet (deferred): Playwright visual-regression screenshots, custom retro cursor wiring, Monaco themes (Phase 3), composite components (JudgePanel, VerdictBanner, InterviewerAvatar, Timer, SkillPlant, StreakSunflower, RadarScore) which arrive with the features that use them.
+
+## Phase 2 - DB, auth, app shell (milestone M0)
+
+Done:
+
+- `packages/db`: forward-only SQL migrations `001_identity`, `002_problem_bank`, `003_submissions` (doc 10 DDL plus `created_at`/`updated_at` triggers), migrate/reset runner (`pnpm db:migrate`, `db:reset`), transaction helper, UUID v7 ids, reference seed (32 tags). `pnpm db:seed` also creates the demo user (`demo@prepquest.dev` / `demo-password`).
+- `apps/api` auth: signup, email verification and resend (Mailpit in dev), login, rotating refresh tokens with family revoke on replay, logout / logout-all, forgot / reset password (resets sign out everywhere), `GET /me`, profile and settings PATCH, device list and revoke. Argon2id passwords, EdDSA access JWT (15 min), httpOnly refresh cookie, Origin check on cookie endpoints, per-IP rate limits (Redis-backed when available), strict request validation (shared Zod schemas in `packages/shared`), `app.authenticate` / `app.requireRole` plugin, standard error shape + `x-request-id`.
+- `apps/web`: auth context (token in memory only, single in-flight refresh), pages login / signup / forgot / reset / verify-email, protected `(app)` shell with top bar (PQ, MENU dialog, search, XP coin, streak sunflower, avatar), icon rail on desktop and bottom tab bar on mobile, dashboard, settings (profile, theme saved to account, devices, sign out everywhere), placeholder pages for unbuilt sections. New nav icon sprites in `packages/ui`.
+- Tests: 30 API integration tests against a real `prepquest_test` Postgres (auth flows, token reuse, expiry, CSRF origin, rate limit, mass-assignment, session ownership, CORS preflight), plus 8 Playwright e2e tests through the real stack (signup, verify via Mailpit, login, reload, settings + theme persistence, mobile layout, menu / sign out, password reset). 44 UI tests, 3 shared.
+- CI now runs a Postgres service for the integration tests.
+
+Decisions / gotchas:
+
+- No ORM: plain SQL migrations + `pg` repositories (docs 09/10 updated). Revisit only if query volume makes it painful.
+- Login does not require a verified email (flag exposed, UI nudges); gate costly features on it later.
+- `@fastify/cors` defaults to GET/HEAD/POST only; PATCH/DELETE must be listed explicitly (found by e2e, now covered by an API test).
+- Next.js renders its own `role="alert"` route announcer: e2e locators for error messages must target text, not the role.
+- `@node-rs/argon2`'s `Algorithm` is a const enum, unusable under `isolatedModules`; the code uses the numeric value with a comment.
+- Dev JWT keys are generated into `secrets/` (gitignored) on first API start; tests use ephemeral keys.
+- A native Windows Postgres owns 5432 on the dev machine, so Docker Postgres is on 5433 (Phase 0 note).
+
+Deferred / next:
+
+- OAuth (Google/GitHub), 2FA, breached-password check, account export/deletion, public profiles, Husky + lint-staged.
+- CI e2e job (works locally; needs Postgres + Redis + Mailpit services).
+- Account lockout with exponential delay (only IP rate limiting for now).

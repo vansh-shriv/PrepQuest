@@ -13,6 +13,13 @@ export { FolderCard, type FolderCardProps } from "./components/FolderCard";
 export { Dialog, type DialogProps } from "./components/Dialog";
 export { ToastProvider, useToast, type ToastOptions } from "./components/Toast";
 export { Sprite, type SpriteProps } from "./components/Sprite";
-export { ThemeSwitcher, THEMES, THEME_INIT_SCRIPT, type Theme } from "./components/ThemeSwitcher";
+export {
+  ThemeSwitcher,
+  applyTheme,
+  THEMES,
+  THEME_INIT_SCRIPT,
+  type Theme,
+  type ThemeSwitcherProps,
+} from "./components/ThemeSwitcher";
 export { SPRITE_NAMES, type SpriteName } from "./sprites/art";
 export { cx } from "./lib/cx";

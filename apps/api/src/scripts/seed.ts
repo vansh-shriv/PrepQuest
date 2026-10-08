@@ -1,0 +1,40 @@
+import { createPool, newId, seedReferenceData, withTransaction } from "@prepquest/db";
+import { parseServerEnv } from "@prepquest/shared";
+import { hashPassword } from "../modules/auth/password.js";
+import * as repo from "../modules/auth/repo.js";
+
+/** Local-only demo data. Idempotent. Refuses to run in production. */
+const env = parseServerEnv();
+if (env.NODE_ENV === "production") throw new Error("Refusing to seed demo data in production");
+
+const DEMO = {
+  email: "demo@prepquest.dev",
+  password: "demo-password",
+  handle: "demo",
+  displayName: "Demo Player",
+};
+
+const pool = createPool(env.DATABASE_URL, 2);
+try {
+  const { tags } = await seedReferenceData(pool);
+  console.log(`Tags: ${tags} inserted`);
+
+  if (await repo.findUserByEmail(pool, DEMO.email)) {
+    console.log("Demo user already exists.");
+  } else {
+    const userId = newId();
+    const passwordHash = await hashPassword(DEMO.password);
+    await withTransaction(pool, async (tx) => {
+      await repo.insertUser(tx, { id: userId, email: DEMO.email, passwordHash });
+      await repo.insertProfile(tx, {
+        userId,
+        handle: DEMO.handle,
+        displayName: DEMO.displayName,
+      });
+      await repo.markEmailVerified(tx, userId);
+    });
+    console.log(`Demo user created: ${DEMO.email} / ${DEMO.password}`);
+  }
+} finally {
+  await pool.end();
+}

@@ -13,6 +13,8 @@
 
 ## 2. First run
 
+> Built so far: Docker services, `pnpm db:migrate`, `pnpm db:seed`, `pnpm dev`, tests and e2e (below). Content import and the judge arrive in later phases. Postgres is published on host port **5433** (a native Postgres often owns 5432). The API generates dev JWT keys into `secrets/` on first start.
+
 ```bash
 git clone <repo> prepquest && cd prepquest
 corepack enable && pnpm install
@@ -28,6 +30,15 @@ docker compose up -d judge      # judge worker (privileged, isolate)
 Open `http://localhost:3000`, log in with `demo@prepquest.dev / demo-password` (seeded, local only).
 
 Mailpit UI: `http://localhost:8025` (verification emails). MinIO console: `http://localhost:9001`.
+
+### Tests
+
+```bash
+docker compose up -d postgres            # API integration tests use a separate prepquest_test database (created and reset automatically)
+pnpm test                                # unit + API integration
+docker compose up -d postgres redis mailpit && pnpm build && pnpm test:e2e   # Playwright against real web + API + Mailpit, uses installed Chrome
+```
+Override the test database with `TEST_DATABASE_URL`.
 
 ## 3. Environment variables (`.env.example`)
 
