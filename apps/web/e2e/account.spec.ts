@@ -113,10 +113,10 @@ test("settings: profile edit and theme persist; shell navigation works", async (
   await expect(page.locator("html")).toHaveAttribute("data-theme", "night");
   await expect(page.getByLabel("College")).toHaveValue("Pixel Institute");
 
-  // placeholder sections render inside the shell
+  // the problem list renders inside the shell
   await page.getByRole("link", { name: "Practice" }).first().click();
   await expect(page).toHaveURL(/\/problems$/);
-  await expect(page.getByText("NOTHING HERE YET. START A QUEST!")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Quests", level: 1 })).toBeVisible();
 });
 
 test("mobile layout uses the bottom tab bar", async ({ browser }) => {

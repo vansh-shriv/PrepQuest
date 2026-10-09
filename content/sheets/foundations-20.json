@@ -1,0 +1,45 @@
+{
+  "slug": "foundations-20",
+  "title": "Foundations 20",
+  "description": "Twenty classic problems that cover the core patterns, in a sensible order.",
+  "sections": [
+    {
+      "name": "Arrays and Hashing",
+      "problems": ["two-sum", "contains-duplicate", "product-except-self", "top-k-frequent"]
+    },
+    {
+      "name": "Strings",
+      "problems": ["longest-common-prefix"]
+    },
+    {
+      "name": "Two Pointers",
+      "problems": [
+        "merge-sorted-arrays",
+        "move-zeroes",
+        "is-palindrome-alnum",
+        "three-sum",
+        "trapping-rain-water"
+      ]
+    },
+    {
+      "name": "Stack",
+      "problems": ["valid-parentheses"]
+    },
+    {
+      "name": "Sliding Window and Greedy",
+      "problems": ["max-profit-single-trade", "longest-substring-no-repeat", "max-subarray-sum"]
+    },
+    {
+      "name": "Binary Search",
+      "problems": ["binary-search-position"]
+    },
+    {
+      "name": "Dynamic Programming",
+      "problems": ["climbing-stairs", "coin-change-min", "edit-distance"]
+    },
+    {
+      "name": "Graphs and Intervals",
+      "problems": ["number-of-islands", "merge-intervals"]
+    }
+  ]
+}

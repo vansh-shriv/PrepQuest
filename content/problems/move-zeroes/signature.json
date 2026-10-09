@@ -1,0 +1,10 @@
+{
+  "function": "moveZeroes",
+  "params": [
+    {
+      "name": "nums",
+      "type": "int[]"
+    }
+  ],
+  "returns": "int[]"
+}

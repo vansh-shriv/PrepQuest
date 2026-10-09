@@ -1,0 +1,32 @@
+[
+  {
+    "kind": "edge",
+    "label": "all zeros",
+    "args": [[0, 0, 0, 0]]
+  },
+  {
+    "kind": "edge",
+    "label": "no zeros",
+    "args": [[5, -3, 8]]
+  },
+  {
+    "kind": "edge",
+    "label": "zeros already at the end",
+    "args": [[1, 2, 0, 0]]
+  },
+  {
+    "kind": "edge",
+    "label": "zeros all at the start",
+    "args": [[0, 0, 4, 5]]
+  },
+  {
+    "kind": "edge",
+    "label": "alternating",
+    "args": [[0, 1, 0, 1, 0, 1]]
+  },
+  {
+    "kind": "edge",
+    "label": "single non-zero element",
+    "args": [[9]]
+  }
+]

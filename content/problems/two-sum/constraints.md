@@ -1,0 +1,4 @@
+- `2 <= nums.length <= 20000`
+- `-100000000 <= nums[i] <= 100000000`
+- `-200000000 <= target <= 200000000`
+- Exactly one pair of indices `i < j` satisfies `nums[i] + nums[j] == target`.

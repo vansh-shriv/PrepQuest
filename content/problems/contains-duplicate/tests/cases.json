@@ -1,0 +1,27 @@
+[
+  {
+    "kind": "edge",
+    "label": "single element",
+    "args": [[7]]
+  },
+  {
+    "kind": "edge",
+    "label": "smallest duplicate",
+    "args": [[0, 0]]
+  },
+  {
+    "kind": "edge",
+    "label": "duplicate at the extremes",
+    "args": [[-1000000000, 1000000000, -1000000000]]
+  },
+  {
+    "kind": "edge",
+    "label": "duplicate only at the ends",
+    "args": [[5, 1, 2, 3, 4, 5]]
+  },
+  {
+    "kind": "edge",
+    "label": "all distinct including negatives",
+    "args": [[-3, -2, -1, 0, 1, 2, 3]]
+  }
+]

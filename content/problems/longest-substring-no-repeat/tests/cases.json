@@ -1,0 +1,32 @@
+[
+  {
+    "kind": "edge",
+    "label": "empty string",
+    "args": [""]
+  },
+  {
+    "kind": "edge",
+    "label": "single space",
+    "args": [" "]
+  },
+  {
+    "kind": "edge",
+    "label": "all distinct",
+    "args": ["abcdef"]
+  },
+  {
+    "kind": "edge",
+    "label": "repeat reaches back past the window start",
+    "args": ["abba"]
+  },
+  {
+    "kind": "edge",
+    "label": "repeat right after the start",
+    "args": ["dvdf"]
+  },
+  {
+    "kind": "edge",
+    "label": "two characters alternating",
+    "args": ["ababababab"]
+  }
+]

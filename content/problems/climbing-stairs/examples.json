@@ -1,0 +1,17 @@
+[
+  {
+    "args": [2],
+    "expected": 2,
+    "explanation": "`1+1` and `2`."
+  },
+  {
+    "args": [3],
+    "expected": 3,
+    "explanation": "`1+1+1`, `1+2` and `2+1`."
+  },
+  {
+    "args": [5],
+    "expected": 8,
+    "explanation": "Eight different sequences."
+  }
+]

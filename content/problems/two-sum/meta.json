@@ -1,0 +1,10 @@
+{
+  "slug": "two-sum",
+  "title": "Two Sum",
+  "difficulty": "easy",
+  "topics": ["arrays", "hashing"],
+  "patterns": [],
+  "estMinutes": 10,
+  "source": "Original problem written for PrepQuest (classic algorithmic idea, original wording and examples)",
+  "license": "CC0-1.0"
+}

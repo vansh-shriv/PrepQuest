@@ -1,0 +1,2 @@
+- `1 <= s.length <= 20000`
+- `s` contains printable ASCII characters (codes 32 to 126).

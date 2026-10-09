@@ -1,0 +1,10 @@
+{
+  "slug": "max-profit-single-trade",
+  "title": "Best Day to Trade",
+  "difficulty": "easy",
+  "topics": ["arrays", "greedy"],
+  "patterns": [],
+  "estMinutes": 15,
+  "source": "Original problem written for PrepQuest (classic algorithmic idea, original wording and examples)",
+  "license": "CC0-1.0"
+}

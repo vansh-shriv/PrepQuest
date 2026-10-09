@@ -1,0 +1,10 @@
+{
+  "function": "maxSubarray",
+  "params": [
+    {
+      "name": "nums",
+      "type": "int[]"
+    }
+  ],
+  "returns": "long"
+}

@@ -1,0 +1,10 @@
+{
+  "slug": "top-k-frequent",
+  "title": "Most Frequent Values",
+  "difficulty": "medium",
+  "topics": ["hashing", "heap", "sorting"],
+  "patterns": [],
+  "estMinutes": 30,
+  "source": "Original problem written for PrepQuest (classic algorithmic idea, original wording and examples)",
+  "license": "CC0-1.0"
+}

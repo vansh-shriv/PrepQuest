@@ -1,0 +1,14 @@
+{
+  "function": "coinChange",
+  "params": [
+    {
+      "name": "coins",
+      "type": "int[]"
+    },
+    {
+      "name": "amount",
+      "type": "int"
+    }
+  ],
+  "returns": "int"
+}

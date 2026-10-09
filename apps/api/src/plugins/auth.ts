@@ -17,6 +17,8 @@ declare module "fastify" {
   }
   interface FastifyInstance {
     authenticate: (req: FastifyRequest, reply: FastifyReply) => Promise<void>;
+    /** Like `authenticate` but anonymous callers pass; a present-but-invalid token is still a 401. */
+    optionalAuth: (req: FastifyRequest) => Promise<void>;
     /** Signed in AND holding one of `roles`. Privileged roles must also have passed 2FA. */
     requireRole: (...roles: UserRole[]) => preHandlerAsyncHookHandler;
     /** Signed in AND email verified (gate for AI interviews and other costly features). */
@@ -35,6 +37,14 @@ export function registerAuth(app: FastifyInstance, deps: { keys: JwtKeys; db: Db
     if (!header?.startsWith("Bearer ")) {
       throw new AppError("UNAUTHENTICATED", 401, "Missing access token");
     }
+    req.auth = await verifyAccessToken(deps.keys, header.slice(7));
+  });
+
+  app.decorate("optionalAuth", async (req: FastifyRequest) => {
+    const header = req.headers.authorization;
+    if (!header) return;
+    if (!header.startsWith("Bearer "))
+      throw new AppError("UNAUTHENTICATED", 401, "Malformed authorization header");
     req.auth = await verifyAccessToken(deps.keys, header.slice(7));
   });
 

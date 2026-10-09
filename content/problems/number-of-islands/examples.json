@@ -1,0 +1,17 @@
+[
+  {
+    "args": [["11110", "11010", "11000", "00000"]],
+    "expected": 1,
+    "explanation": "All land touches, forming one island."
+  },
+  {
+    "args": [["11000", "11000", "00100", "00011"]],
+    "expected": 3,
+    "explanation": "Three separate groups."
+  },
+  {
+    "args": [["0"]],
+    "expected": 0,
+    "explanation": "No land."
+  }
+]

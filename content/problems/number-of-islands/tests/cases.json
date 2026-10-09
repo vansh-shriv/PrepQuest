@@ -1,0 +1,37 @@
+[
+  {
+    "kind": "edge",
+    "label": "single land cell",
+    "args": [["1"]]
+  },
+  {
+    "kind": "edge",
+    "label": "all water",
+    "args": [["000", "000"]]
+  },
+  {
+    "kind": "edge",
+    "label": "all land",
+    "args": [["111", "111", "111"]]
+  },
+  {
+    "kind": "edge",
+    "label": "diagonal cells are separate islands",
+    "args": [["10", "01"]]
+  },
+  {
+    "kind": "edge",
+    "label": "single row",
+    "args": [["1011011"]]
+  },
+  {
+    "kind": "edge",
+    "label": "single column",
+    "args": [["1", "0", "1", "1"]]
+  },
+  {
+    "kind": "edge",
+    "label": "ring around water",
+    "args": [["111", "101", "111"]]
+  }
+]

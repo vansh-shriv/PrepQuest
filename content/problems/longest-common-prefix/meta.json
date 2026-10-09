@@ -1,0 +1,10 @@
+{
+  "slug": "longest-common-prefix",
+  "title": "Longest Common Prefix",
+  "difficulty": "easy",
+  "topics": ["strings"],
+  "patterns": [],
+  "estMinutes": 15,
+  "source": "Original problem written for PrepQuest (classic algorithmic idea, original wording and examples)",
+  "license": "CC0-1.0"
+}

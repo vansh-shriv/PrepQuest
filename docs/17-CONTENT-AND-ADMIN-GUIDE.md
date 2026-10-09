@@ -210,3 +210,17 @@ Nodes with `topic_slug`, `prerequisites[]`, `problem_ids[]` (ladder: easy → me
 - Report counts per problem ("wrong test", "unclear").
 - Quiz item analysis: discrimination index, items with > 90% or < 20% correct reviewed.
 - Interview question usefulness ratings.
+
+## 11. As built (Phase 3)
+
+**Authoring.** `pnpm content:new <slug>` scaffolds a folder. Per problem: `meta.json`, `signature.json`, `statement.md`, `constraints.md`, `examples.json` (structured: JSON `args` per parameter and the expected return value), `solutions/ref.py` (class `Solution` with the signature's method), `tests/cases.json` (hand-written edge cases, each labelled) and optionally `tests/gen.py` (seeded generator for random and stress cases, using `content/_lib/gentools.py`). Starter code is generated from the signature unless `starter/<lang>.txt` overrides it; hints go in `hints/{1,2,3}.md`. Editorials and mutant solutions are authored in Phase 5.
+
+**Pipeline.**
+1. `pnpm content:build-tests` writes `tests/NN.in|out` and `manifest.json`: samples first (from `examples.json`), then `cases.json`, then `gen.py` output; duplicate inputs are dropped; expected outputs come from running `ref.py` through the harness. Each sample is cross-checked against the answer written in `examples.json`, so a statement that disagrees with its reference solution fails here.
+2. `pnpm content:validate` checks schemas, slug/folder match, tag taxonomy, statement/constraints, HTML-free statements, example encoding, starter files, and the test rules (contiguous ordinals, format against the signature, sample/edge/stress kinds and labels, 10/15/20 non-sample tests by difficulty, at least 2 stress tests, size limits).
+3. `pnpm content:verify` re-runs every reference solution on every committed input and compares with the committed output.
+4. `pnpm content:import [--publish]` upserts problems (tags, three languages with limits, test rows, test files to object storage, hints) and sheets. A content hash (statement, metadata, signature, examples, starters, hints, every test) decides whether a new version is needed; an unchanged problem is a no-op. New problems are drafts unless `--publish` is passed.
+
+**Shipped content:** 20 original problems (10 easy, 8 medium, 2 hard; 19 to 31 tests each, 7 MB total) and the sheet `foundations-20`.
+
+**Admin v0** (`/admin/problems`): list with status and search, create a draft with a signature builder, editor tabs (Meta, Statement with preview and examples, Starters and limits, Tests with zip upload and the current test table, Versions, Audit for reviewers), a "Run checks" checklist, and the workflow buttons permitted for the signed-in role. Not built yet: the test generator runner, rejudge options, diff between versions, hints/editorial editors, mutation checks, and the other admin modules in §8.

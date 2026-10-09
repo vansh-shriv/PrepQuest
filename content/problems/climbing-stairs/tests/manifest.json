@@ -1,0 +1,119 @@
+[
+  {
+    "ordinal": 1,
+    "kind": "sample",
+    "weight": 1
+  },
+  {
+    "ordinal": 2,
+    "kind": "sample",
+    "weight": 1
+  },
+  {
+    "ordinal": 3,
+    "kind": "sample",
+    "weight": 1
+  },
+  {
+    "ordinal": 4,
+    "kind": "edge",
+    "weight": 1,
+    "label": "one step"
+  },
+  {
+    "ordinal": 5,
+    "kind": "edge",
+    "weight": 1,
+    "label": "first value that needs more than 32 bits"
+  },
+  {
+    "ordinal": 6,
+    "kind": "stress",
+    "weight": 1,
+    "label": "stress: n = 90 (largest 64-bit result)"
+  },
+  {
+    "ordinal": 7,
+    "kind": "stress",
+    "weight": 1,
+    "label": "stress: n = 89"
+  },
+  {
+    "ordinal": 8,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "n = 4"
+  },
+  {
+    "ordinal": 9,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "n = 7"
+  },
+  {
+    "ordinal": 10,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "n = 10"
+  },
+  {
+    "ordinal": 11,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "n = 15"
+  },
+  {
+    "ordinal": 12,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "n = 20"
+  },
+  {
+    "ordinal": 13,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "n = 30"
+  },
+  {
+    "ordinal": 14,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "n = 45"
+  },
+  {
+    "ordinal": 15,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "n = 60"
+  },
+  {
+    "ordinal": 16,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "n = 75"
+  },
+  {
+    "ordinal": 17,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "random small"
+  },
+  {
+    "ordinal": 18,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "random medium"
+  },
+  {
+    "ordinal": 19,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "random medium"
+  },
+  {
+    "ordinal": 20,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "random medium"
+  }
+]

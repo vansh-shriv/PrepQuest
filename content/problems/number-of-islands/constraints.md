@@ -1,0 +1,3 @@
+- `1 <= grid.length <= 100`
+- All rows have the same length, between `1` and `100`.
+- Every character is `'0'` or `'1'`.

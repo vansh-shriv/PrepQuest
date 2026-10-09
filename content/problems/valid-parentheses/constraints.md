@@ -1,0 +1,2 @@
+- `1 <= s.length <= 20000`
+- `s` consists only of the characters `()[]{}`.

@@ -1,0 +1,10 @@
+{
+  "function": "trap",
+  "params": [
+    {
+      "name": "height",
+      "type": "int[]"
+    }
+  ],
+  "returns": "int"
+}

@@ -418,3 +418,24 @@ Reconnect: client sends `sync` with last event id; server replays from Redis str
 - `PATCH /me/*` bodies are strict: unknown fields (e.g. `role`, `xp`) return 422. Validation errors: `error.details.fields` maps field name to message.
 - Signup returns 409 with `details.field` (`email` or `handle`) on conflicts, which discloses that an email is registered; rate limiting is the mitigation.
 - Unknown routes return 404 `NOT_FOUND`; malformed requests return `BAD_REQUEST`. Every response carries `x-request-id` (an incoming value is reused).
+
+### Problems and editor support (Phase 3)
+
+| Area | Endpoints |
+| ---- | --------- |
+| Browse | `GET /problems`, `/problems/:slug`, `/tags` (`?all=1` includes unused tags), `/companies`, `/sheets`, `/sheets/:slug` |
+| Editor | `GET/PUT /problems/:slug/draft?language=`, `GET /problems/:slug/draft-history?language=`, `GET/POST /problems/:slug/custom-tests`, `DELETE /problems/:slug/custom-tests/:id` |
+| Admin (content roles) | `GET/POST /admin/problems`, `GET/PATCH /admin/problems/:id`, `GET /admin/problems/:id/validation`, `GET .../versions`, `POST .../tests/upload` (multipart zip), `POST .../submit-review`, `.../publish`, `.../archive` (reason required), `GET /admin/audit` (reviewer/admin) |
+
+Not built yet: hints, editorial, rating, bookmarks, notes, `/problems/:slug/similar`, personal sheets, and the other admin CRUD groups.
+
+**Behavior notes**
+- **List** filters: `q`, `topic[]`, `pattern[]`, `topicMode=any|all`, `difficulty[]`, `company[]`, `status[]` (`unsolved|attempted|solved`, needs sign-in), `sheet`, `minAcc`, `maxAcc`, `maxMinutes`, `sort=default|difficulty|acceptance|recent`, `limit` (max 50), `cursor`. Arrays accept repeated or CSV values. Only published problems are listed; archived ones stay reachable by slug (`archived: true`); drafts and in-review problems 404. Pagination is offset-based behind an opaque cursor; the response carries `total`. Anonymous callers get public data; a valid token personalises `status`/`state`; an invalid token is a 401 (not silently anonymous).
+- **Search** is Postgres full-text (stemmed, title weighted over statement) OR trigram similarity, so typos like "edt distnce" still find Edit Distance. Default order with `q` is relevance; with `sheet` it is the sheet's order; otherwise easy to hard, then estimated time.
+- **Problem detail** returns statement, constraints, formatted examples, tags, per-language limits and starter code. It never returns hidden tests, drivers or storage keys. Language limits follow doc 12: C++ base, Java 2x + 300 ms and 2x memory, Python 5x.
+- **Drafts:** optimistic concurrency. `PUT` carries `baseVersion` (0 for a new draft); a stale version returns 409 `CONFLICT` with `details.current` (the newer draft). Unchanged code is a no-op. Code is capped at 64 KB. Replaced code is snapshotted into history at most once a minute (5 kept). Concurrent saves: exactly one wins.
+- **Custom tests:** up to 20 per user per problem (429 `QUOTA_EXCEEDED`, race-safe), input up to 64 KB, private to the user.
+- **Admin permissions:** content editors create problems and edit/upload/submit **their own drafts**; reviewers and admins edit anything not archived and are the only ones who publish or archive; an author can't publish their own problem unless `ALLOW_SELF_PUBLISH=true`; admin tokens also need 2FA. `submit-review` and `publish` require the validation checklist to pass (422 lists what to fix); archiving requires a reason. Every write is recorded in `admin_audit_log`.
+- **Edits and versions:** changes to statement, constraints, examples, limits or starters create a new version (tests are copied forward); title, tags and estimates don't. Files in `content/` remain the source of truth for imported problems: the next `content:import` replaces admin edits with the file contents (as a new version).
+- **Test upload:** zip with `manifest.json` and `NN.in`/`NN.out` in its root; at most 25 MB zipped, 200 tests, 5 MB per file, 50 MB total, checked from the zip headers before anything is inflated; no nested folders or stray files; UTF-8 only; every input/output is parsed against the signature; the first N tests must be samples (N = number of examples). A bad zip changes nothing (422 with up to 50 issues).
+- **Validation checklist:** tags, statement, constraints, examples, signature, three starters, test validity (format, counts: 10/15/20 non-sample tests for easy/medium/hard, at least 2 stress, labelled edge/stress), hints (warning). Reference-solution and mutant runs are listed as "later" until the judge exists.

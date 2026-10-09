@@ -1,0 +1,3 @@
+- `0 <= height.length <= 20000`
+- `0 <= height[i] <= 100000`
+- The answer always fits in a 32-bit signed integer.

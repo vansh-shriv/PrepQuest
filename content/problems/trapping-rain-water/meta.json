@@ -1,0 +1,10 @@
+{
+  "slug": "trapping-rain-water",
+  "title": "Rain Between the Walls",
+  "difficulty": "hard",
+  "topics": ["arrays", "two-pointers", "stack"],
+  "patterns": ["monotonic-stack"],
+  "estMinutes": 45,
+  "source": "Original problem written for PrepQuest (classic algorithmic idea, original wording and examples)",
+  "license": "CC0-1.0"
+}

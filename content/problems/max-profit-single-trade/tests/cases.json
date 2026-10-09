@@ -1,0 +1,32 @@
+[
+  {
+    "kind": "edge",
+    "label": "single day",
+    "args": [[5]]
+  },
+  {
+    "kind": "edge",
+    "label": "strictly increasing",
+    "args": [[1, 2, 3, 4, 5]]
+  },
+  {
+    "kind": "edge",
+    "label": "strictly decreasing",
+    "args": [[5, 4, 3, 2, 1]]
+  },
+  {
+    "kind": "edge",
+    "label": "all equal",
+    "args": [[3, 3, 3, 3]]
+  },
+  {
+    "kind": "edge",
+    "label": "maximum price swing",
+    "args": [[1000000, 0, 1000000]]
+  },
+  {
+    "kind": "edge",
+    "label": "best trade is not from the global minimum",
+    "args": [[10, 1, 11, 2, 3, 20, 0, 5]]
+  }
+]

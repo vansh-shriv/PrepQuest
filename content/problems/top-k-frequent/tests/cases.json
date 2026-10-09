@@ -1,0 +1,27 @@
+[
+  {
+    "kind": "edge",
+    "label": "all values tie",
+    "args": [[3, 1, 2], 3]
+  },
+  {
+    "kind": "edge",
+    "label": "k equals the distinct count",
+    "args": [[5, 5, 7, 7, 7, 9], 3]
+  },
+  {
+    "kind": "edge",
+    "label": "negative values and ties",
+    "args": [[-1, -1, -2, -2, 0], 2]
+  },
+  {
+    "kind": "edge",
+    "label": "k is 1 with a clear winner",
+    "args": [[8, 8, 8, 2, 2, 9], 1]
+  },
+  {
+    "kind": "edge",
+    "label": "single value repeated",
+    "args": [[4, 4, 4, 4], 1]
+  }
+]

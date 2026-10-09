@@ -1,0 +1,27 @@
+[
+  {
+    "kind": "edge",
+    "label": "single opener",
+    "args": ["("]
+  },
+  {
+    "kind": "edge",
+    "label": "single closer",
+    "args": [")"]
+  },
+  {
+    "kind": "edge",
+    "label": "deeply nested and valid",
+    "args": ["{[()()]}[{}]"]
+  },
+  {
+    "kind": "edge",
+    "label": "valid prefix, dangling opener",
+    "args": ["()[]{"]
+  },
+  {
+    "kind": "edge",
+    "label": "closer before opener",
+    "args": [")("]
+  }
+]

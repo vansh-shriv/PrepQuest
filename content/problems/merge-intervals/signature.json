@@ -1,0 +1,10 @@
+{
+  "function": "mergeIntervals",
+  "params": [
+    {
+      "name": "intervals",
+      "type": "int[][]"
+    }
+  ],
+  "returns": "int[][]"
+}

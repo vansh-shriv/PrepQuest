@@ -1,0 +1,10 @@
+{
+  "slug": "product-except-self",
+  "title": "Product of the Others",
+  "difficulty": "medium",
+  "topics": ["arrays"],
+  "patterns": ["prefix-sum"],
+  "estMinutes": 30,
+  "source": "Original problem written for PrepQuest (classic algorithmic idea, original wording and examples)",
+  "license": "CC0-1.0"
+}

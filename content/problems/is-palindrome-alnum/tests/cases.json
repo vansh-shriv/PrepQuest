@@ -1,0 +1,32 @@
+[
+  {
+    "kind": "edge",
+    "label": "digit versus letter",
+    "args": ["0P"]
+  },
+  {
+    "kind": "edge",
+    "label": "only punctuation",
+    "args": [".,;!"]
+  },
+  {
+    "kind": "edge",
+    "label": "single letter with punctuation",
+    "args": ["a."]
+  },
+  {
+    "kind": "edge",
+    "label": "mixed case",
+    "args": ["No lemon, no melon"]
+  },
+  {
+    "kind": "edge",
+    "label": "digits palindrome",
+    "args": ["12321"]
+  },
+  {
+    "kind": "edge",
+    "label": "off by one in the middle",
+    "args": ["abca"]
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "slug": "edit-distance",
+  "title": "Edit Distance",
+  "difficulty": "hard",
+  "topics": ["strings", "dynamic-programming"],
+  "patterns": [],
+  "estMinutes": 45,
+  "source": "Original problem written for PrepQuest (classic algorithmic idea, original wording and examples)",
+  "license": "CC0-1.0"
+}

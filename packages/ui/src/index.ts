@@ -1,6 +1,8 @@
 export { Button, buttonClasses, type ButtonProps } from "./components/Button";
 export { Card, Window, type WindowProps } from "./components/Card";
 export { Checkbox, type CheckboxProps } from "./components/Checkbox";
+export { Select, Textarea, type SelectProps, type TextareaProps } from "./components/Field";
+export { StatusBox, type ProblemStatusLike } from "./components/StatusBox";
 export { Input, SearchPill, type InputProps, type SearchPillProps } from "./components/Input";
 export { Tabs, type TabItem, type TabsProps } from "./components/Tabs";
 export {

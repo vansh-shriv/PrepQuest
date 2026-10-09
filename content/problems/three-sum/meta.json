@@ -1,0 +1,10 @@
+{
+  "slug": "three-sum",
+  "title": "Three Numbers That Cancel",
+  "difficulty": "medium",
+  "topics": ["arrays", "two-pointers", "sorting"],
+  "patterns": [],
+  "estMinutes": 35,
+  "source": "Original problem written for PrepQuest (classic algorithmic idea, original wording and examples)",
+  "license": "CC0-1.0"
+}

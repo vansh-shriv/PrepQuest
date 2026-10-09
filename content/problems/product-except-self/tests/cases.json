@@ -1,0 +1,27 @@
+[
+  {
+    "kind": "edge",
+    "label": "two zeros",
+    "args": [[0, 0]]
+  },
+  {
+    "kind": "edge",
+    "label": "one zero among others",
+    "args": [[5, 0, 7]]
+  },
+  {
+    "kind": "edge",
+    "label": "negative result is reduced into range",
+    "args": [[-3, -4, 5]]
+  },
+  {
+    "kind": "edge",
+    "label": "all ones",
+    "args": [[1, 1, 1, 1]]
+  },
+  {
+    "kind": "edge",
+    "label": "products overflow 64 bits without the modulus",
+    "args": [[1000000, 1000000, 1000000, 1000000, 1000000]]
+  }
+]

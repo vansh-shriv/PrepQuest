@@ -1,0 +1,14 @@
+{
+  "function": "twoSum",
+  "params": [
+    {
+      "name": "nums",
+      "type": "int[]"
+    },
+    {
+      "name": "target",
+      "type": "int"
+    }
+  ],
+  "returns": "int[]"
+}

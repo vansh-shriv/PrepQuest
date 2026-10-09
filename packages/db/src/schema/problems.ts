@@ -27,6 +27,13 @@ export const publishStatus = pgEnum("publish_status", [
   "archived",
 ]);
 
+/** Function signature the driver and the test-file validator are generated from (doc 12, doc 17). */
+export interface ProblemSignature {
+  function: string;
+  params: Array<{ name: string; type: string }>;
+  returns: string;
+}
+
 export interface ProblemExample {
   input: string;
   output: string;
@@ -43,6 +50,7 @@ export const problems = pgTable(
     constraintsMd: text("constraints_md"),
     difficulty: difficulty("difficulty").notNull(),
     examples: jsonb("examples").$type<ProblemExample[]>().notNull(),
+    signature: jsonb("signature").$type<ProblemSignature>(),
     checker: text("checker").notNull().default("exact"),
     checkerConfig: jsonb("checker_config").$type<Record<string, unknown>>(),
     estMinutes: integer("est_minutes"),

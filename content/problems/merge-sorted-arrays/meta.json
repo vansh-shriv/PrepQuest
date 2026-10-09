@@ -1,0 +1,10 @@
+{
+  "slug": "merge-sorted-arrays",
+  "title": "Merge Two Sorted Lists",
+  "difficulty": "easy",
+  "topics": ["arrays", "two-pointers", "sorting"],
+  "patterns": [],
+  "estMinutes": 15,
+  "source": "Original problem written for PrepQuest (classic algorithmic idea, original wording and examples)",
+  "license": "CC0-1.0"
+}

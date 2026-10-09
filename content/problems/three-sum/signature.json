@@ -1,0 +1,10 @@
+{
+  "function": "threeSum",
+  "params": [
+    {
+      "name": "nums",
+      "type": "int[]"
+    }
+  ],
+  "returns": "int[][]"
+}

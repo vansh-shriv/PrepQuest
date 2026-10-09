@@ -39,6 +39,18 @@ export const serverEnvSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   GITHUB_CLIENT_ID: z.string().optional(),
   GITHUB_CLIENT_SECRET: z.string().optional(),
+  // --- Object storage (hidden test data, uploads) ---
+  STORAGE_DRIVER: z.enum(["fs", "s3"]).default("fs"),
+  /** Root directory for the `fs` driver (dev/test). Resolved from the process working directory. */
+  STORAGE_FS_DIR: z.string().default("../../.data/objects"),
+  S3_ENDPOINT: z.string().optional(),
+  S3_REGION: z.string().default("us-east-1"),
+  S3_BUCKET: z.string().default("prepquest"),
+  S3_ACCESS_KEY: z.string().optional(),
+  S3_SECRET_KEY: z.string().optional(),
+  S3_FORCE_PATH_STYLE: bool,
+  /** Let content authors publish their own problems (doc 17: separation of duties is the default). */
+  ALLOW_SELF_PUBLISH: bool,
   // --- Email ---
   SMTP_URL: z.string().default("smtp://localhost:1025"),
   EMAIL_FROM: z.string().default("PrepQuest <no-reply@prepquest.local>"),

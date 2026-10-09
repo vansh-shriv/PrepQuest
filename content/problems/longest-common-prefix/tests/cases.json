@@ -1,0 +1,27 @@
+[
+  {
+    "kind": "edge",
+    "label": "single empty string",
+    "args": [[""]]
+  },
+  {
+    "kind": "edge",
+    "label": "one empty string among others",
+    "args": [["abc", "", "abd"]]
+  },
+  {
+    "kind": "edge",
+    "label": "all strings identical",
+    "args": [["same", "same", "same"]]
+  },
+  {
+    "kind": "edge",
+    "label": "one string is a prefix of the others",
+    "args": [["ab", "abc", "a"]]
+  },
+  {
+    "kind": "edge",
+    "label": "difference at the first character",
+    "args": [["xa", "ya"]]
+  }
+]

@@ -17,7 +17,7 @@ Assumes **one primary developer** (you), ~15 to 20 productive hours/week, alongs
 
 - Monorepo (pnpm + Turborepo), TS configs, ESLint/Prettier, Husky.
 - GitHub Actions: lint, typecheck, unit; preview deploys.
-- Docker Compose: Postgres+pgvector, Redis, MinIO, Mailpit.
+- Docker Compose: Postgres+pgvector, Redis, S3-compatible store (Zenko CloudServer), Mailpit.
 - DB schema v1 (users, profiles, problems, tags, test_cases, submissions) + migrations + seed script.
 - Auth: signup/login/refresh/logout, email verification, Google/GitHub OAuth.
 - Design system: tokens, fonts, Button, Card, Input, Tabs, Dialog, Toast, Loading bar, Sprite component; Storybook with 3 themes.

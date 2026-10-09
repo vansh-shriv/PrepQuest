@@ -1,0 +1,3 @@
+- `0 <= a.length, b.length <= 20000`
+- `-1000000000 <= a[i], b[i] <= 1000000000`
+- Both arrays are sorted in non-decreasing order.

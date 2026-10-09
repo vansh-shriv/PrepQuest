@@ -1,0 +1,10 @@
+{
+  "function": "numIslands",
+  "params": [
+    {
+      "name": "grid",
+      "type": "string[]"
+    }
+  ],
+  "returns": "int"
+}

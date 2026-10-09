@@ -1,0 +1,37 @@
+[
+  {
+    "kind": "edge",
+    "label": "both strings empty",
+    "args": ["", ""]
+  },
+  {
+    "kind": "edge",
+    "label": "first string empty",
+    "args": ["", "abc"]
+  },
+  {
+    "kind": "edge",
+    "label": "second string empty",
+    "args": ["abc", ""]
+  },
+  {
+    "kind": "edge",
+    "label": "identical strings",
+    "args": ["algorithm", "algorithm"]
+  },
+  {
+    "kind": "edge",
+    "label": "single different characters",
+    "args": ["a", "b"]
+  },
+  {
+    "kind": "edge",
+    "label": "no characters in common",
+    "args": ["abc", "xyz"]
+  },
+  {
+    "kind": "edge",
+    "label": "one is a subsequence of the other",
+    "args": ["ace", "abcde"]
+  }
+]

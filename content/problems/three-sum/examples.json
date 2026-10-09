@@ -1,0 +1,20 @@
+[
+  {
+    "args": [[-1, 0, 1, 2, -1, -4]],
+    "expected": [
+      [-1, -1, 2],
+      [-1, 0, 1]
+    ],
+    "explanation": "Two distinct triplets sum to zero."
+  },
+  {
+    "args": [[0, 1, 1]],
+    "expected": [],
+    "explanation": "No triplet sums to zero."
+  },
+  {
+    "args": [[0, 0, 0]],
+    "expected": [[0, 0, 0]],
+    "explanation": "Three zeros make one triplet."
+  }
+]

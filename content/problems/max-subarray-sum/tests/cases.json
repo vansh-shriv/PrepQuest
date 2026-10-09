@@ -1,0 +1,39 @@
+[
+  {
+    "kind": "edge",
+    "label": "all negative: pick the largest single value",
+    "args": [[-3, -1, -2]]
+  },
+  {
+    "kind": "edge",
+    "label": "single negative element",
+    "args": [[-7]]
+  },
+  {
+    "kind": "edge",
+    "label": "all positive: take everything",
+    "args": [[1, 2, 3, 4]]
+  },
+  {
+    "kind": "edge",
+    "label": "zeros and negatives",
+    "args": [[0, -1, 0, -2]]
+  },
+  {
+    "kind": "edge",
+    "label": "best run sits at the end",
+    "args": [[-5, -4, 3, 4, 5]]
+  },
+  {
+    "kind": "edge",
+    "label": "maximum possible sum",
+    "args": [
+      [
+        10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000,
+        10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000,
+        10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000,
+        10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000
+      ]
+    ]
+  }
+]

@@ -1,0 +1,3 @@
+- `1 <= nums.length <= 20000`
+- `-1000000000 <= nums[i] <= 1000000000`, strictly increasing
+- `-1000000000 <= target <= 1000000000`

@@ -8,6 +8,8 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "./e2e",
   timeout: 60_000,
+  // CI machines and cold starts are slower than a warm laptop: give assertions room before failing
+  expect: { timeout: 10_000 },
   fullyParallel: false,
   workers: 1,
   reporter: [["list"]],

@@ -1,0 +1,2 @@
+- `0 <= a.length, b.length <= 1000`
+- `a` and `b` contain only lowercase English letters.

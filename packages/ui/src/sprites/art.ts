@@ -239,6 +239,20 @@ export const SPRITES = {
       "KKKKKKKKK",
     ],
   },
+  admin: {
+    palette: { K: "currentColor" },
+    rows: [
+      "....K....",
+      ".K.KKK.K.",
+      "..KKKKK..",
+      ".KKK.KKK.",
+      "KKKK.KKKK",
+      ".KKK.KKK.",
+      "..KKKKK..",
+      ".K.KKK.K.",
+      "....K....",
+    ],
+  },
   magnifier: {
     palette: { K: "var(--ink)" },
     rows: [

@@ -19,7 +19,12 @@
     "test:e2e": "pnpm --filter @prepquest/web test:e2e",
     "db:generate": "pnpm --filter @prepquest/db db:generate",
     "db:studio": "pnpm --filter @prepquest/db db:studio",
-    "prepare": "husky"
+    "prepare": "husky",
+    "content:validate": "pnpm --filter @prepquest/content content validate",
+    "content:build-tests": "pnpm --filter @prepquest/content content build-tests",
+    "content:verify": "pnpm --filter @prepquest/content content verify",
+    "content:import": "pnpm --filter @prepquest/content content import",
+    "content:new": "pnpm --filter @prepquest/content content new"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.3",

@@ -1,0 +1,10 @@
+{
+  "slug": "binary-search-position",
+  "title": "Find in a Sorted List",
+  "difficulty": "easy",
+  "topics": ["arrays", "binary-search"],
+  "patterns": [],
+  "estMinutes": 10,
+  "source": "Original problem written for PrepQuest (classic algorithmic idea, original wording and examples)",
+  "license": "CC0-1.0"
+}

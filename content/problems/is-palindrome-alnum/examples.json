@@ -1,0 +1,17 @@
+[
+  {
+    "args": ["A man, a plan, a canal: Panama"],
+    "expected": true,
+    "explanation": "It reads `amanaplanacanalpanama` both ways."
+  },
+  {
+    "args": ["race a car"],
+    "expected": false,
+    "explanation": "`raceacar` is not symmetric."
+  },
+  {
+    "args": [" "],
+    "expected": true,
+    "explanation": "Nothing is left after ignoring the space."
+  }
+]

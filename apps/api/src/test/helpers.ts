@@ -2,6 +2,10 @@ import type { FastifyInstance, LightMyRequestResponse } from "fastify";
 import { sql } from "drizzle-orm";
 import { createDatabase, type Database } from "@prepquest/db";
 import { parseServerEnv, type LoginResponse, type ServerEnv } from "@prepquest/shared";
+import { mkdtemp } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { FsObjectStore, type ObjectStore } from "@prepquest/storage";
 import { buildApp } from "../app.js";
 import { NoopBreachChecker, type BreachChecker } from "../lib/breach.js";
 import { MemoryKv, type Kv } from "../lib/kv.js";
@@ -17,6 +21,7 @@ export interface TestApp {
   /** The underlying pg pool, for raw SQL in assertions and fixtures. */
   pool: Database["$client"];
   kv: Kv;
+  store: ObjectStore;
   env: ServerEnv;
   close: () => Promise<void>;
 }
@@ -26,6 +31,7 @@ export interface TestOptions {
   breach?: BreachChecker;
   fetchFn?: typeof fetch;
   kv?: Kv;
+  store?: ObjectStore;
 }
 
 export async function makeTestApp(options: TestOptions = {}): Promise<TestApp> {
@@ -49,11 +55,13 @@ export async function makeTestApp(options: TestOptions = {}): Promise<TestApp> {
   await db.execute(sql`TRUNCATE users CASCADE`);
   const mailer = new MemoryMailer();
   const kv = options.kv ?? new MemoryKv();
+  const store = options.store ?? new FsObjectStore(await mkdtemp(join(tmpdir(), "pq-objects-")));
   const app = await buildApp({
     env,
     db,
     mailer,
     kv,
+    store,
     keys: await loadJwtKeys(env),
     checks: {},
     breach: options.breach ?? new NoopBreachChecker(),
@@ -65,6 +73,7 @@ export async function makeTestApp(options: TestOptions = {}): Promise<TestApp> {
     db,
     pool: db.$client,
     kv,
+    store,
     env,
     close: async () => {
       await app.close();

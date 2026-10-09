@@ -1,0 +1,22 @@
+[
+  {
+    "args": ["()"],
+    "expected": true,
+    "explanation": "One pair."
+  },
+  {
+    "args": ["()[]{}"],
+    "expected": true,
+    "explanation": "Three separate pairs."
+  },
+  {
+    "args": ["(]"],
+    "expected": false,
+    "explanation": "A `(` can't be closed by `]`."
+  },
+  {
+    "args": ["([)]"],
+    "expected": false,
+    "explanation": "The brackets interleave instead of nesting."
+  }
+]

@@ -1,0 +1,14 @@
+{
+  "function": "minDistance",
+  "params": [
+    {
+      "name": "a",
+      "type": "string"
+    },
+    {
+      "name": "b",
+      "type": "string"
+    }
+  ],
+  "returns": "int"
+}

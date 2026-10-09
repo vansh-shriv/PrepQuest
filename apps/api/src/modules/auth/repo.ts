@@ -8,7 +8,13 @@ import {
   users,
   type Db,
 } from "@prepquest/db";
-import type { MeResponse, ProfileUpdate, SessionInfo, SettingsUpdate } from "@prepquest/shared";
+import type {
+  MeResponse,
+  ProfileUpdate,
+  SessionInfo,
+  SettingsUpdate,
+  UserRole,
+} from "@prepquest/shared";
 
 export type UserRow = typeof users.$inferSelect;
 export type SessionRow = typeof authSessions.$inferSelect;
@@ -17,12 +23,19 @@ export type SessionRow = typeof authSessions.$inferSelect;
 
 export async function insertUser(
   db: Db,
-  u: { id: string; email: string; passwordHash: string | null; emailVerified?: boolean },
+  u: {
+    id: string;
+    email: string;
+    passwordHash: string | null;
+    emailVerified?: boolean;
+    role?: UserRole;
+  },
 ): Promise<void> {
   await db.insert(users).values({
     id: u.id,
     email: u.email,
     passwordHash: u.passwordHash,
+    ...(u.role ? { role: u.role } : {}),
     emailVerifiedAt: u.emailVerified ? new Date() : null,
   });
 }

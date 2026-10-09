@@ -1,0 +1,10 @@
+{
+  "slug": "longest-substring-no-repeat",
+  "title": "Longest Substring Without Repeats",
+  "difficulty": "medium",
+  "topics": ["strings", "hashing", "sliding-window"],
+  "patterns": [],
+  "estMinutes": 25,
+  "source": "Original problem written for PrepQuest (classic algorithmic idea, original wording and examples)",
+  "license": "CC0-1.0"
+}

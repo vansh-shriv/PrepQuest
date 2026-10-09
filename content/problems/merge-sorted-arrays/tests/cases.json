@@ -1,0 +1,44 @@
+[
+  {
+    "kind": "edge",
+    "label": "both arrays empty",
+    "args": [[], []]
+  },
+  {
+    "kind": "edge",
+    "label": "second array empty",
+    "args": [[1, 2, 3], []]
+  },
+  {
+    "kind": "edge",
+    "label": "everything in a comes before b",
+    "args": [
+      [1, 2],
+      [3, 4]
+    ]
+  },
+  {
+    "kind": "edge",
+    "label": "everything in b comes before a",
+    "args": [
+      [7, 8],
+      [1, 2]
+    ]
+  },
+  {
+    "kind": "edge",
+    "label": "all values equal",
+    "args": [
+      [4, 4, 4],
+      [4, 4]
+    ]
+  },
+  {
+    "kind": "edge",
+    "label": "extreme values",
+    "args": [
+      [-1000000000, 5],
+      [5, 1000000000]
+    ]
+  }
+]

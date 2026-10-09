@@ -1,0 +1,17 @@
+[
+  {
+    "args": ["abcabcbb"],
+    "expected": 3,
+    "explanation": "`abc` is the longest repeat-free run."
+  },
+  {
+    "args": ["bbbbb"],
+    "expected": 1,
+    "explanation": "Every substring longer than 1 repeats `b`."
+  },
+  {
+    "args": ["pwwkew"],
+    "expected": 3,
+    "explanation": "`wke` works; `pwke` would not be a substring."
+  }
+]

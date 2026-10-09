@@ -1,0 +1,10 @@
+{
+  "slug": "coin-change-min",
+  "title": "Fewest Coins",
+  "difficulty": "medium",
+  "topics": ["dynamic-programming"],
+  "patterns": ["knapsack"],
+  "estMinutes": 30,
+  "source": "Original problem written for PrepQuest (classic algorithmic idea, original wording and examples)",
+  "license": "CC0-1.0"
+}

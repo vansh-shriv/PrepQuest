@@ -13,30 +13,31 @@
 
 ## 2. First run
 
-> Built so far: Docker services, `pnpm db:migrate`, `pnpm db:seed`, `pnpm dev`, tests and e2e (below). Content import and the judge arrive in later phases. Postgres is published on host port **5433** (a native Postgres often owns 5432). The API generates dev JWT keys into `secrets/` on first start. Git hooks (Husky) install on `pnpm install`: staged files are formatted and linted, and commit messages must follow Conventional Commits.
+> Built so far: Docker services, `pnpm db:migrate`, `pnpm db:seed`, `pnpm content:*`, `pnpm dev`, tests and e2e (below). The judge arrives in a later phase (`docker compose up -d judge` doesn't exist yet). Postgres is published on host port **5433** (a native Postgres often owns 5432). The API generates dev JWT keys into `secrets/` on first start. Git hooks (Husky) install on `pnpm install`: staged files are formatted and linted, and commit messages must follow Conventional Commits.
 
 ```bash
 git clone <repo> prepquest && cd prepquest
 corepack enable && pnpm install
 cp .env.example .env            # fill secrets (see section 3)
-docker compose up -d postgres redis minio mailpit
+docker compose up -d postgres redis mailpit     # add `s3` only if you set STORAGE_DRIVER=s3
 pnpm db:migrate
-pnpm content:validate && pnpm content:import   # imports problems, quizzes, packs
-pnpm db:seed                    # demo user, badges, templates
-pnpm dev                        # web :3000, api :4000, worker, scheduler
-docker compose up -d judge      # judge worker (privileged, isolate)
+pnpm db:seed                    # tags + demo player, content editor and reviewer (password: demo-password)
+pnpm content:validate && pnpm content:import --publish   # imports the 20 problems and the sheet (needs tags, so seed first)
+pnpm dev                        # web :3000, api :4000
+# later phases: worker, scheduler, and `docker compose up -d judge` (privileged, isolate)
 ```
 
-Open `http://localhost:3000`, log in with `demo@prepquest.dev / demo-password` (seeded, local only).
+Open `http://localhost:3000`, log in with `demo@prepquest.dev / demo-password` (seeded, local only). `editor@prepquest.dev` (content editor) and `reviewer@prepquest.dev` (reviewer) use the same password and open the Admin section. Python 3.9+ must be on PATH (or set `PYTHON`) for `content:build-tests` and `content:verify`.
 
-Mailpit UI: `http://localhost:8025` (verification emails). MinIO console: `http://localhost:9001`.
+Mailpit UI: `http://localhost:8025` (verification emails). Hidden test data is stored under `.data/objects` (gitignored) by default; `docker compose up -d s3` starts a local S3-compatible server on `:9000` (Zenko CloudServer; MinIO's community images are no longer published) for `STORAGE_DRIVER=s3`.
 
 ### Tests
 
 ```bash
 docker compose up -d postgres            # API integration tests use a separate prepquest_test database (created and reset automatically)
 pnpm test                                # unit + API integration
-docker compose up -d postgres redis mailpit && pnpm build && pnpm test:e2e   # Playwright against real web + API + Mailpit, uses installed Chrome
+docker compose up -d postgres redis mailpit && pnpm db:seed && pnpm content:import --publish && pnpm build && pnpm test:e2e   # Playwright against real web + API + Mailpit, uses installed Chrome
+pnpm content:validate && pnpm content:verify   # content gates (CI runs these too)
 ```
 Override the test database with `TEST_DATABASE_URL`. CI runs the same suites (the e2e job is new and only verified locally). The e2e API server is started with `BREACH_CHECK=off` and generous rate limits so the suite is offline-safe.
 
@@ -78,13 +79,18 @@ RL_AUTH_PER_MIN=20                  # credential endpoints per IP (refresh gets 
 RL_LOGIN_PER_10MIN=10               # login attempts per IP+email per 10 minutes
 RL_FORGOT_PER_HOUR=3                # password-reset emails per address per hour
 
-# --- Storage ---
-S3_ENDPOINT=http://localhost:9000
-S3_REGION=auto
+# --- Storage (hidden test data, uploads) ---
+STORAGE_DRIVER=fs                   # fs | s3
+STORAGE_FS_DIR=../../.data/objects  # relative to the process working directory (apps/api, packages/content)
+S3_ENDPOINT=http://localhost:9000   # `docker compose up -d s3`
+S3_REGION=us-east-1
 S3_BUCKET=prepquest
-S3_ACCESS_KEY=minioadmin
-S3_SECRET_KEY=minioadmin
+S3_ACCESS_KEY=prepquest
+S3_SECRET_KEY=prepquest-secret
 S3_FORCE_PATH_STYLE=true
+
+# --- Content workflow ---
+ALLOW_SELF_PUBLISH=false            # true lets authors publish their own problems
 
 # --- Email ---
 SMTP_URL=smtp://localhost:1025
@@ -170,8 +176,11 @@ pnpm test | test:unit | test:int | test:e2e | test:judge | test:ai-eval
 pnpm lint | typecheck | format
 pnpm db:generate | db:migrate | db:reset | db:seed | db:studio   # generate = diff the Drizzle schema into a new migration
 pnpm --filter @prepquest/api db:purge   # hard-delete accounts past the 14-day deletion grace period (daily)
-pnpm content:validate | content:import | content:new-problem <slug>   # scaffolds a problem folder
-pnpm problem:validate <slug>    # run reference, validators, mutants for one problem locally
+pnpm content:new <slug>                       # scaffold a problem folder
+pnpm content:build-tests [slug]               # generate tests/*.in|out from examples + cases.json + gen.py via the reference solution
+pnpm content:validate [slug]                  # schemas, tag taxonomy, test format and counts (no code execution)
+pnpm content:verify [slug]                    # re-run reference solutions against the committed tests
+pnpm content:import [--publish] [slug]        # idempotent upsert into the database (new version only when content changed)
 pnpm sprites:build | storybook
 pnpm llm:record                 # record LLM fixtures for tests
 ```

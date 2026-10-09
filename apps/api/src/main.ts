@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { Redis } from "ioredis";
 import { createDatabase } from "@prepquest/db";
 import { parseServerEnv } from "@prepquest/shared";
+import { createObjectStore } from "@prepquest/storage";
 import { buildApp } from "./app.js";
 import { SmtpMailer } from "./lib/mailer.js";
 import { loadJwtKeys } from "./modules/auth/keys.js";
@@ -18,6 +19,7 @@ const app = await buildApp({
   redis: redis.status === "ready" ? redis : undefined,
   keys: await loadJwtKeys(env),
   mailer: new SmtpMailer(env.SMTP_URL, env.EMAIL_FROM),
+  store: createObjectStore(env),
   checks: {
     postgres: async () => void (await db.execute(sql`select 1`)),
     redis: async () => {

@@ -22,6 +22,27 @@
       "when": 1791496398464,
       "tag": "0002_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791501185947,
+      "tag": "0003_draft_history_audit",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791501190671,
+      "tag": "0004_triggers_workflow",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791541391194,
+      "tag": "0005_problem_signature",
+      "breakpoints": true
     }
   ]
 }

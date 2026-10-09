@@ -1,0 +1,42 @@
+[
+  {
+    "kind": "edge",
+    "label": "empty",
+    "args": [[]]
+  },
+  {
+    "kind": "edge",
+    "label": "single wall",
+    "args": [[5]]
+  },
+  {
+    "kind": "edge",
+    "label": "two walls",
+    "args": [[3, 5]]
+  },
+  {
+    "kind": "edge",
+    "label": "one deep valley",
+    "args": [[3, 0, 3]]
+  },
+  {
+    "kind": "edge",
+    "label": "strictly decreasing",
+    "args": [[5, 4, 3, 2, 1]]
+  },
+  {
+    "kind": "edge",
+    "label": "alternating",
+    "args": [[1, 0, 1, 0, 1, 0, 1]]
+  },
+  {
+    "kind": "edge",
+    "label": "all zeros",
+    "args": [[0, 0, 0, 0]]
+  },
+  {
+    "kind": "edge",
+    "label": "tall walls with a wide basin",
+    "args": [[100000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100000]]
+  }
+]

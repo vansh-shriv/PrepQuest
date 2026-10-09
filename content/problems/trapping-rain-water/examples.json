@@ -1,0 +1,17 @@
+[
+  {
+    "args": [[0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1]],
+    "expected": 6,
+    "explanation": "Six units collect in the valleys."
+  },
+  {
+    "args": [[4, 2, 0, 3, 2, 5]],
+    "expected": 9,
+    "explanation": "Walls of 4 and 5 hold 9 units."
+  },
+  {
+    "args": [[1, 2, 3]],
+    "expected": 0,
+    "explanation": "Rising walls hold nothing."
+  }
+]

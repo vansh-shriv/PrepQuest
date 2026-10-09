@@ -1,0 +1,10 @@
+{
+  "function": "maxProfit",
+  "params": [
+    {
+      "name": "prices",
+      "type": "int[]"
+    }
+  ],
+  "returns": "int"
+}

@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
 import { Chip } from "./Chip";
+import { Select, Textarea } from "./Field";
+import { StatusBox } from "./StatusBox";
 import { Input } from "./Input";
 import { LoadingBar, StageBar } from "./LoadingBar";
 import { Sprite } from "./Sprite";
@@ -104,5 +106,35 @@ describe("Checkbox", () => {
     expect(out).toContain('for="b"');
     expect(out).toContain("Show my bio");
     expect(out).toContain("checked");
+  });
+});
+
+describe("StatusBox", () => {
+  it("announces its state and uses a distinct class per state", () => {
+    for (const [status, label] of [
+      ["unseen", "Not started"],
+      ["attempted", "Attempted"],
+      ["solved", "Solved"],
+    ] as const) {
+      const out = html(<StatusBox status={status} />);
+      expect(out).toContain(`aria-label="${label}"`);
+      expect(out).toContain(`pq-status--${status}`);
+    }
+  });
+});
+
+describe("Select and Textarea", () => {
+  it("are labelled form controls with linked error text", () => {
+    const select = html(
+      <Select label="Sort" id="s" error="Pick one">
+        <option>a</option>
+      </Select>,
+    );
+    expect(select).toContain('for="s"');
+    expect(select).toContain('aria-invalid="true"');
+    expect(select).toContain('aria-describedby="s-note"');
+    const area = html(<Textarea label="Statement" id="t" mono helper="Markdown" />);
+    expect(area).toContain("pq-textarea--mono");
+    expect(area).toContain('aria-describedby="t-note"');
   });
 });

@@ -8,7 +8,7 @@ Quality bar: judge and scoring logic are trusted by users making career decision
 | ----------------- | ------------------------------------------------------------ | ---------------------------------------------------- | ----------------------------------------------------- |
 | Unit              | Vitest                                                       | Pure logic in `*-core` packages, utils, reducers     | ≥ 90% for judge-core, analytics-core; ≥ 70% elsewhere |
 | Component         | Testing Library + Storybook interaction tests                | Pixel UI components, a11y                            | All primitives                                        |
-| Integration       | Vitest + Supertest + Testcontainers (Postgres, Redis, MinIO) | API modules with real DB, queues                     | Every endpoint happy + auth + validation paths        |
+| Integration       | Vitest + Supertest + Testcontainers (Postgres, Redis, S3-compatible store) | API modules with real DB, queues                     | Every endpoint happy + auth + validation paths        |
 | Judge sandbox     | Custom harness on privileged runner                          | Languages, limits, malicious suite                   | 100% of suite passes                                  |
 | Contract          | OpenAPI/Zod schema diff, WS event schema tests               | Web ⟷ API ⟷ workers                                  | No breaking changes unflagged                         |
 | E2E               | Playwright                                                   | Core journeys in 3 themes, desktop + mobile viewport | All P0 flows                                          |

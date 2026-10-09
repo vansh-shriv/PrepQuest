@@ -86,7 +86,7 @@ export function refreshSession(): Promise<LoginResponse | null> {
 }
 
 export interface ApiOptions {
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   json?: unknown;
 }
 
@@ -113,4 +113,13 @@ export async function apiDownload(
   if (!res.ok) throw await toError(res);
   const match = res.headers.get("content-disposition")?.match(/filename="([^"]+)"/);
   return { blob: await res.blob(), filename: match?.[1] ?? "download" };
+}
+
+/** Multipart upload (e.g. a test zip). Same silent token refresh as `api`. */
+export async function apiUpload<T>(path: string, form: FormData): Promise<T> {
+  const send = () => request(path, { method: "POST", body: form });
+  let res = await send();
+  if (res.status === 401 && accessToken && (await refreshSession())) res = await send();
+  if (!res.ok) throw await toError(res);
+  return (await res.json()) as T;
 }

@@ -1,0 +1,10 @@
+{
+  "slug": "climbing-stairs",
+  "title": "Climbing Stairs",
+  "difficulty": "easy",
+  "topics": ["dynamic-programming", "math"],
+  "patterns": [],
+  "estMinutes": 10,
+  "source": "Original problem written for PrepQuest (classic algorithmic idea, original wording and examples)",
+  "license": "CC0-1.0"
+}

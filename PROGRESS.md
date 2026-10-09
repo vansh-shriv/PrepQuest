@@ -8,7 +8,7 @@ Phase-by-phase build log. Plan source: `docs/18-ROADMAP-AND-SPRINTS.md`. Each ph
 | 1     | Design system: tokens, `packages/ui`, sprites, Storybook, 3 themes                                                                          | -         | Done (committed)      |
 | 2     | DB schema v1, auth, app shell                                                                                                               | M0        | Done (committed)      |
 | 2b    | Completion pass: Drizzle ORM, verified-email gate, rate limiting, OAuth, 2FA, breach check, export/deletion, public profiles, Husky, CI e2e | -         | Done (pending commit) |
-| 3     | Problem bank, content pipeline, Monaco editor, admin v0                                                                                     | M1        | Not started           |
+| 3     | Problem bank, content pipeline, Monaco editor, admin v0                                                                                     | M1        | Done (pending commit) |
 | 4     | Judge (`isolate`), submissions, verdict UI, history/bookmarks/notes                                                                         | M2        | Not started           |
 | 5     | Hints, editorials, XP/streaks, dashboard, sheets                                                                                            | M3        | Not started           |
 | 6     | AI interview MVP, resume parse, scorecards                                                                                                  | M4        | Not started           |
@@ -22,7 +22,7 @@ Done:
 - `packages/shared`: Zod server-env validation (`parseServerEnv`), `AppError`.
 - `apps/api`: Fastify app factory (`buildApp`), central error handler, `GET /v1/health` and `/v1/health/ready` (checks Postgres + Redis).
 - `apps/web`: minimal Next.js App Router placeholder.
-- `docker-compose.yml`: Postgres+pgvector, Redis, MinIO, Mailpit.
+- `docker-compose.yml`: Postgres+pgvector, Redis, MinIO (replaced by an `s3` CloudServer service in Phase 3), Mailpit.
 - ESLint (flat), Prettier, `.editorconfig`, GitHub Actions CI (format, lint, typecheck, test, build).
 
 Deferred from Phase 0 scope: Husky + lint-staged (add once the first commit exists), preview deploys (needs hosting decision).
@@ -116,3 +116,30 @@ Still open:
 
 - Real-provider OAuth smoke test (needs Google/GitHub app credentials), CAPTCHA, disposable-email blocking, security headers/CSP on the web app, gitleaks in CI, the generated auth/authorization matrix test.
 - The CI `e2e` job has not run on GitHub yet.
+
+## Phase 3 - Problem bank, content pipeline, editor, admin v0 (milestone M1)
+
+Done:
+
+- **Storage:** `packages/storage` (`ObjectStore`, filesystem driver for dev/tests, S3 driver verified against a real server). Compose `minio` replaced by `s3` (`zenko/cloudserver`, :9000, creds `prepquest`/`prepquest-secret`) because MinIO's community images are no longer pullable.
+- **DB:** migrations `0003` (`draft_history`, `admin_audit_log`), `0004` (their triggers), `0005` (`problems.signature`).
+- **Content pipeline** (`packages/content`, `content/`): canonical stdin/stdout codec derived from function signatures, Python reference harness, generated starters (Python/Java/C++), test builder (samples, hand cases, seeded generators, dedupe), validator, versioned idempotent importer, CLI (`content:new|build-tests|validate|verify|import`). 20 original problems (10 easy, 8 medium, 2 hard) and the `foundations-20` sheet; all verified against their reference solutions.
+- **API:** problem list (filters, typo-tolerant full-text search, sheets, cursor pagination), detail, tags, companies, sheets; drafts with optimistic concurrency, history (5), custom tests (20 cap). Admin: create/edit with versioning, zip test upload with zip-bomb checks, validation checklist, submit/publish/archive workflow with role rules, audit log, `optionalAuth`.
+- **Web:** `/problems` (filters, search, URL-driven state), `/problems/[slug]` (resizable split panes, Markdown+KaTeX statement, Monaco with language switch, autosave drafts across devices, history/reset, custom tests, phone layout), `/admin/problems` (list, create, editor tabs, checks, workflow, audit). Pixel `Select`, `Textarea`, `StatusBox`, `Checkbox`.
+- **Tests:** API 179+, UI 47, content/storage/web unit tests, e2e 15 account + 13 problems + 4 admin.
+
+Bugs found and fixed:
+
+- Monaco crashed in production ("Illegal value for token color") because the CSS minifier shortened `#ffffff`; colors are now normalised in `editor-colors.ts`.
+- A controlled Monaco `value` dropped keystrokes; the editor now owns its text and external changes go through an explicit revision counter.
+- Drizzle drops table prefixes in single-table SELECT-list subqueries (counts returned 0); use raw qualified names there.
+- Windows Python text-mode stdout emitted `
+`; the harness uses binary stdio.
+- `TRUNCATE users CASCADE` also wipes problems: import fixtures after creating the test app.
+- Filter panel and search box rendered twice; each is now rendered once.
+
+Deferred:
+
+- Reference-solution and mutation checks in admin validation (need the judge, Phase 4), Run/Submit buttons (Phase 4), hints and editorial authoring (Phase 5), company packs, generator runner in the admin UI, version diffs.
+- The CI `e2e` job (now also importing content) has not run on GitHub yet.
+- First cold-start e2e signup can exceed 5 s on a slow machine; the suite uses a 10 s expect timeout.

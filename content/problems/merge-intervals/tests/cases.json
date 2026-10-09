@@ -1,0 +1,73 @@
+[
+  {
+    "kind": "edge",
+    "label": "single interval",
+    "args": [[[4, 9]]]
+  },
+  {
+    "kind": "edge",
+    "label": "identical intervals",
+    "args": [
+      [
+        [2, 5],
+        [2, 5],
+        [2, 5]
+      ]
+    ]
+  },
+  {
+    "kind": "edge",
+    "label": "one interval swallows the others",
+    "args": [
+      [
+        [1, 10],
+        [2, 3],
+        [4, 8]
+      ]
+    ]
+  },
+  {
+    "kind": "edge",
+    "label": "gap of exactly one is not an overlap",
+    "args": [
+      [
+        [1, 2],
+        [3, 4]
+      ]
+    ]
+  },
+  {
+    "kind": "edge",
+    "label": "reverse sorted input",
+    "args": [
+      [
+        [9, 10],
+        [5, 6],
+        [1, 2]
+      ]
+    ]
+  },
+  {
+    "kind": "edge",
+    "label": "zero-length intervals",
+    "args": [
+      [
+        [3, 3],
+        [3, 3],
+        [4, 4]
+      ]
+    ]
+  },
+  {
+    "kind": "edge",
+    "label": "chain that merges into one",
+    "args": [
+      [
+        [1, 3],
+        [3, 5],
+        [5, 7],
+        [7, 9]
+      ]
+    ]
+  }
+]

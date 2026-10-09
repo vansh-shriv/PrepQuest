@@ -1,0 +1,17 @@
+[
+  {
+    "args": ["horse", "ros"],
+    "expected": 3,
+    "explanation": "horse → rorse (replace h) → rose (delete r) → ros (delete e)."
+  },
+  {
+    "args": ["intention", "execution"],
+    "expected": 5,
+    "explanation": "Five edits are enough and necessary."
+  },
+  {
+    "args": ["", "abc"],
+    "expected": 3,
+    "explanation": "Insert three characters."
+  }
+]

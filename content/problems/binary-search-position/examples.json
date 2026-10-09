@@ -1,0 +1,17 @@
+[
+  {
+    "args": [[-1, 0, 3, 5, 9, 12], 9],
+    "expected": 4,
+    "explanation": "`9` is at index 4."
+  },
+  {
+    "args": [[-1, 0, 3, 5, 9, 12], 2],
+    "expected": -1,
+    "explanation": "`2` is not in the array."
+  },
+  {
+    "args": [[5], 5],
+    "expected": 0,
+    "explanation": "A single-element array."
+  }
+]

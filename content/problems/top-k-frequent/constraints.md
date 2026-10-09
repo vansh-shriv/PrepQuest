@@ -1,0 +1,3 @@
+- `1 <= nums.length <= 20000`
+- `-10000 <= nums[i] <= 10000`
+- `1 <= k <=` the number of distinct values in `nums`

@@ -1,0 +1,10 @@
+{
+  "function": "lengthOfLongestSubstring",
+  "params": [
+    {
+      "name": "s",
+      "type": "string"
+    }
+  ],
+  "returns": "int"
+}

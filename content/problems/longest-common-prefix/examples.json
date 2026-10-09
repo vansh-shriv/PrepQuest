@@ -1,0 +1,17 @@
+[
+  {
+    "args": [["flower", "flow", "flight"]],
+    "expected": "fl",
+    "explanation": "All three start with `fl`."
+  },
+  {
+    "args": [["dog", "racecar", "car"]],
+    "expected": "",
+    "explanation": "No shared prefix."
+  },
+  {
+    "args": [["interview"]],
+    "expected": "interview",
+    "explanation": "A single string is its own prefix."
+  }
+]

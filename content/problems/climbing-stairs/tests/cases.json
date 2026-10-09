@@ -1,0 +1,72 @@
+[
+  {
+    "kind": "edge",
+    "label": "one step",
+    "args": [1]
+  },
+  {
+    "kind": "edge",
+    "label": "two steps",
+    "args": [2]
+  },
+  {
+    "kind": "edge",
+    "label": "first value that needs more than 32 bits",
+    "args": [46]
+  },
+  {
+    "kind": "stress",
+    "label": "stress: n = 90 (largest 64-bit result)",
+    "args": [90]
+  },
+  {
+    "kind": "stress",
+    "label": "stress: n = 89",
+    "args": [89]
+  },
+  {
+    "kind": "hidden",
+    "label": "n = 4",
+    "args": [4]
+  },
+  {
+    "kind": "hidden",
+    "label": "n = 7",
+    "args": [7]
+  },
+  {
+    "kind": "hidden",
+    "label": "n = 10",
+    "args": [10]
+  },
+  {
+    "kind": "hidden",
+    "label": "n = 15",
+    "args": [15]
+  },
+  {
+    "kind": "hidden",
+    "label": "n = 20",
+    "args": [20]
+  },
+  {
+    "kind": "hidden",
+    "label": "n = 30",
+    "args": [30]
+  },
+  {
+    "kind": "hidden",
+    "label": "n = 45",
+    "args": [45]
+  },
+  {
+    "kind": "hidden",
+    "label": "n = 60",
+    "args": [60]
+  },
+  {
+    "kind": "hidden",
+    "label": "n = 75",
+    "args": [75]
+  }
+]

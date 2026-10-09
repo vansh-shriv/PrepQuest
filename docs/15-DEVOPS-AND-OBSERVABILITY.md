@@ -30,7 +30,7 @@ Kubernetes (or Nomad/ECS): API (HPA), gateway (sticky), job workers, scheduler (
 
 ## 3. Docker Compose (local) services
 
-`web`, `api`, `worker`, `scheduler`, `judge` (privileged, with isolate), `postgres` (pgvector image), `redis`, `minio`, `mailpit` (email), `otel-collector`, `prometheus`, `grafana`, `loki` (optional profile `observability`).
+`web`, `api`, `worker`, `scheduler`, `judge` (privileged, with isolate), `postgres` (pgvector image), `redis`, `s3` (S3-compatible object store), `mailpit` (email), `otel-collector`, `prometheus`, `grafana`, `loki` (optional profile `observability`).
 
 ## 4. CI pipeline (GitHub Actions)
 
@@ -40,7 +40,7 @@ jobs:
  1. setup: pnpm install --frozen-lockfile, turbo cache
  2. lint-typecheck: eslint, tsc, prettier --check, content:validate
  3. unit: vitest (packages/*-core coverage gates: judge-core ≥ 90%, analytics-core ≥ 90%, others ≥ 70%)
- 4. integration: services (postgres+pgvector, redis, minio) → API tests (supertest/testcontainers), migrations up/down
+ 4. integration: services (postgres+pgvector, redis, an S3-compatible server) → API tests (supertest/testcontainers), migrations up/down
  5. judge-sandbox (self-hosted/privileged runner): language smoke tests, malicious program suite, determinism checks
  6. ai-eval (on prompt/orchestrator changes): golden sessions, injection suite, leak suite (uses recorded fixtures by default; live-model run nightly)
  7. build: web, api, worker, judge images (buildx, cache), SBOM, Trivy scan, sign (cosign)

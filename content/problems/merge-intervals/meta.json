@@ -1,0 +1,10 @@
+{
+  "slug": "merge-intervals",
+  "title": "Merge Overlapping Ranges",
+  "difficulty": "medium",
+  "topics": ["arrays", "sorting"],
+  "patterns": ["interval-merging"],
+  "estMinutes": 30,
+  "source": "Original problem written for PrepQuest (classic algorithmic idea, original wording and examples)",
+  "license": "CC0-1.0"
+}

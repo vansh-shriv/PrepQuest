@@ -1,0 +1,113 @@
+[
+  {
+    "ordinal": 1,
+    "kind": "sample",
+    "weight": 1
+  },
+  {
+    "ordinal": 2,
+    "kind": "sample",
+    "weight": 1
+  },
+  {
+    "ordinal": 3,
+    "kind": "sample",
+    "weight": 1
+  },
+  {
+    "ordinal": 4,
+    "kind": "edge",
+    "weight": 1,
+    "label": "all zeros"
+  },
+  {
+    "ordinal": 5,
+    "kind": "edge",
+    "weight": 1,
+    "label": "no zeros"
+  },
+  {
+    "ordinal": 6,
+    "kind": "edge",
+    "weight": 1,
+    "label": "zeros already at the end"
+  },
+  {
+    "ordinal": 7,
+    "kind": "edge",
+    "weight": 1,
+    "label": "zeros all at the start"
+  },
+  {
+    "ordinal": 8,
+    "kind": "edge",
+    "weight": 1,
+    "label": "alternating"
+  },
+  {
+    "ordinal": 9,
+    "kind": "edge",
+    "weight": 1,
+    "label": "single non-zero element"
+  },
+  {
+    "ordinal": 10,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "random small"
+  },
+  {
+    "ordinal": 11,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "random small"
+  },
+  {
+    "ordinal": 12,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "random small"
+  },
+  {
+    "ordinal": 13,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "random small"
+  },
+  {
+    "ordinal": 14,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "random small"
+  },
+  {
+    "ordinal": 15,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "random medium"
+  },
+  {
+    "ordinal": 16,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "random medium"
+  },
+  {
+    "ordinal": 17,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "random medium"
+  },
+  {
+    "ordinal": 18,
+    "kind": "stress",
+    "weight": 1,
+    "label": "stress: maximum input size"
+  },
+  {
+    "ordinal": 19,
+    "kind": "stress",
+    "weight": 1,
+    "label": "stress: maximum input size"
+  }
+]

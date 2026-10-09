@@ -154,3 +154,10 @@ pnpm content:import     # import content/ into DB
 pnpm sprites:build      # PNG -> SVG rect sprites + manifest
 pnpm storybook
 ```
+
+## 7. Implementation notes (as built through Phase 3)
+
+- **New packages:** `packages/storage` (`ObjectStore` interface with a filesystem implementation for dev/tests and an S3 implementation, same behavioural contract tests; keys are validated, no traversal) and `packages/content` (problem loader, validator, canonical I/O codec, starter-code generator, Python reference harness, test builder, versioned importer, `content:*` CLI). `apps/api` depends on both: the admin module reuses the validator and importer helpers so uploads and the CLI enforce identical rules.
+- **Content lives in `content/`** (`problems/<slug>/`, `sheets/*.json`, `_lib/gentools.py` for test generators). Generated tests are committed.
+- **Frontend libraries added:** `@monaco-editor/react` (Monaco is loaded from a CDN at runtime; a plain textarea takes over if it can't load), `react-markdown` + `remark-gfm` + `remark-math` + `rehype-katex` (no raw HTML is ever rendered), `qrcode` (2FA setup), `fflate` (e2e zip building). API: `@fastify/multipart`, `fflate` (zip reading with size checks before inflating).
+- **Object storage dev default** is the `fs` driver under `.data/objects`; production uses S3/R2.

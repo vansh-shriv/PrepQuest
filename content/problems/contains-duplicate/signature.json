@@ -1,0 +1,10 @@
+{
+  "function": "containsDuplicate",
+  "params": [
+    {
+      "name": "nums",
+      "type": "int[]"
+    }
+  ],
+  "returns": "bool"
+}

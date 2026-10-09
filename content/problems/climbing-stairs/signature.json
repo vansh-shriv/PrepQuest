@@ -1,0 +1,10 @@
+{
+  "function": "countWays",
+  "params": [
+    {
+      "name": "n",
+      "type": "int"
+    }
+  ],
+  "returns": "long"
+}

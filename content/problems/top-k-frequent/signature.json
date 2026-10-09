@@ -1,0 +1,14 @@
+{
+  "function": "topKFrequent",
+  "params": [
+    {
+      "name": "nums",
+      "type": "int[]"
+    },
+    {
+      "name": "k",
+      "type": "int"
+    }
+  ],
+  "returns": "int[]"
+}

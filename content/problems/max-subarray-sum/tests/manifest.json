@@ -1,0 +1,137 @@
+[
+  {
+    "ordinal": 1,
+    "kind": "sample",
+    "weight": 1
+  },
+  {
+    "ordinal": 2,
+    "kind": "sample",
+    "weight": 1
+  },
+  {
+    "ordinal": 3,
+    "kind": "sample",
+    "weight": 1
+  },
+  {
+    "ordinal": 4,
+    "kind": "edge",
+    "weight": 1,
+    "label": "all negative: pick the largest single value"
+  },
+  {
+    "ordinal": 5,
+    "kind": "edge",
+    "weight": 1,
+    "label": "single negative element"
+  },
+  {
+    "ordinal": 6,
+    "kind": "edge",
+    "weight": 1,
+    "label": "all positive: take everything"
+  },
+  {
+    "ordinal": 7,
+    "kind": "edge",
+    "weight": 1,
+    "label": "zeros and negatives"
+  },
+  {
+    "ordinal": 8,
+    "kind": "edge",
+    "weight": 1,
+    "label": "best run sits at the end"
+  },
+  {
+    "ordinal": 9,
+    "kind": "edge",
+    "weight": 1,
+    "label": "maximum possible sum"
+  },
+  {
+    "ordinal": 10,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "random small"
+  },
+  {
+    "ordinal": 11,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "random small"
+  },
+  {
+    "ordinal": 12,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "random small"
+  },
+  {
+    "ordinal": 13,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "random small"
+  },
+  {
+    "ordinal": 14,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "random small"
+  },
+  {
+    "ordinal": 15,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "random small"
+  },
+  {
+    "ordinal": 16,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "random small"
+  },
+  {
+    "ordinal": 17,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "random small"
+  },
+  {
+    "ordinal": 18,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "random medium"
+  },
+  {
+    "ordinal": 19,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "random medium"
+  },
+  {
+    "ordinal": 20,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "random medium"
+  },
+  {
+    "ordinal": 21,
+    "kind": "hidden",
+    "weight": 1,
+    "label": "random medium"
+  },
+  {
+    "ordinal": 22,
+    "kind": "stress",
+    "weight": 1,
+    "label": "stress: maximum input size"
+  },
+  {
+    "ordinal": 23,
+    "kind": "stress",
+    "weight": 1,
+    "label": "stress: maximum input size"
+  }
+]

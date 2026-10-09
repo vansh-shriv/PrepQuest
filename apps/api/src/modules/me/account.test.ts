@@ -258,7 +258,7 @@ describe("hard delete after the grace period", () => {
     ).rows;
     await t.pool.query(
       `INSERT INTO problems (id, slug, title, statement_md, difficulty, examples, created_by)
-       VALUES ('0192f3a0-0000-7000-8000-000000000001', 'two-sum', 'Two Sum', 'Find two numbers', 'easy', '[]', $1)`,
+       VALUES ('0192f3a0-0000-7000-8000-000000000001', 'purge-fixture', 'Purge Fixture', 'Find two numbers', 'easy', '[]', $1)`,
       [expiredId],
     );
 
@@ -280,7 +280,9 @@ describe("hard delete after the grace period", () => {
       );
       expect(left.rows[0].n, table).toBe(0);
     }
-    const problem = await t.pool.query("SELECT created_by FROM problems WHERE slug = 'two-sum'");
+    const problem = await t.pool.query(
+      "SELECT created_by FROM problems WHERE slug = 'purge-fixture'",
+    );
     expect(problem.rows[0].created_by).toBeNull();
     expect(expired.accessToken).toBeTruthy();
   });

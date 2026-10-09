@@ -1,0 +1,10 @@
+{
+  "function": "longestCommonPrefix",
+  "params": [
+    {
+      "name": "strs",
+      "type": "string[]"
+    }
+  ],
+  "returns": "string"
+}

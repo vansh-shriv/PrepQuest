@@ -1,0 +1,20 @@
+[
+  {
+    "args": [
+      [1, 3, 5],
+      [2, 4, 6]
+    ],
+    "expected": [1, 2, 3, 4, 5, 6],
+    "explanation": "The values interleave."
+  },
+  {
+    "args": [[1, 1], [1]],
+    "expected": [1, 1, 1],
+    "explanation": "Duplicates are all kept."
+  },
+  {
+    "args": [[], [2, 5]],
+    "expected": [2, 5],
+    "explanation": "One input may be empty."
+  }
+]

@@ -1,0 +1,17 @@
+[
+  {
+    "args": [[7, 1, 5, 3, 6, 4]],
+    "expected": 5,
+    "explanation": "Buy at 1 (day 2), sell at 6 (day 5)."
+  },
+  {
+    "args": [[7, 6, 4, 3, 1]],
+    "expected": 0,
+    "explanation": "Prices only fall, so don't trade."
+  },
+  {
+    "args": [[1, 2]],
+    "expected": 1,
+    "explanation": "Buy at 1, sell at 2."
+  }
+]

@@ -1,0 +1,17 @@
+[
+  {
+    "args": [[1, 2, 5], 11],
+    "expected": 3,
+    "explanation": "`5 + 5 + 1`."
+  },
+  {
+    "args": [[2], 3],
+    "expected": -1,
+    "explanation": "An odd amount can't be made from 2s."
+  },
+  {
+    "args": [[1], 0],
+    "expected": 0,
+    "explanation": "Zero coins make an amount of zero."
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "function": "isPalindrome",
+  "params": [
+    {
+      "name": "s",
+      "type": "string"
+    }
+  ],
+  "returns": "bool"
+}

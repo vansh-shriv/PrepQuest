@@ -546,3 +546,142 @@
   color: var(--ink-soft);
   font-size: 14px;
 }
+
+/* ---------- Select / Textarea ---------- */
+.pq-select {
+  appearance: none;
+  padding-right: 36px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--ink) 50%),
+    linear-gradient(135deg, var(--ink) 50%, transparent 50%);
+  background-position:
+    calc(100% - 20px) 55%,
+    calc(100% - 14px) 55%;
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+.pq-textarea {
+  height: auto;
+  min-height: 88px;
+  padding: 10px 12px;
+  resize: vertical;
+  line-height: 1.5;
+}
+.pq-textarea--mono {
+  font-family: var(--font-code);
+  font-size: 14px;
+  tab-size: 4;
+}
+
+/* ---------- Status box ---------- */
+.pq-status {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 3px;
+  background: var(--surface);
+  box-shadow:
+    0 calc(var(--border) * -1) 0 0 var(--ink),
+    0 var(--border) 0 0 var(--ink),
+    calc(var(--border) * -1) 0 0 0 var(--ink),
+    var(--border) 0 0 0 var(--ink);
+}
+.pq-status--attempted {
+  background: linear-gradient(to top, var(--sun) 50%, var(--surface) 50%);
+}
+.pq-status--solved {
+  background: var(--leaf);
+  background-image:
+    linear-gradient(var(--on-olive), var(--on-olive)),
+    linear-gradient(var(--on-olive), var(--on-olive)),
+    linear-gradient(var(--on-olive), var(--on-olive));
+  background-size:
+    4px 4px,
+    4px 4px,
+    10px 4px;
+  background-position:
+    3px 9px,
+    7px 13px,
+    11px 5px;
+  background-repeat: no-repeat;
+}
+
+/* ---------- Prose: long-form text such as problem statements (read font, never pixel font) ---------- */
+.pq-prose {
+  font-family: var(--font-read);
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.pq-prose > :first-child {
+  margin-top: 0;
+}
+.pq-prose p,
+.pq-prose ul,
+.pq-prose ol {
+  margin: 0 0 14px;
+}
+.pq-prose ul,
+.pq-prose ol {
+  padding-left: 24px;
+}
+.pq-prose li {
+  margin: 4px 0;
+}
+.pq-prose code {
+  padding: 1px 6px;
+  background: var(--surface-alt);
+  border: 2px solid var(--ink);
+  font-family: var(--font-code);
+  font-size: 0.9em;
+}
+.pq-prose pre {
+  margin: 0 0 14px;
+  padding: 12px;
+  overflow-x: auto;
+  background: var(--surface-alt);
+  border: var(--border) solid var(--ink);
+}
+.pq-prose pre code {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.pq-prose h2,
+.pq-prose h3 {
+  font-family: var(--font-ui);
+  text-transform: uppercase;
+  margin: 24px 0 8px;
+}
+.pq-prose a {
+  color: var(--sky);
+  text-decoration: underline;
+}
+.pq-prose table {
+  border-collapse: collapse;
+  margin: 0 0 14px;
+}
+.pq-prose th,
+.pq-prose td {
+  padding: 4px 10px;
+  border: 2px solid var(--ink);
+}
+
+/* ---------- Resizable split panes ---------- */
+.pq-divider {
+  flex: none;
+  width: 14px;
+  cursor: col-resize;
+  background: var(--surface-alt);
+  border-left: 3px solid var(--ink);
+  border-right: 3px solid var(--ink);
+  touch-action: none;
+}
+.pq-divider:hover,
+.pq-divider:focus-visible,
+.pq-divider[data-dragging="true"] {
+  background: var(--sky-light);
+}

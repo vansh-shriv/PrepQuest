@@ -1,0 +1,2 @@
+- `1 <= intervals.length <= 10000`
+- `0 <= start <= end <= 1000000`

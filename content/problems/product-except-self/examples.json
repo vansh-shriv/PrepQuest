@@ -1,0 +1,17 @@
+[
+  {
+    "args": [[1, 2, 3, 4]],
+    "expected": [24, 12, 8, 6],
+    "explanation": "For index 0: `2 * 3 * 4 = 24`."
+  },
+  {
+    "args": [[-1, 1, 0, -3, 3]],
+    "expected": [0, 0, 9, 0, 0],
+    "explanation": "Only the zero's own slot avoids the zero."
+  },
+  {
+    "args": [[2, 3]],
+    "expected": [3, 2],
+    "explanation": "Each answer is the other element."
+  }
+]

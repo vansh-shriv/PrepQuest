@@ -1,0 +1,10 @@
+{
+  "slug": "max-subarray-sum",
+  "title": "Best Streak",
+  "difficulty": "medium",
+  "topics": ["arrays", "dynamic-programming"],
+  "patterns": [],
+  "estMinutes": 25,
+  "source": "Original problem written for PrepQuest (classic algorithmic idea, original wording and examples)",
+  "license": "CC0-1.0"
+}

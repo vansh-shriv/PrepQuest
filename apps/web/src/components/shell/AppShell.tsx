@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Button, Dialog, SearchPill, Sprite } from "@prepquest/ui";
 import { useAuth } from "@/lib/auth-context";
-import { isActive, MOBILE_TABS, NAV_ITEMS } from "./nav";
+import { isActive, isFullBleed, MOBILE_TABS, navItemsFor } from "./nav";
 
 function sunflowerLabel(streak: number): string {
   return streak > 0 ? `${streak} day streak` : "No streak yet";
@@ -13,6 +13,9 @@ function sunflowerLabel(streak: number): string {
 
 function TopBar({ onMenu }: { onMenu: () => void }) {
   const { user } = useAuth();
+  const pathname = usePathname();
+  // the problem list has its own, richer search box: don't show two on one page
+  const showSearch = pathname !== "/problems";
   const router = useRouter();
   const [query, setQuery] = useState("");
 
@@ -34,13 +37,17 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
       <Button size="sm" onClick={onMenu} aria-haspopup="dialog">
         Menu
       </Button>
-      <form onSubmit={search} className="mx-2 hidden max-w-md flex-1 md:block" role="search">
-        <SearchPill
-          label="Search problems"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-      </form>
+      {showSearch ? (
+        <form onSubmit={search} className="mx-2 hidden max-w-md flex-1 md:block" role="search">
+          <SearchPill
+            label="Search problems"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </form>
+      ) : (
+        <span className="hidden flex-1 md:block" />
+      )}
       <div className="ml-auto flex items-center gap-4">
         <span className="flex items-center gap-1" title="Experience points">
           <Sprite name="coin" scale={2} animate />
@@ -69,12 +76,14 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
 
 function SideRail() {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const items = navItemsFor(user?.role);
   return (
     <nav
       aria-label="Main"
       className="sticky top-[57px] hidden h-[calc(100vh-57px)] w-[72px] shrink-0 flex-col items-center gap-2 border-r-[3px] border-ink bg-surface-alt py-4 md:flex"
     >
-      {NAV_ITEMS.map((item) => {
+      {items.map((item) => {
         const active = isActive(pathname, item.href);
         return (
           <Link
@@ -130,7 +139,7 @@ function BottomTabs({ onMenu }: { onMenu: () => void }) {
 }
 
 function MenuDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -142,19 +151,20 @@ function MenuDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <Dialog open={open} onClose={onClose} title="Menu" tone="olive">
       <ul className="m-0 grid list-none gap-2 p-0">
-        {[...NAV_ITEMS, { href: "/settings", label: "Settings", icon: "user" as const }].map(
-          (item) => (
-            <li key={item.href}>
-              <Link
-                href={item.href}
-                className="pq-font-ui flex min-h-[44px] items-center gap-3 px-2 text-sm uppercase hover:bg-surface-alt"
-              >
-                <Sprite name={item.icon} scale={2} />
-                {item.label}
-              </Link>
-            </li>
-          ),
-        )}
+        {[
+          ...navItemsFor(user?.role),
+          { href: "/settings", label: "Settings", icon: "user" as const },
+        ].map((item) => (
+          <li key={item.href}>
+            <Link
+              href={item.href}
+              className="pq-font-ui flex min-h-[44px] items-center gap-3 px-2 text-sm uppercase hover:bg-surface-alt"
+            >
+              <Sprite name={item.icon} scale={2} />
+              {item.label}
+            </Link>
+          </li>
+        ))}
       </ul>
       <div className="mt-4">
         <Button
@@ -175,6 +185,7 @@ function MenuDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
 /** Authenticated layout: top bar, icon rail (desktop) or bottom tabs (mobile), and the page. */
 export function AppShell({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const bleed = isFullBleed(usePathname());
   return (
     <div className="min-h-screen">
       <a
@@ -186,7 +197,14 @@ export function AppShell({ children }: { children: ReactNode }) {
       <TopBar onMenu={() => setMenuOpen(true)} />
       <div className="flex">
         <SideRail />
-        <main id="main" className="mx-auto w-full max-w-[1280px] flex-1 p-4 pb-24 md:p-8 md:pb-8">
+        <main
+          id="main"
+          className={
+            bleed
+              ? "min-w-0 flex-1"
+              : "mx-auto w-full max-w-[1280px] flex-1 p-4 pb-24 md:p-8 md:pb-8"
+          }
+        >
           {children}
         </main>
       </div>

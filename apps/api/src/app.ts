@@ -17,14 +17,19 @@ import type { AuthContext } from "./modules/auth/service.js";
 import { healthRoutes, type HealthChecks } from "./modules/health/routes.js";
 import { interviewRoutes } from "./modules/interviews/routes.js";
 import { meRoutes } from "./modules/me/routes.js";
+import { problemRoutes } from "./modules/problems/routes.js";
 import { userRoutes } from "./modules/users/routes.js";
+import { adminRoutes } from "./modules/admin/routes.js";
 import { registerAuth } from "./plugins/auth.js";
+import type { ObjectStore } from "@prepquest/storage";
 
 export interface AppDeps {
   env: ServerEnv;
   db: Database;
   keys: JwtKeys;
   mailer: Mailer;
+  /** Object storage for hidden test data and uploads. */
+  store: ObjectStore;
   checks: HealthChecks;
   /** When set, rate-limit counters, lockouts and OAuth state live in Redis (shared across instances). */
   redis?: Redis;
@@ -161,6 +166,11 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(authRoutes, { prefix: "/v1", ctx, rateLimitPerMin: env.RL_AUTH_PER_MIN });
   await app.register(meRoutes, { prefix: "/v1", ctx });
   await app.register(userRoutes, { prefix: "/v1", db });
+  await app.register(problemRoutes, { prefix: "/v1", db });
   await app.register(interviewRoutes, { prefix: "/v1" });
+  await app.register(adminRoutes, {
+    prefix: "/v1",
+    ctx: { db, store: deps.store, allowSelfPublish: env.ALLOW_SELF_PUBLISH },
+  });
   return app;
 }
