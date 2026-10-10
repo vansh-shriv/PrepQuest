@@ -18,7 +18,10 @@ import { healthRoutes, type HealthChecks } from "./modules/health/routes.js";
 import { interviewRoutes } from "./modules/interviews/routes.js";
 import { meRoutes } from "./modules/me/routes.js";
 import { libraryRoutes } from "./modules/library/routes.js";
+import { practiceRoutes } from "./modules/practice/routes.js";
 import { problemRoutes } from "./modules/problems/routes.js";
+import { ensureBadgeCatalog } from "./modules/progress/award.js";
+import { progressRoutes } from "./modules/progress/routes.js";
 import type { JudgeQueue } from "./modules/submissions/queue.js";
 import { submissionRoutes } from "./modules/submissions/routes.js";
 import { userRoutes } from "./modules/users/routes.js";
@@ -177,6 +180,9 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     ctx: { db, queue: deps.judge, limiter: ctx.limiter },
   });
   await app.register(libraryRoutes, { prefix: "/v1", db });
+  await app.register(practiceRoutes, { prefix: "/v1", db });
+  await app.register(progressRoutes, { prefix: "/v1", db });
+  await ensureBadgeCatalog(db);
   await app.register(interviewRoutes, { prefix: "/v1" });
   await app.register(adminRoutes, {
     prefix: "/v1",

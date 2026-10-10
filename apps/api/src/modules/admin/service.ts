@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, ilike, inArray, sql } from "drizzle-orm";
 import {
   adminAuditLog,
+  editorials,
   hints,
   newId,
   problemLanguages,
@@ -20,6 +21,8 @@ import {
   type AdminProblemListItem,
   type AuditEntry,
   type CreateProblem,
+  type SaveEditorial,
+  type SaveHints,
   type ProblemStatusValue,
   type Signature,
   type UpdateProblem,
@@ -205,6 +208,16 @@ export async function getAdminProblem(
     .from(testCases)
     .where(and(eq(testCases.problemId, id), eq(testCases.version, p.currentVersion)))
     .orderBy(asc(testCases.ordinal));
+  const [editorialRow] = await ctx.db.select().from(editorials).where(eq(editorials.problemId, id));
+  const relatedIds = editorialRow?.relatedProblemIds ?? [];
+  const relatedSlugs = relatedIds.length
+    ? (
+        await ctx.db
+          .select({ slug: problems.slug })
+          .from(problems)
+          .where(inArray(problems.id, relatedIds))
+      ).map((r) => r.slug)
+    : [];
 
   const lang = (l: Language) => langs.find((x) => x.language === l);
   const cpp = lang("cpp");
@@ -232,6 +245,13 @@ export async function getAdminProblem(
       python: lang("python")?.starterCode ?? "",
     },
     hints: hintRows.map((h) => ({ tier: h.tier as 1 | 2 | 3, bodyMd: h.bodyMd })),
+    editorial: editorialRow
+      ? {
+          approaches: editorialRow.approaches,
+          talkTrackMd: editorialRow.talkTrackMd,
+          relatedSlugs,
+        }
+      : null,
     testCases: cases.map((c) => ({
       ordinal: c.ordinal,
       kind: c.kind as AdminProblemDetail["testCases"][number]["kind"],
@@ -527,17 +547,30 @@ export async function validateProblem(ctx: AdminContext, id: string): Promise<Va
         .where(eq(hints.problemId, id))
     )[0]?.n ?? 0;
   add("hints", "Three hint tiers", hintCount >= 3, `${hintCount} of 3 written`, "warn");
+  const [editorialRow] = await ctx.db
+    .select({ approaches: editorials.approaches })
+    .from(editorials)
+    .where(eq(editorials.problemId, id));
+  add(
+    "editorial",
+    "Editorial with at least one approach",
+    (editorialRow?.approaches.length ?? 0) > 0,
+    "players unlock it after solving, using all hints, or giving up",
+    "warn",
+  );
+  // The reference and mutant solutions live in the content repository, not in the database, so the
+  // judge runs them in CI (`pnpm content:judge`) rather than from this screen.
   checks.push({
     id: "reference",
-    label: "Reference solution passes all tests",
+    label: "Reference solutions pass every test",
     status: "skip",
-    detail: "runs once the judge exists",
+    detail: "checked in CI by `pnpm content:judge` (C++, Java and Python through the real judge)",
   });
   checks.push({
     id: "mutants",
     label: "Mutant solutions fail as expected",
     status: "skip",
-    detail: "runs once the judge exists",
+    detail: "checked in CI by `pnpm content:judge`",
   });
   return { ok: !checks.some((c) => c.status === "fail"), checks };
 }
@@ -696,4 +729,101 @@ export async function actorNames(db: Db, ids: Array<string | null>): Promise<Map
     .from(users)
     .where(inArray(users.id, unique));
   return new Map(rows.map((r) => [r.id, r.email]));
+}
+
+// ---------------------------------------------------------------- hints and editorial
+
+export async function saveHints(
+  ctx: AdminContext,
+  actor: Actor,
+  id: string,
+  input: SaveHints,
+): Promise<AdminProblemDetail> {
+  const p = await loadProblem(ctx.db, id);
+  requireAllowed(permissionsFor(ctx, actor, p).edit, "edit");
+  const before = await ctx.db
+    .select()
+    .from(hints)
+    .where(eq(hints.problemId, id))
+    .orderBy(asc(hints.tier));
+  await withTransaction(ctx.db, async (tx) => {
+    await tx.delete(hints).where(eq(hints.problemId, id));
+    if (input.hints.length) {
+      await tx
+        .insert(hints)
+        .values(
+          input.hints.map((h) => ({ id: newId(), problemId: id, tier: h.tier, bodyMd: h.bodyMd })),
+        );
+    }
+    await audit(tx, actor, {
+      action: "problem.hints.save",
+      entityId: id,
+      before: { hints: before.map((h) => ({ tier: h.tier, bodyMd: h.bodyMd })) },
+      after: { hints: input.hints },
+    });
+  });
+  return getAdminProblem(ctx, actor, id);
+}
+
+export async function saveEditorial(
+  ctx: AdminContext,
+  actor: Actor,
+  id: string,
+  input: SaveEditorial,
+): Promise<AdminProblemDetail> {
+  const p = await loadProblem(ctx.db, id);
+  requireAllowed(permissionsFor(ctx, actor, p).edit, "edit");
+  const slugs = [...new Set(input.relatedSlugs ?? [])];
+  const related = slugs.length
+    ? await ctx.db
+        .select({ id: problems.id, slug: problems.slug })
+        .from(problems)
+        .where(inArray(problems.slug, slugs))
+    : [];
+  const unknown = slugs.filter((s) => !related.some((r) => r.slug === s));
+  if (unknown.length) {
+    throw new AppError("VALIDATION_ERROR", 422, `Unknown related problems: ${unknown.join(", ")}`);
+  }
+  if (related.some((r) => r.id === id)) {
+    throw new AppError("VALIDATION_ERROR", 422, "A problem cannot be related to itself");
+  }
+  const [before] = await ctx.db.select().from(editorials).where(eq(editorials.problemId, id));
+  await withTransaction(ctx.db, async (tx) => {
+    const values = {
+      approaches: input.approaches,
+      talkTrackMd: input.talkTrackMd || null,
+      relatedProblemIds: related.map((r) => r.id),
+    };
+    await tx
+      .insert(editorials)
+      .values({ id: newId(), problemId: id, ...values })
+      .onConflictDoUpdate({ target: editorials.problemId, set: values });
+    await audit(tx, actor, {
+      action: "problem.editorial.save",
+      entityId: id,
+      before: before
+        ? { approaches: before.approaches.length, talkTrack: !!before.talkTrackMd }
+        : null,
+      after: {
+        approaches: input.approaches.length,
+        talkTrack: !!input.talkTrackMd,
+        related: slugs,
+      },
+    });
+  });
+  return getAdminProblem(ctx, actor, id);
+}
+
+export async function deleteEditorial(
+  ctx: AdminContext,
+  actor: Actor,
+  id: string,
+): Promise<AdminProblemDetail> {
+  const p = await loadProblem(ctx.db, id);
+  requireAllowed(permissionsFor(ctx, actor, p).edit, "edit");
+  await withTransaction(ctx.db, async (tx) => {
+    await tx.delete(editorials).where(eq(editorials.problemId, id));
+    await audit(tx, actor, { action: "problem.editorial.delete", entityId: id });
+  });
+  return getAdminProblem(ctx, actor, id);
 }

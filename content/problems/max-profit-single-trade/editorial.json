@@ -1,0 +1,40 @@
+{
+  "approaches": [
+    {
+      "name": "Every buy and sell pair",
+      "intuition": "Try each buy day with each later sell day and keep the largest difference.",
+      "steps": [
+        "For each buy day `i`",
+        "For each later sell day `j`",
+        "Track the maximum of `prices[j] - prices[i]`, never below 0"
+      ],
+      "code": {
+        "python": "class Solution:\n    def maxProfit(self, prices):\n        best = 0\n        for i in range(len(prices)):\n            for j in range(i + 1, len(prices)):\n                best = max(best, prices[j] - prices[i])\n        return best\n"
+      },
+      "time": "O(n^2)",
+      "space": "O(1)"
+    },
+    {
+      "name": "One pass with the cheapest price so far",
+      "intuition": "The best profit ending today is today's price minus the lowest price before it. Carry that minimum forward.",
+      "steps": [
+        "Keep the lowest price seen so far",
+        "Profit today is `price - lowest`",
+        "Keep the largest profit"
+      ],
+      "code": {
+        "python": {
+          "file": "solutions/ref.py"
+        }
+      },
+      "time": "O(n)",
+      "space": "O(1)",
+      "pitfalls": [
+        "Selling before buying: update the minimum after computing today's profit.",
+        "Falling prices: the answer is 0, not a negative number."
+      ]
+    }
+  ],
+  "talkTrackMd": "Frame it as: for every sell day I want the lowest earlier price. That is a running minimum, so a single pass suffices. Mention the all-decreasing case returning 0.",
+  "relatedSlugs": ["max-subarray-sum", "trapping-rain-water"]
+}

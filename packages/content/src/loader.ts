@@ -1,8 +1,10 @@
 import { readdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 import { z } from "zod";
+import { saveEditorialSchema, type SaveEditorial } from "@prepquest/shared";
 import {
   caseSchema,
+  editorialFileSchema,
   exampleSchema,
   LANGUAGES,
   manifestEntrySchema,
@@ -114,6 +116,8 @@ export async function loadProblem(
     if (text !== null) hints[tier] = text.trim();
   }
 
+  const editorial = await loadEditorial(dir, slug, issues);
+
   const tests: TestFile[] = [];
   const manifest = await readJson(
     join(dir, "tests", "manifest.json"),
@@ -140,7 +144,18 @@ export async function loadProblem(
     return { bundle: null, issues };
   }
   return {
-    bundle: { dir, meta, statementMd, constraintsMd, examples, signature, starters, hints, tests },
+    bundle: {
+      dir,
+      meta,
+      statementMd,
+      constraintsMd,
+      examples,
+      signature,
+      starters,
+      hints,
+      editorial,
+      tests,
+    },
     issues,
   };
 }
@@ -151,4 +166,68 @@ export async function loadCases(dir: string, slug: string, issues: Issue[]): Pro
     (await readJson(join(dir, "tests", "cases.json"), z.array(caseSchema), slug, issues, false)) ??
     []
   );
+}
+
+const MAX_CODE_FILE_BYTES = 20_000;
+
+/** Reads `editorial.json`, inlines `{ "file": ... }` code references and checks the result. */
+async function loadEditorial(
+  dir: string,
+  slug: string,
+  issues: Issue[],
+): Promise<SaveEditorial | null> {
+  const raw = await readJson(join(dir, "editorial.json"), editorialFileSchema, slug, issues, false);
+  if (!raw) return null;
+  const approaches: unknown[] = [];
+  for (const approach of raw.approaches) {
+    const code: Record<string, string> = {};
+    for (const [lang, value] of Object.entries(approach.code)) {
+      if (typeof value === "string") {
+        code[lang] = value;
+        continue;
+      }
+      const rel = value.file;
+      if (isAbsolute(rel) || rel.split(/[\\/]/).includes("..")) {
+        issues.push({
+          level: "error",
+          problem: slug,
+          message: `editorial code file escapes the problem folder: ${rel}`,
+        });
+        continue;
+      }
+      const text = await readText(join(dir, rel));
+      if (text === null) {
+        issues.push({
+          level: "error",
+          problem: slug,
+          message: `editorial code file not found: ${rel}`,
+        });
+      } else if (Buffer.byteLength(text) > MAX_CODE_FILE_BYTES) {
+        issues.push({
+          level: "error",
+          problem: slug,
+          message: `editorial code file is larger than 20 KB: ${rel}`,
+        });
+      } else {
+        code[lang] = text;
+      }
+    }
+    approaches.push({ ...approach, code });
+  }
+  const parsed = saveEditorialSchema.safeParse({
+    approaches,
+    talkTrackMd: raw.talkTrackMd ?? null,
+    relatedSlugs: raw.relatedSlugs ?? [],
+  });
+  if (!parsed.success) {
+    for (const i of parsed.error.issues) {
+      issues.push({
+        level: "error",
+        problem: slug,
+        message: `editorial.json: ${i.path.join(".") || "(root)"}: ${i.message}`,
+      });
+    }
+    return null;
+  }
+  return parsed.data;
 }

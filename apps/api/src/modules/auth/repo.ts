@@ -283,6 +283,7 @@ export async function getMe(db: Db, userId: string): Promise<MeResponse | undefi
       sound: settings.sound,
       reducedMotion: settings.reducedMotion,
       hintMode: settings.hintMode as "strict" | "relaxed",
+      openEditorials: settings.openEditorials,
       defaultLanguage: settings.defaultLanguage,
     },
   };

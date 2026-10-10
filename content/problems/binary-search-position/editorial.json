@@ -1,0 +1,41 @@
+{
+  "approaches": [
+    {
+      "name": "Linear scan",
+      "intuition": "Look at every element until the target appears. It ignores that the array is sorted.",
+      "steps": [
+        "Walk the array from the start",
+        "Return the index of the first match",
+        "Return -1 at the end"
+      ],
+      "code": {
+        "python": "class Solution:\n    def search(self, nums, target):\n        for i, x in enumerate(nums):\n            if x == target:\n                return i\n        return -1\n"
+      },
+      "time": "O(n), too slow for the required O(log n)",
+      "space": "O(1)"
+    },
+    {
+      "name": "Binary search",
+      "intuition": "Sorted order lets one comparison discard half of the candidates.",
+      "steps": [
+        "Keep the inclusive range `[lo, hi]`",
+        "Compare the middle with the target",
+        "Shrink the range to the half that can still contain it"
+      ],
+      "code": {
+        "python": {
+          "file": "solutions/ref.py"
+        }
+      },
+      "time": "O(log n)",
+      "space": "O(1)",
+      "pitfalls": [
+        "Infinite loops from `lo = mid` instead of `mid + 1`.",
+        "Overflow in `(lo + hi) / 2` in languages with fixed-size ints: use `lo + (hi - lo) / 2`.",
+        "Off-by-one on the loop condition: `lo <= hi` when `hi` is inclusive."
+      ]
+    }
+  ],
+  "talkTrackMd": "Say the invariant out loud: if the target exists, it is inside `[lo, hi]`. Then each step keeps that true while halving the range. Mention the overflow-safe midpoint.",
+  "relatedSlugs": ["climbing-stairs", "merge-sorted-arrays"]
+}

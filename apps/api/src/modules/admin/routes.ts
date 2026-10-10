@@ -6,6 +6,8 @@ import {
   adminListQuerySchema,
   createProblemSchema,
   reasonSchema,
+  saveEditorialSchema,
+  saveHintsSchema,
   updateProblemSchema,
 } from "@prepquest/shared";
 import { parse } from "../../lib/validate.js";
@@ -40,6 +42,18 @@ export const adminRoutes: FastifyPluginAsync<{ ctx: svc.AdminContext }> = async 
 
   app.patch("/admin/problems/:id", async (req) =>
     svc.updateProblem(ctx, actor(req), id(req), parse(updateProblemSchema, req.body)),
+  );
+
+  app.put("/admin/problems/:id/hints", async (req) =>
+    svc.saveHints(ctx, actor(req), id(req), parse(saveHintsSchema, req.body)),
+  );
+
+  app.put("/admin/problems/:id/editorial", async (req) =>
+    svc.saveEditorial(ctx, actor(req), id(req), parse(saveEditorialSchema, req.body)),
+  );
+
+  app.delete("/admin/problems/:id/editorial", async (req) =>
+    svc.deleteEditorial(ctx, actor(req), id(req)),
   );
 
   app.get("/admin/problems/:id/validation", async (req) => svc.validateProblem(ctx, id(req)));

@@ -36,6 +36,8 @@ import {
   type TagFacets,
 } from "@prepquest/shared";
 
+import { markSeen } from "../practice/service.js";
+
 // ---------------------------------------------------------------- helpers
 
 /** The caller's progress on a problem as a correlated subquery (NULL for anonymous callers). */
@@ -274,6 +276,8 @@ export async function getProblem(
       .where(and(eq(userProblemState.userId, userId), eq(userProblemState.problemId, p.id)))
       .limit(1);
     state = { status: (s?.status ?? "unseen") as ProblemStatus, attempts: s?.attempts ?? 0 };
+    // hint and give-up cooldowns count from the first time the problem was opened
+    await markSeen(db, userId, p.id);
     const [b] = await db
       .select({ folder: bookmarks.folder })
       .from(bookmarks)

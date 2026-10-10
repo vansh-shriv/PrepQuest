@@ -182,7 +182,8 @@ pnpm content:new <slug>                       # scaffold a problem folder
 pnpm content:build-tests [slug]               # generate tests/*.in|out from examples + cases.json + gen.py via the reference solution
 pnpm content:validate [slug]                  # schemas, tag taxonomy, test format and counts (no code execution)
 pnpm content:verify [slug]                    # re-run reference solutions against the committed tests
-pnpm content:import [--publish] [slug]        # idempotent upsert into the database (new version only when content changed)
+pnpm content:import [--publish] [slug]        # idempotent upsert into the database (new version only when content changed); also syncs hints and editorials
+pnpm content:judge [slug]                     # references, editorial code and mutants through the real judge (needs python; g++/javac when present)
 pnpm sprites:build | storybook
 pnpm llm:record                 # record LLM fixtures for tests
 ```

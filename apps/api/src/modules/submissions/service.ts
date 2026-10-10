@@ -8,6 +8,7 @@ import {
   submissionResults,
   submissions,
   testCases,
+  userProblemState,
   type Database,
 } from "@prepquest/db";
 import type { CheckerConfig, JudgeJob, JudgeTest } from "@prepquest/judge-core";
@@ -17,6 +18,7 @@ import {
   isTerminal,
   type DiffLine,
   type LanguageValue,
+  type SolveRewards,
   type SubmissionCreate,
   type SubmissionCreated,
   type SubmissionDetail,
@@ -178,6 +180,11 @@ export async function createSubmission(
     tests.push({ ordinal: ++next, kind: "custom", customInput });
   }
 
+  const [priorState] = await db
+    .select({ hintsUsed: userProblemState.hintsUsed })
+    .from(userProblemState)
+    .where(and(eq(userProblemState.userId, userId), eq(userProblemState.problemId, problem.id)));
+
   const id = newId();
   const inserted = await db
     .insert(submissions)
@@ -193,6 +200,7 @@ export async function createSubmission(
       mode: input.mode,
       verdict: "QUEUED",
       total: tests.length,
+      hintsUsed: priorState?.hintsUsed ?? 0,
       idempotencyKey: idempotencyKey ?? null,
       queuedAt: new Date(),
     })
@@ -320,6 +328,7 @@ export async function getSubmission(
     results: resultRows.map(toResult),
     note: s.note,
     hintsUsed: s.hintsUsed,
+    rewards: (s.rewards as SolveRewards | null) ?? null,
     createdAt: s.createdAt.toISOString(),
     finishedAt: s.finishedAt?.toISOString() ?? null,
     ...(finished ? { code: s.code } : {}),

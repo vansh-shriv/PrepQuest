@@ -1,0 +1,42 @@
+{
+  "approaches": [
+    {
+      "name": "Plain recursion",
+      "intuition": "`ways(n) = ways(n - 1) + ways(n - 2)` written directly. It recomputes the same subproblems over and over.",
+      "steps": ["Base cases: 1 way for step 0 and 1", "Add the two smaller answers"],
+      "code": {
+        "python": "class Solution:\n    def countWays(self, n):\n        def ways(k):\n            return 1 if k <= 1 else ways(k - 1) + ways(k - 2)\n        return ways(n)\n"
+      },
+      "time": "O(2^n): far too slow for large n",
+      "space": "O(n) of recursion"
+    },
+    {
+      "name": "Rolling two values",
+      "intuition": "Each answer depends only on the previous two, so keep just those two numbers and walk up to `n`.",
+      "steps": [
+        "Start with 1 way for step 0 and step 1",
+        "Replace the pair with `(b, a + b)`",
+        "Repeat up to `n`"
+      ],
+      "code": {
+        "python": {
+          "file": "solutions/ref.py"
+        },
+        "cpp": {
+          "file": "solutions/ref.cpp"
+        },
+        "java": {
+          "file": "solutions/ref.java"
+        }
+      },
+      "time": "O(n)",
+      "space": "O(1)",
+      "pitfalls": [
+        "The result grows quickly: use a 64-bit integer (the statement guarantees it fits).",
+        "`n = 1` must return 1."
+      ]
+    }
+  ],
+  "talkTrackMd": "Define the subproblem (ways to reach step k), write the recurrence, point out it is Fibonacci, then collapse the table to two variables.",
+  "relatedSlugs": ["coin-change-min", "max-subarray-sum"]
+}

@@ -1,6 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import {
   companies,
+  editorials,
   hints,
   newId,
   problemCompanies,
@@ -94,6 +95,7 @@ export async function importProblem(
       };
       if (Object.keys(patch).length > 0)
         await db.update(problems).set(patch).where(eq(problems.id, existing.id));
+      await syncLearningContent(db, existing.id, bundle);
       return { slug: meta.slug, action: "unchanged", version: existing.currentVersion };
     }
   }
@@ -170,7 +172,7 @@ export async function importProblem(
     );
     await syncTags(tx, problemId, [...meta.topics, ...meta.patterns]);
     await syncCompanies(tx, problemId, meta.companies);
-    await syncHints(tx, problemId, bundle.hints);
+    await syncLearningContent(tx, problemId, bundle);
   });
 
   return { slug: meta.slug, action: existing ? "updated" : "created", version };
@@ -225,6 +227,30 @@ async function syncCompanies(tx: Db, problemId: string, list: ProblemBundle["met
       lastSeenYear: c.lastSeenYear ?? null,
     });
   }
+}
+
+/** Hints and the editorial are replaced from the files on every import, without creating a version. */
+export async function syncLearningContent(db: Db, problemId: string, bundle: ProblemBundle) {
+  await syncHints(db, problemId, bundle.hints);
+  await syncEditorial(db, problemId, bundle);
+}
+
+export async function syncEditorial(db: Db, problemId: string, bundle: ProblemBundle) {
+  const doc = bundle.editorial;
+  if (!doc) return; // no file: leave anything an admin wrote in the editor alone
+  const slugs = doc.relatedSlugs ?? [];
+  const related = slugs.length
+    ? await db.select({ id: problems.id }).from(problems).where(inArray(problems.slug, slugs))
+    : [];
+  const values = {
+    approaches: doc.approaches,
+    talkTrackMd: doc.talkTrackMd || null,
+    relatedProblemIds: related.map((r) => r.id),
+  };
+  await db
+    .insert(editorials)
+    .values({ id: newId(), problemId, ...values })
+    .onConflictDoUpdate({ target: editorials.problemId, set: values });
 }
 
 async function syncHints(tx: Db, problemId: string, bundleHints: ProblemBundle["hints"]) {
@@ -298,5 +324,26 @@ export async function importFolder(
 ): Promise<ImportResult> {
   const { bundle, issues } = await loadProblem(contentRoot, slug);
   if (!bundle) throw new Error(issues.map((i) => i.message).join("; "));
-  return importProblem(db, store, bundle, options);
+  const result = await importProblem(db, store, bundle, options);
+  return result;
+}
+
+/**
+ * Re-links editorials to their related problems once every problem exists (a related problem imported
+ * later in the same run wasn't there yet when the first editorial was written).
+ */
+export async function linkRelatedEditorials(
+  db: Database,
+  contentRoot: string,
+  slugs: string[],
+): Promise<void> {
+  for (const slug of slugs) {
+    const { bundle } = await loadProblem(contentRoot, slug);
+    if (!bundle?.editorial) continue;
+    const [row] = await db
+      .select({ id: problems.id })
+      .from(problems)
+      .where(eq(problems.slug, slug));
+    if (row) await syncEditorial(db, row.id, bundle);
+  }
 }

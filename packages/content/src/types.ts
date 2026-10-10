@@ -3,7 +3,13 @@ import { z } from "zod";
 // ---------------------------------------------------------------- signatures and values
 
 // Defined in @prepquest/shared so the admin API and web forms use the same schema.
-import { PARAM_TYPES, signatureSchema, type ParamType, type Signature } from "@prepquest/shared";
+import {
+  PARAM_TYPES,
+  signatureSchema,
+  type ParamType,
+  type SaveEditorial,
+  type Signature,
+} from "@prepquest/shared";
 export { PARAM_TYPES, signatureSchema, type ParamType, type Signature };
 
 // ---------------------------------------------------------------- problem files
@@ -77,6 +83,29 @@ export const caseSchema = z.object({
 });
 export type TestCase = z.infer<typeof caseSchema>;
 
+/** `editorial.json`: an approach's code may reference a file (e.g. the reference solution) instead of inlining it. */
+export const editorialFileSchema = z.object({
+  approaches: z
+    .array(
+      z.object({
+        name: z.string(),
+        intuition: z.string(),
+        steps: z.array(z.string()),
+        code: z.partialRecord(
+          z.enum(["cpp", "java", "python"]),
+          z.union([z.string(), z.object({ file: z.string() })]),
+        ),
+        time: z.string(),
+        space: z.string(),
+        pitfalls: z.array(z.string()).optional(),
+      }),
+    )
+    .min(1),
+  talkTrackMd: z.string().nullable().optional(),
+  relatedSlugs: z.array(z.string()).optional(),
+});
+export type EditorialFile = z.infer<typeof editorialFileSchema>;
+
 export const hintsSchema = z.object({
   1: z.string().optional(),
   2: z.string().optional(),
@@ -115,6 +144,8 @@ export interface ProblemBundle {
   /** Author-supplied starter code; missing languages are generated from the signature. */
   starters: Partial<Record<Language, string>>;
   hints: Partial<Record<1 | 2 | 3, string>>;
+  /** Resolved from `editorial.json` (file references replaced by their contents), or null. */
+  editorial: SaveEditorial | null;
   tests: TestFile[];
 }
 

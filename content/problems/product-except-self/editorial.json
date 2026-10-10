@@ -1,0 +1,37 @@
+{
+  "approaches": [
+    {
+      "name": "Multiply everything else for each position",
+      "intuition": "For each position, multiply all the other elements. Division is avoided but every product is recomputed.",
+      "steps": ["For each `i`", "Multiply all `nums[j]` with `j != i` modulo 1000000007"],
+      "code": {
+        "python": "class Solution:\n    def productExceptSelf(self, nums):\n        mod = 1000000007\n        out = []\n        for i in range(len(nums)):\n            p = 1\n            for j in range(len(nums)):\n                if j != i:\n                    p = p * nums[j] % mod\n            out.append(p)\n        return out\n"
+      },
+      "time": "O(n^2)",
+      "space": "O(1) besides the output"
+    },
+    {
+      "name": "Prefix and suffix products",
+      "intuition": "`answer[i] = (product before i) * (product after i)`. Two linear passes compute both without division.",
+      "steps": [
+        "Left pass: store the running product before each index",
+        "Right pass: multiply the running product after each index",
+        "Apply the modulo at every multiplication"
+      ],
+      "code": {
+        "python": {
+          "file": "solutions/ref.py"
+        }
+      },
+      "time": "O(n)",
+      "space": "O(1) extra besides the output",
+      "pitfalls": [
+        "Zeros: this method needs no division, so they just work.",
+        "Negative numbers: reduce into `[0, 1000000006]` after every multiplication (in C++ and Java add the modulus when the remainder is negative).",
+        "Overflow: multiply in 64 bits before reducing."
+      ]
+    }
+  ],
+  "talkTrackMd": "Say why division fails (zeros and the modulus), then present prefix times suffix. Point out the O(1) extra space trick of reusing the output array for the left products.",
+  "relatedSlugs": ["max-subarray-sum", "trapping-rain-water"]
+}

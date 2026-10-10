@@ -267,6 +267,82 @@ export const SPRITES = {
       ".......KK",
     ],
   },
+  // ---- growth stages: skill plants (topic mastery) and the streak sunflower
+  plantSeed: {
+    palette: { D: "#7a4a1a", E: "#5a3510", K: "#3a2208" },
+    rows: [
+      "..............",
+      "..............",
+      "..............",
+      "......KK......",
+      ".....KEEK.....",
+      "....DDDDDD....",
+      "..DDDDDDDDDD..",
+      ".DDDDDDDDDDDD.",
+    ],
+  },
+  plantSprout: {
+    palette: { D: "#7a4a1a", G: "var(--leaf)", S: "var(--leaf-dark)" },
+    rows: [
+      "..............",
+      "....GG..GG....",
+      "...GGGSSGGG...",
+      "....GGSSGG....",
+      ".......SS.....",
+      "......SSD.....",
+      "..DDDDDSDDDD..",
+      ".DDDDDDDDDDDD.",
+    ],
+  },
+  plantBud: {
+    palette: { D: "#7a4a1a", G: "var(--leaf)", S: "var(--leaf-dark)", P: "var(--blossom)" },
+    rows: [
+      "......PP......",
+      ".....PPPP.....",
+      "......SS......",
+      "..GG..SS..GG..",
+      ".GGGGSSSSGGGG.",
+      "..GGG.SS.GGG..",
+      "..DDDDSSDDDD..",
+      ".DDDDDDDDDDDD.",
+    ],
+  },
+  plantBloom: {
+    palette: {
+      P: "var(--blossom)",
+      Y: "var(--sun)",
+      S: "var(--leaf-dark)",
+      G: "var(--leaf)",
+      D: "#7a4a1a",
+    },
+    rows: [
+      "...PP....PP...",
+      "..PPPP..PPPP..",
+      "...PPYYYYPP...",
+      "....PYYYYP....",
+      "..G..PSSP..G..",
+      ".GGGG.SS.GGGG.",
+      "..GGG.SS.GGG..",
+      "..DDDDSSDDDD..",
+    ],
+  },
+  sunflowerSeed: {
+    palette: { D: "#7a4a1a", G: "var(--leaf)" },
+    rows: ["....G.....", "...GG.....", "....G.....", "....G.....", "..DDDDDD..", ".DDDDDDDD."],
+  },
+  sunflowerBud: {
+    palette: { G: "var(--leaf)", S: "var(--leaf-dark)", Y: "var(--sun)", D: "#7a4a1a" },
+    rows: [
+      "....YY....",
+      "...YGGY...",
+      "....SS....",
+      "..G.SS....",
+      ".GGGSS.GG.",
+      "..GGSSGGG.",
+      "....SS....",
+      "..DDDDDD..",
+    ],
+  },
   // ---- verdict icons (doc 07 §2): drawn for the judge result banner
   verdictAc: {
     palette: { G: "var(--leaf)", D: "var(--leaf-dark)", W: "#ffffff" },

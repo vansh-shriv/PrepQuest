@@ -1,0 +1,36 @@
+{
+  "approaches": [
+    {
+      "name": "Count, then sort the distinct values",
+      "intuition": "A frequency table plus a sort with a two-part key gives the ranking directly.",
+      "steps": ["Build counts", "Sort by `(-count, value)`", "Take `k`"],
+      "code": {
+        "python": "from collections import Counter\n\nclass Solution:\n    def topKFrequent(self, nums, k):\n        counts = Counter(nums)\n        return sorted(counts, key=lambda v: (-counts[v], v))[:k]\n"
+      },
+      "time": "O(n + d log d) where d is the number of distinct values",
+      "space": "O(d)"
+    },
+    {
+      "name": "Count, then a heap of size k",
+      "intuition": "When `k` is much smaller than the number of distinct values, keep only the best `k` in a heap instead of sorting everything.",
+      "steps": [
+        "Build counts",
+        "Push `(count, -value)` pairs into a min-heap, popping when it grows past `k`",
+        "Read the heap in descending order"
+      ],
+      "code": {
+        "python": {
+          "file": "solutions/ref.py"
+        }
+      },
+      "time": "O(n + d log k)",
+      "space": "O(d)",
+      "pitfalls": [
+        "The tie-break: smaller values come first, so the heap key must reflect it (negate the value in a min-heap).",
+        "`k` is at most the number of distinct values, so the heap is never short."
+      ]
+    }
+  ],
+  "talkTrackMd": "Start with counting. Then compare sorting all distinct values with a bounded heap and state when each wins. Mention bucket sort by frequency as an O(n) alternative.",
+  "relatedSlugs": ["contains-duplicate", "two-sum"]
+}

@@ -26,6 +26,7 @@ describe("GET /me", () => {
     expect(me.settings).toMatchObject({
       theme: "system",
       hintMode: "strict",
+      openEditorials: false,
       defaultLanguage: "cpp",
     });
     // flags are fine; credentials and secrets are not
@@ -72,11 +73,13 @@ describe("PATCH /me/settings", () => {
       theme: "night",
       readableMode: true,
       hintMode: "relaxed",
+      openEditorials: true,
     });
     expect(res.json().settings).toMatchObject({
       theme: "night",
       readableMode: true,
       hintMode: "relaxed",
+      openEditorials: true,
     });
     expect(
       (await call("PATCH", "/v1/me/settings", accessToken, { theme: "neon" })).statusCode,

@@ -1,0 +1,42 @@
+{
+  "approaches": [
+    {
+      "name": "Three nested loops with a set",
+      "intuition": "Try every triple of positions and collect the zero-sum ones in a set of sorted tuples to remove duplicates.",
+      "steps": [
+        "Three loops over increasing positions",
+        "Sort each zero-sum triple and store it in a set",
+        "Sort the set for the output"
+      ],
+      "code": {
+        "python": "class Solution:\n    def threeSum(self, nums):\n        found = set()\n        n = len(nums)\n        for i in range(n):\n            for j in range(i + 1, n):\n                for k in range(j + 1, n):\n                    if nums[i] + nums[j] + nums[k] == 0:\n                        found.add(tuple(sorted((nums[i], nums[j], nums[k]))))\n        return [list(t) for t in sorted(found)]\n"
+      },
+      "time": "O(n^3)",
+      "space": "O(number of triplets)"
+    },
+    {
+      "name": "Sort, then two pointers",
+      "intuition": "Sorting lets you walk two pointers towards each other for every fixed first number, and equal neighbours are skipped instead of stored.",
+      "steps": [
+        "Sort",
+        "Fix the first value",
+        "Close the gap with `lo` and `hi`",
+        "Skip repeated values at all three positions"
+      ],
+      "code": {
+        "python": {
+          "file": "solutions/ref.py"
+        }
+      },
+      "time": "O(n^2)",
+      "space": "O(1) besides the output and the sort",
+      "pitfalls": [
+        "Skipping duplicates after a hit, not before checking it: the first copy must still be used.",
+        "Use positions, not values, so three different positions are guaranteed.",
+        "The output order is lexicographic: sorted input produces it directly."
+      ]
+    }
+  ],
+  "talkTrackMd": "Reduce 3Sum to 2Sum on a sorted array, then explain duplicate skipping at each level. Quote O(n^2) and note that this is optimal for the general problem.",
+  "relatedSlugs": ["two-sum", "merge-sorted-arrays"]
+}

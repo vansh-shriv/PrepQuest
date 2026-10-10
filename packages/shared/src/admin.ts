@@ -59,6 +59,49 @@ export const updateProblemSchema = z
   .strict();
 export type UpdateProblem = z.infer<typeof updateProblemSchema>;
 
+/** Hints: tiers 1 to 3, in order, no gaps (a problem may have fewer than three while it is a draft). */
+export const saveHintsSchema = z
+  .object({
+    hints: z
+      .array(
+        z.object({
+          tier: z.number().int().min(1).max(3),
+          bodyMd: z.string().trim().min(10).max(3000),
+        }),
+      )
+      .max(3),
+  })
+  .strict()
+  .refine((v) => v.hints.every((h, i) => h.tier === i + 1), {
+    message: "Hints must be tiers 1, 2, 3 in order, without gaps",
+  });
+export type SaveHints = z.infer<typeof saveHintsSchema>;
+
+const approach = z.object({
+  name: z.string().trim().min(2).max(80),
+  intuition: z.string().trim().min(10).max(4000),
+  steps: z.array(z.string().trim().min(1).max(500)).min(1).max(20),
+  code: z.partialRecord(z.enum(["cpp", "java", "python"]), z.string().max(20_000)),
+  time: z.string().trim().min(1).max(200),
+  space: z.string().trim().min(1).max(200),
+  pitfalls: z.array(z.string().trim().min(1).max(500)).max(10).optional(),
+});
+
+export const saveEditorialSchema = z
+  .object({
+    approaches: z.array(approach).min(1).max(5),
+    talkTrackMd: z.string().trim().max(4000).nullable().optional(),
+    relatedSlugs: z.array(z.string().max(60)).max(10).optional(),
+  })
+  .strict();
+export type SaveEditorial = z.infer<typeof saveEditorialSchema>;
+
+export interface AdminEditorial {
+  approaches: z.infer<typeof approach>[];
+  talkTrackMd: string | null;
+  relatedSlugs: string[];
+}
+
 /** Archiving, and other dangerous actions, need a reason that lands in the audit log. */
 export const reasonSchema = z.object({ reason: z.string().trim().min(5).max(500) });
 
@@ -99,6 +142,7 @@ export interface AdminProblemDetail extends AdminProblemListItem {
   limits: { timeLimitMs: number; memoryLimitKb: number };
   starters: { cpp: string; java: string; python: string };
   hints: Array<{ tier: 1 | 2 | 3; bodyMd: string }>;
+  editorial: AdminEditorial | null;
   testCases: AdminTest[];
   /** What the signed-in admin may do with this problem right now. */
   permissions: {

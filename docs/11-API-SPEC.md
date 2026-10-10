@@ -456,3 +456,23 @@ Not built yet: review (X3) and complexity (X4) endpoints, personal tags, notes e
 - **Effects of a finished submit:** `user_problem_state` (status, attempts, first AC, first-try flag, best time) and the problem's submission/acceptance counters. Runs and `IE` never count.
 - **History:** `GET /me/submissions` filters `problem`, `verdict`, `language`, `mode`, `from`, `to`, `q` (problem title) and `kind` (`submit` default, `run`, `all`), newest first with an opaque cursor (`limit` up to 100). `diff` compares two of your attempts at the same problem (line diff).
 - **Notes:** `PUT` carries `baseVersion` (0 for a new note); a stale version is 409 `CONFLICT` with `details.current`; saving an empty body deletes the note; at most 20,000 characters. Notes of archived problems stay and are marked `archived` in the hub. `GET /problems/:slug` now includes `bookmarked` for signed-in users.
+
+### Hints, editorial, rewards and the dashboard (Phase 5)
+
+| Area | Endpoints |
+| ---- | --------- |
+| Hints | `GET /problems/:slug/hints`, `POST /problems/:slug/hints/:tier/unlock` |
+| Editorial | `GET /problems/:slug/editorial`, `GET /problems/:slug/editorial/status`, `POST /problems/:slug/editorial/give-up` `{confirm: true}`, `POST /problems/:slug/rating` `{rating}` |
+| Progress | `GET /me/xp`, `GET /me/badges`, `GET /me/dashboard?range=7d\|30d\|90d\|all` |
+| Admin | `PUT /admin/problems/:id/hints`, `PUT` and `DELETE /admin/problems/:id/editorial` (same permissions as editing; audited; no new version) |
+
+Settings gained `openEditorials` (`PATCH /me/settings`); `hintMode` (strict or relaxed) now has an effect.
+
+**Behavior notes**
+- **Hints:** tiers must be viewed in order. Strict mode: the first hint unlocks 3 minutes after the problem was first opened, each next one 5 minutes after the previous; relaxed: 0 and 1 minute. A locked tier is `403 HINT_LOCKED` with `details: {reason: "cooldown", unlockAt}` or `{reason: "previous_tier", missingTier}`. Hint text is never in the overview until viewed. Viewed hints can be read again free. Once a problem is solved the waits no longer apply (order still does). The highest tier viewed is `user_problem_state.hints_used` and is copied onto each new submission.
+- **Editorial:** `403 EDITORIAL_LOCKED` with `details: {reasons[], giveUpAt, canGiveUp}` until the user has solved the problem, viewed all three hints, turned on "open editorials", or gave up. `give-up` needs `confirm: true` and 10 minutes (strict) or 2 minutes (relaxed) after first opening the problem (`403 GIVE_UP_TOO_EARLY`); it is recorded and counts like using all three hints for XP. No editorial row: 404. The rating (`easy|good|hard|again`) needs a solved problem (`403 NOT_SOLVED`) and feeds spaced repetition later.
+- **XP:** only the first accepted solution of a problem earns XP: base 10 / 25 / 50 by difficulty, +20% first try, +20% with no hints, -10% per hint tier (whole-percent arithmetic, minimum 1). Levels: `xp_to_next(level) = round(100 * level^1.4)`. Any accepted submit counts as activity for the streak and the heatmap.
+- **Streak:** per the player's time zone; the next day extends it, one missed day is bridged by a grace day (one is kept; a new one is earned at each multiple of 7 days), a longer gap restarts it at 1 (best is kept). Bonus XP at 7, 30 and 100 days (50, 200, 500). A lapsed streak reads as 0 on the dashboard.
+- **Rewards** arrive on `GET /submissions/:id` as `rewards` for an accepted submit (XP split, level before and after, streak, new badge ids). They are written in the same transaction as the verdict, so a redelivered judge event can never pay twice.
+- **Dashboard:** one call returns everything: level and XP, streak, solved by difficulty with a 30-day daily series, accuracy (acceptance, first-try rate, average submissions to first AC), a 26-week heatmap, a skill plant per topic (seed, sprout, bud, bloom), weak areas with a diagnosis, three recommended problems, recent submissions, sheet progress, badges and the placement countdown. `range` filters the "solved in range" and accuracy numbers; totals ignore it. Numbers reconcile with the raw tables (tested).
+- **Badges** today: First Blood, Ten Down, Week Warrior, Hard Mode, Clean Sheet (5 first-try solves without hints), Polyglot (accepted in three languages).

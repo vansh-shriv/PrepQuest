@@ -1,0 +1,41 @@
+{
+  "approaches": [
+    {
+      "name": "Sort, then compare neighbours",
+      "intuition": "After sorting, equal values sit next to each other, so a duplicate is any adjacent equal pair.",
+      "steps": [
+        "Sort a copy of the array",
+        "Compare each element with the next",
+        "Return true at the first equal pair"
+      ],
+      "code": {
+        "python": "class Solution:\n    def containsDuplicate(self, nums):\n        s = sorted(nums)\n        return any(s[i] == s[i + 1] for i in range(len(s) - 1))\n"
+      },
+      "time": "O(n log n) for the sort",
+      "space": "O(n) for the sorted copy (O(1) if you may reorder the input)"
+    },
+    {
+      "name": "Hash set of seen values",
+      "intuition": "Stop as soon as a value repeats; a set makes the membership test constant time.",
+      "steps": ["Scan once", "Return true if the value is already in the set", "Add it otherwise"],
+      "code": {
+        "python": {
+          "file": "solutions/ref.py"
+        },
+        "cpp": {
+          "file": "solutions/ref.cpp"
+        },
+        "java": {
+          "file": "solutions/ref.java"
+        }
+      },
+      "time": "O(n)",
+      "space": "O(n)",
+      "pitfalls": [
+        "Comparing lengths of the list and the set also works, but it always reads the whole input."
+      ]
+    }
+  ],
+  "talkTrackMd": "Give both answers: sorting is fine when memory is tight, a set is the fast one. State the trade-off: O(n) time with O(n) space against O(n log n) time with little extra space.",
+  "relatedSlugs": ["two-sum", "top-k-frequent"]
+}

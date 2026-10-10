@@ -11,6 +11,14 @@ export {
   type LoadingBarProps,
   type StageBarProps,
 } from "./components/LoadingBar";
+export {
+  ActivityHeatmap,
+  buildHeatmap,
+  heatLevel,
+  type ActivityHeatmapProps,
+  type HeatCell,
+  type HeatDay,
+} from "./components/ActivityHeatmap";
 export { Chip, type ChipProps } from "./components/Chip";
 export {
   VerdictBanner,

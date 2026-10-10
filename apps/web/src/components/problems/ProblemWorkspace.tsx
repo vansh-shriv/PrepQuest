@@ -11,6 +11,8 @@ import { useAuth } from "@/lib/auth-context";
 import { readLocal, writeLocal } from "@/lib/local-store";
 import { CodeEditor } from "./CodeEditor";
 import { CustomTests } from "./CustomTests";
+import { EditorialPanel } from "./EditorialPanel";
+import { HintsPanel } from "./HintsPanel";
 import { Markdown } from "./Markdown";
 import { NotesPanel } from "./NotesPanel";
 import { ResultPanel } from "./ResultPanel";
@@ -170,7 +172,7 @@ function Description({ problem }: { problem: ProblemDetail }) {
 }
 
 function Workspace({ problem }: { problem: ProblemDetail }) {
-  const { user } = useAuth();
+  const { user, reload } = useAuth();
   const [language, setLanguage] = useState<LanguageValue>(() => {
     const saved = typeof window === "undefined" ? null : readLocal<LanguageValue>("pq:language");
     const preferred = saved ?? (user?.settings.defaultLanguage as LanguageValue | undefined);
@@ -195,6 +197,8 @@ function Workspace({ problem }: { problem: ProblemDetail }) {
 
   const judge = useJudge((finished) => {
     if (finished.kind === "submit") setHistoryKey((k) => k + 1);
+    // XP, level and streak changed: refresh the counters in the top bar
+    if (finished.rewards) void reload();
   });
   const judgeRequest = () => ({
     slug: problem.slug,
@@ -267,6 +271,24 @@ function Workspace({ problem }: { problem: ProblemDetail }) {
       aria-label="Problem sections"
       items={[
         { id: "description", label: "Description", content: <Description problem={problem} /> },
+        {
+          id: "hints",
+          label: "Hints",
+          content: user ? (
+            <HintsPanel slug={problem.slug} />
+          ) : (
+            <p className="m-0 p-2">Sign in to use hints.</p>
+          ),
+        },
+        {
+          id: "editorial",
+          label: "Editorial",
+          content: user ? (
+            <EditorialPanel slug={problem.slug} key={historyKey} />
+          ) : (
+            <p className="m-0 p-2">Sign in to read editorials.</p>
+          ),
+        },
         {
           id: "submissions",
           label: "Submissions",

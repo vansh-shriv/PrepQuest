@@ -15,7 +15,8 @@ function canonical(value: unknown): string {
 
 /**
  * Fingerprint of everything that defines a problem version: statement, metadata, signature, examples,
- * starters, hints and every test file. A new hash means a new version (doc 17 §9).
+ * starters and every test file. A new hash means a new version (doc 17 §9). Hints and editorials are
+ * synced on every import without versioning.
  */
 export function contentHash(bundle: ProblemBundle, starters: Record<Language, string>): string {
   const testsHash = createHash("sha256");
@@ -33,7 +34,9 @@ export function contentHash(bundle: ProblemBundle, starters: Record<Language, st
         examples: bundle.examples,
         signature: bundle.signature,
         starters,
-        hints: bundle.hints,
+        // Hints and editorials are not part of a problem's version (editing them must not create one);
+        // the constant keeps the hash of problems imported before they existed unchanged.
+        hints: {},
         tests: testsHash.digest("hex"),
       }),
     )

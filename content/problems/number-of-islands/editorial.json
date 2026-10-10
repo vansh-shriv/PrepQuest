@@ -1,0 +1,47 @@
+{
+  "approaches": [
+    {
+      "name": "Recursive depth-first search",
+      "intuition": "From each unvisited land cell, recurse into every land neighbour. It is short but deep grids can overflow the call stack.",
+      "steps": [
+        "Scan all cells",
+        "On new land, count one and recurse into neighbours",
+        "Mark visited on entry"
+      ],
+      "code": {
+        "python": "import sys\n\nclass Solution:\n    def numIslands(self, grid):\n        sys.setrecursionlimit(10**6)\n        rows, cols = len(grid), len(grid[0])\n        seen = [[False] * cols for _ in range(rows)]\n        def dfs(r, c):\n            if r < 0 or c < 0 or r >= rows or c >= cols or seen[r][c] or grid[r][c] != '1':\n                return\n            seen[r][c] = True\n            dfs(r + 1, c); dfs(r - 1, c); dfs(r, c + 1); dfs(r, c - 1)\n        count = 0\n        for r in range(rows):\n            for c in range(cols):\n                if grid[r][c] == '1' and not seen[r][c]:\n                    count += 1\n                    dfs(r, c)\n        return count\n"
+      },
+      "time": "O(rows * cols)",
+      "space": "O(rows * cols) for the visited grid and recursion"
+    },
+    {
+      "name": "Iterative flood fill with an explicit stack",
+      "intuition": "The same exploration without recursion, so a 1000 x 1000 grid cannot overflow the call stack.",
+      "steps": [
+        "Scan all cells",
+        "On new land, count one",
+        "Flood the island with a stack, marking cells when pushed"
+      ],
+      "code": {
+        "python": {
+          "file": "solutions/ref.py"
+        },
+        "cpp": {
+          "file": "solutions/ref.cpp"
+        },
+        "java": {
+          "file": "solutions/ref.java"
+        }
+      },
+      "time": "O(rows * cols)",
+      "space": "O(rows * cols)",
+      "pitfalls": [
+        "Marking a cell when it is popped instead of pushed can push it many times.",
+        "Diagonal neighbours are not connected.",
+        "Grid rows are strings: compare characters, not integers."
+      ]
+    }
+  ],
+  "talkTrackMd": "Treat the grid as a graph, say a flood fill labels one connected component, and count components. Mention BFS and DFS are equivalent here and why you avoided recursion.",
+  "relatedSlugs": ["merge-intervals", "valid-parentheses"]
+}

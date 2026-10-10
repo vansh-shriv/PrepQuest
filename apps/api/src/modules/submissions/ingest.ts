@@ -16,6 +16,7 @@ import {
   type JudgeEvent,
   type TestResult,
 } from "@prepquest/judge-core";
+import { awardAccepted } from "../progress/award.js";
 
 /** Verdicts a submission can still move on from. Anything else is final and ignores later events. */
 const OPEN = ["QUEUED", "COMPILING", "RUNNING"] as const;
@@ -180,6 +181,40 @@ async function finish(db: Database, id: string, summary: JobSummary) {
         acceptanceRate: sql`round((${problems.acceptedCount} + ${a})::numeric * 100 / (${problems.submissionsCount} + 1), 2)`,
       })
       .where(eq(problems.id, done.problemId));
+
+    if (!accepted) return;
+    // XP, streak, activity and badges (an editorial given up on counts as all three hints)
+    const [problem] = await tx
+      .select({ difficulty: problems.difficulty })
+      .from(problems)
+      .where(eq(problems.id, done.problemId));
+    const gaveUp = state?.gaveUpAt != null;
+    const hintTiers = gaveUp ? 3 : (state?.hintsUsed ?? 0);
+    const rewards = await awardAccepted(tx, {
+      userId: done.userId,
+      problemId: done.problemId,
+      submissionId: id,
+      difficulty: problem?.difficulty ?? "easy",
+      firstSolve: !solvedBefore,
+      firstTry: attemptsBefore === 0,
+      hintTiers,
+      now: new Date(),
+    });
+    await tx
+      .update(submissions)
+      .set({ rewards: rewards as unknown as Record<string, unknown> })
+      .where(eq(submissions.id, id));
+    if (!solvedBefore) {
+      await tx
+        .update(userProblemState)
+        .set({ cleanSolve: hintTiers === 0 })
+        .where(
+          and(
+            eq(userProblemState.userId, done.userId),
+            eq(userProblemState.problemId, done.problemId),
+          ),
+        );
+    }
   });
 }
 

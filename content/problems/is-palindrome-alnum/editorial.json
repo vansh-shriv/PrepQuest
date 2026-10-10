@@ -1,0 +1,36 @@
+{
+  "approaches": [
+    {
+      "name": "Clean, then reverse",
+      "intuition": "Build the cleaned string of lower-case letters and digits and compare it with its reverse.",
+      "steps": ["Keep only letters and digits, lower-cased", "Compare with the reversed string"],
+      "code": {
+        "python": "class Solution:\n    def isPalindrome(self, s):\n        t = [c.lower() for c in s if c.isalnum()]\n        return t == t[::-1]\n"
+      },
+      "time": "O(n)",
+      "space": "O(n)"
+    },
+    {
+      "name": "Two pointers on the original",
+      "intuition": "Walk inwards from both ends and skip the characters that do not count, so no extra string is built.",
+      "steps": [
+        "Skip non-alphanumeric characters at each end",
+        "Compare the lower-cased characters",
+        "Stop when the pointers meet"
+      ],
+      "code": {
+        "python": {
+          "file": "solutions/ref.py"
+        }
+      },
+      "time": "O(n)",
+      "space": "O(1)",
+      "pitfalls": [
+        "An empty cleaned string counts as a palindrome.",
+        "Index checks while skipping: do not run past the other pointer."
+      ]
+    }
+  ],
+  "talkTrackMd": "Mention both versions and the space difference. For the pointer version, state the loop invariant: everything outside `[l, r]` has already matched.",
+  "relatedSlugs": ["longest-common-prefix", "move-zeroes"]
+}

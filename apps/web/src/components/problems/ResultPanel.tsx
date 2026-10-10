@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Chip, LoadingBar, StageBar, VerdictBanner, type VerdictCode } from "@prepquest/ui";
-import type { SubmissionDetail, SubmissionTestResult } from "@prepquest/shared";
+import { BADGES } from "@prepquest/analytics-core";
+import { Chip, LoadingBar, Sprite, StageBar, VerdictBanner, type VerdictCode } from "@prepquest/ui";
+import type { SolveRewards, SubmissionDetail, SubmissionTestResult } from "@prepquest/shared";
 import type { JudgeState } from "@/features/submissions/use-judge";
+import { RatingButtons } from "./EditorialPanel";
 
 const STAGES = ["Queued", "Compiling", "Running", "Done"] as const;
 const STAGE_INDEX: Record<string, number> = { QUEUED: 0, COMPILING: 1, RUNNING: 2 };
@@ -114,6 +116,57 @@ function TestRow({ r }: { r: SubmissionTestResult }) {
   );
 }
 
+function Rewards({
+  rewards,
+  slug,
+  canRate,
+}: {
+  rewards: SolveRewards;
+  slug: string;
+  canRate: boolean;
+}) {
+  const badges = rewards.badges.flatMap((id) => BADGES.find((b) => b.id === id) ?? []);
+  return (
+    <section className="pq-card pq-box grid gap-2" aria-label="Rewards" data-testid="rewards">
+      {rewards.firstSolve ? (
+        <p className="pq-font-pixel m-0 text-2xl" data-testid="xp-gained">
+          +{rewards.xp} XP
+          {rewards.streakBonusXp > 0 ? (
+            <span className="text-base text-ink-soft">
+              {" "}
+              ({rewards.problemXp} for solving, {rewards.streakBonusXp} streak bonus)
+            </span>
+          ) : null}
+        </p>
+      ) : (
+        <p className="m-0">Accepted again. XP is only earned the first time you solve a problem.</p>
+      )}
+      {rewards.levelAfter > rewards.levelBefore ? (
+        <p className="pq-font-display m-0 text-sm" data-testid="level-up">
+          LEVEL UP! You reached level {rewards.levelAfter}.
+        </p>
+      ) : null}
+      {rewards.streak.current > 0 ? (
+        <p className="m-0 flex items-center gap-2">
+          <Sprite name="sunflower" scale={2} />
+          {rewards.streak.current}-day streak
+          {rewards.streak.usedFreeze ? " (a grace day kept it alive)" : ""}
+          {rewards.streak.milestone ? `: milestone reached!` : ""}
+        </p>
+      ) : null}
+      {badges.map((b) => (
+        <p key={b.id} className="m-0 flex items-center gap-2" data-testid="badge-earned">
+          <Sprite name={b.sprite} scale={2} />
+          <span>
+            New badge: <strong>{b.name}</strong>. {b.description}
+          </span>
+        </p>
+      ))}
+      {canRate && rewards.firstSolve ? <RatingButtons slug={slug} /> : null}
+    </section>
+  );
+}
+
 /** The judge's answer: progress while it works, then the verdict banner and per-test results. */
 export function ResultPanel({ state }: { state: JudgeState }) {
   if (state.phase === "idle") {
@@ -172,6 +225,9 @@ export function ResultPanel({ state }: { state: JudgeState }) {
         detail={bannerDetail(s)}
         {...(meta ? { meta } : {})}
       />
+      {s.rewards && s.verdict === "AC" && s.kind === "submit" ? (
+        <Rewards rewards={s.rewards} slug={s.problem.slug} canRate />
+      ) : null}
       {s.compileOutput ? <Block title="Compiler output">{s.compileOutput}</Block> : null}
       {s.verdict === "RE" && s.stderrTail ? (
         <Block title="Error output">{s.stderrTail}</Block>

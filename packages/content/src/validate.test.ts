@@ -4,7 +4,13 @@ import { listProblemSlugs, loadProblem } from "./loader.js";
 import { findContentRoot, taxonomy } from "./root.js";
 import { resolveStarters } from "./import.js";
 import { signatureSchema, type ProblemBundle, type TestFile } from "./types.js";
-import { hasErrors, MIN_TESTS, validateBundle, validateTests } from "./validate.js";
+import {
+  hasErrors,
+  MIN_TESTS,
+  validateBundle,
+  validateReferences,
+  validateTests,
+} from "./validate.js";
 
 const sig = signatureSchema.parse({
   function: "total",
@@ -132,6 +138,7 @@ describe("contentHash", () => {
     signature: sig,
     starters: {},
     hints: {},
+    editorial: null,
     tests: makeTests(3),
     ...over,
   });
@@ -142,11 +149,29 @@ describe("contentHash", () => {
     expect(hash(bundle())).toBe(base);
     expect(hash(bundle({ statementMd: "changed" }))).not.toBe(base);
     expect(hash(bundle({ constraintsMd: "changed" }))).not.toBe(base);
-    expect(hash(bundle({ hints: { 1: "a nudge" } }))).not.toBe(base);
     expect(hash(bundle({ starters: { python: "# mine" } }))).not.toBe(base);
     const edited = makeTests(3);
     edited[2] = { ...edited[2]!, output: "999\n" };
     expect(hash(bundle({ tests: edited }))).not.toBe(base);
+  });
+
+  it("ignores hints and the editorial: editing them never creates a version", () => {
+    const base = hash(bundle());
+    expect(hash(bundle({ hints: { 1: "a nudge" } }))).toBe(base);
+    const editorial = {
+      approaches: [
+        {
+          name: "Brute force",
+          intuition: "Try everything.",
+          steps: ["loop"],
+          code: {},
+          time: "O(n)",
+          space: "O(1)",
+        },
+      ],
+      relatedSlugs: [],
+    };
+    expect(hash(bundle({ editorial }))).toBe(base);
   });
 
   it("ignores key order", () => {
@@ -171,5 +196,40 @@ describe("committed content", () => {
       problems.push(...found.map((i) => `${i.level} ${i.problem}: ${i.message}`));
     }
     expect(problems).toEqual([]);
+  });
+});
+
+describe("editorial validation", () => {
+  const root = findContentRoot();
+
+  it("loads every editorial with its reference code inlined", async () => {
+    const { bundle } = await loadProblem(root, "two-sum");
+    const optimal = bundle?.editorial?.approaches.at(-1);
+    expect(optimal?.name).toBe("Hash map of seen values");
+    expect(Object.keys(optimal?.code ?? {}).sort()).toEqual(["cpp", "java", "python"]);
+    expect(optimal?.code.python).toContain("class Solution");
+    expect(bundle?.editorial?.relatedSlugs).toContain("contains-duplicate");
+    expect(bundle?.hints[1]).toBeTruthy();
+  });
+
+  it("flags related problems that do not exist", async () => {
+    const { bundle } = await loadProblem(root, "two-sum");
+    const broken = {
+      ...bundle!,
+      editorial: { ...bundle!.editorial!, relatedSlugs: ["ghost-problem"] },
+    };
+    const issues = validateReferences([broken]);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]?.message).toContain("ghost-problem");
+    const known = {
+      ...bundle!,
+      editorial: { ...bundle!.editorial!, relatedSlugs: ["contains-duplicate"] },
+    };
+    const other = {
+      ...bundle!,
+      meta: { ...bundle!.meta, slug: "contains-duplicate" },
+      editorial: null,
+    };
+    expect(validateReferences([known, other])).toEqual([]);
   });
 });

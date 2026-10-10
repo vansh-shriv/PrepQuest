@@ -4,11 +4,11 @@ import { createDatabase } from "@prepquest/db";
 import { serverEnvSchema } from "@prepquest/shared";
 import { createObjectStore } from "@prepquest/storage";
 import { buildTests, verifyTests } from "./build-tests.js";
-import { importProblem, importSheet } from "./import.js";
+import { importProblem, importSheet, linkRelatedEditorials } from "./import.js";
 import { listProblemSlugs, loadProblem } from "./loader.js";
 import { findContentRoot, taxonomy } from "./root.js";
 import { sheetSchema, type Issue, type ProblemBundle } from "./types.js";
-import { hasErrors, validateBundle } from "./validate.js";
+import { hasErrors, validateBundle, validateReferences } from "./validate.js";
 
 const USAGE = `Usage: content <command> [options] [slug...]
 
@@ -173,6 +173,7 @@ async function main() {
   }
 
   for (const { slug, bundle } of bundles) issues.push(...validateBundle(bundle, slug, taxonomy));
+  issues.push(...validateReferences(bundles.map((b) => b.bundle)));
   const slugCounts = new Map<string, number>();
   for (const { bundle } of bundles)
     slugCounts.set(bundle.meta.slug, (slugCounts.get(bundle.meta.slug) ?? 0) + 1);
@@ -212,6 +213,12 @@ async function main() {
       const r = await importProblem(db, store, bundle, { publish });
       console.log(`${r.action.padEnd(9)} ${r.slug} (v${r.version})`);
     }
+    // editorials can name problems imported later in the same run
+    await linkRelatedEditorials(
+      db,
+      root,
+      bundles.map((b) => b.slug),
+    );
     if (args.length === 0) {
       for (const sheet of sheets) {
         const r = await importSheet(db, sheet);

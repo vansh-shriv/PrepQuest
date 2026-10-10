@@ -113,6 +113,7 @@ export const settingsUpdateSchema = z
     sound: z.boolean(),
     reducedMotion: z.boolean(),
     hintMode: z.enum(["strict", "relaxed"]),
+    openEditorials: z.boolean(),
     defaultLanguage: z.enum(["cpp", "java", "python"]),
   })
   .partial()
@@ -161,6 +162,7 @@ export interface MeResponse {
     sound: boolean;
     reducedMotion: boolean;
     hintMode: "strict" | "relaxed";
+    openEditorials: boolean;
     defaultLanguage: string;
   };
 }

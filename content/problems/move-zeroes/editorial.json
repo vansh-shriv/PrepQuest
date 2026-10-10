@@ -1,0 +1,32 @@
+{
+  "approaches": [
+    {
+      "name": "Collect the non-zeros, then pad",
+      "intuition": "Build a new list of the non-zero values in order, then add as many zeros as were skipped.",
+      "steps": ["Filter out zeros", "Append the missing zeros"],
+      "code": {
+        "python": "class Solution:\n    def moveZeroes(self, nums):\n        out = [x for x in nums if x != 0]\n        return out + [0] * (len(nums) - len(out))\n"
+      },
+      "time": "O(n)",
+      "space": "O(n) for the new list"
+    },
+    {
+      "name": "Write pointer in place",
+      "intuition": "Keep every non-zero value in order by writing it at the next free position; everything after the last write becomes zero.",
+      "steps": ["Scan with a read index", "Write non-zero values forward", "Zero out the rest"],
+      "code": {
+        "python": {
+          "file": "solutions/ref.py"
+        }
+      },
+      "time": "O(n)",
+      "space": "O(1) when done in place",
+      "pitfalls": [
+        "Swapping instead of copying also works, but do not swap an element with itself needlessly.",
+        "Order of the non-zero values must not change."
+      ]
+    }
+  ],
+  "talkTrackMd": "Show the simple filter first, then the in-place variant. Explain that the write pointer always sits on the first position that is either zero or already processed.",
+  "relatedSlugs": ["merge-sorted-arrays", "is-palindrome-alnum"]
+}

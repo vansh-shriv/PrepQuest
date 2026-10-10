@@ -1,0 +1,47 @@
+{
+  "approaches": [
+    {
+      "name": "Plain recursion",
+      "intuition": "Compare the last characters and branch into replace, delete and insert when they differ. Subproblems repeat enormously.",
+      "steps": [
+        "If the strings end with the same character, drop it from both",
+        "Otherwise take 1 + the best of three smaller problems",
+        "Base cases: one string empty"
+      ],
+      "code": {
+        "python": "import sys\n\nclass Solution:\n    def minDistance(self, a, b):\n        sys.setrecursionlimit(10**6)\n        def go(i, j):\n            if i == 0:\n                return j\n            if j == 0:\n                return i\n            if a[i - 1] == b[j - 1]:\n                return go(i - 1, j - 1)\n            return 1 + min(go(i - 1, j - 1), go(i - 1, j), go(i, j - 1))\n        return go(len(a), len(b))\n"
+      },
+      "time": "O(3^(n + m)) in the worst case: unusable for long strings",
+      "space": "O(n + m) of recursion"
+    },
+    {
+      "name": "Dynamic programming over prefixes",
+      "intuition": "Fill a table of distances between every pair of prefixes. Only the previous row is needed, so two rows suffice.",
+      "steps": [
+        "Initialise the first row and column",
+        "Fill row by row using the three neighbours",
+        "Read the bottom-right cell"
+      ],
+      "code": {
+        "python": {
+          "file": "solutions/ref.py"
+        },
+        "cpp": {
+          "file": "solutions/ref.cpp"
+        },
+        "java": {
+          "file": "solutions/ref.java"
+        }
+      },
+      "time": "O(n * m)",
+      "space": "O(min(n, m)) with two rolling rows",
+      "pitfalls": [
+        "Off-by-one between string indices and table indices.",
+        "Matching characters cost 0 and take the diagonal value, never 1 + something.",
+        "Empty strings: the answer is the length of the other string."
+      ]
+    }
+  ],
+  "talkTrackMd": "Define the table, explain the three transitions as replace, delete and insert, and mention that the rolling-row version keeps the same O(n x m) time with far less memory.",
+  "relatedSlugs": ["coin-change-min", "longest-common-prefix"]
+}

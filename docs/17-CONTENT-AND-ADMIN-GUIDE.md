@@ -228,3 +228,14 @@ Nodes with `topic_slug`, `prerequisites[]`, `problem_ids[]` (ladder: easy → me
 ### Reference solutions in other languages (Phase 4)
 
 `solutions/ref.py` is required. `solutions/ref.cpp` and `solutions/ref.java` are optional: the judge's driver tests run every one that exists through the real C++/Java drivers against the committed tests, so a new parameter type or driver change is checked in all three languages. Seven problems have them today (two-sum, climbing-stairs, contains-duplicate, longest-common-prefix, merge-intervals, edit-distance, number-of-islands). Keep C++ compatible with older g++ (no structured bindings) so contributors on Windows toolchains can run the tests. Mutant (known-wrong) solutions for the publish gate (X7) are still to come.
+
+### Hints, editorials and mutants (Phase 5)
+
+Per problem folder:
+- `hints/1.md`, `2.md`, `3.md`: nudge (a question), approach (the technique and key insight, no code), pseudocode (steps, no language-specific code). Each is at least 10 characters.
+- `editorial.json`: `{ approaches: [{ name, intuition, steps[], time, space, pitfalls?[], code: { python|cpp|java: "<code>" | { "file": "solutions/ref.py" } } }], talkTrackMd?, relatedSlugs? }`. Order approaches from simplest to best; point the best approach's code at the reference solutions with `{ "file": ... }` so they stay in sync. Inline code (brute force) must be correct on the samples: `content:judge` runs it.
+- `solutions/mutants/<name>.py`: a known-wrong solution whose first line is `# expect: WA` (or `TLE`, `RE`, ...). The committed tests must make it fail with exactly that verdict; a mutant that passes means the tests are too weak (doc 16 §4.4). Typical mutants: off by one, missing edge case, wrong tie-break, quadratic where linear is required. All 20 shipped problems have 1 to 3.
+
+Commands: `pnpm content:validate` checks the files (a missing editorial or hint is a warning; a related slug that doesn't exist is an error). `pnpm content:import` syncs hints and editorials on every run **without** creating a version (they are not part of the content hash); problems without `editorial.json` keep whatever an admin wrote in the editor. `pnpm content:judge [slug...]` runs reference solutions (every language that has one and a toolchain), editorial code (samples) and mutants through the real judge pipeline and exits non-zero on any mismatch; CI runs it in the `verify` job (about 3 minutes).
+
+Admin v0 now has Hints and Editorial tabs next to Statement, Starters and Tests; both are audited and follow the same permission rules as editing. Reference and mutant checks cannot run from the admin screen (the solutions live in the repository), so the validation panel lists them as "checked in CI".

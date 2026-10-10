@@ -252,3 +252,11 @@ Placement/interview date, hours per day (per weekday), current level (diagnostic
 
 - Starting a track creates a plan (P1) and a default interview configuration (I2).
 - Overlap analysis matches manual set-intersection tests.
+
+---
+
+## As built (Phase 5): A1 dashboard basics and A2 v1
+
+- **Built:** XP and level, streak sunflower with a grace day, activity heatmap (26 weeks), problems solved by difficulty with a 30-day series, accuracy, skill plants per topic, weak areas with a diagnosis, three recommended problems, recent activity, sheet progress, badges, placement countdown, range filter. See doc 11 for the rules and formulas.
+- **Mastery v1** uses the two signals that exist: solve success (first-try 1.0, later 0.6, unsolved 0) and independence (solved without hints), weighted 2:1 and recency-decayed (30-day half-life). Confidence is evidence / 8. `weakness = (1 - mastery) * importance * (0.5 + 0.5 * confidence)` with importance 1 until company packs exist. Quiz, interview, speed and SRS signals join the same formula later.
+- **Not built yet:** today's quest board and daily goals, due reviews (D6), readiness (A4), upcoming contests, per-target importance, nightly consistency job, precomputed aggregates and cache invalidation (the dashboard is computed per request), XP for quizzes and interviews, a user-visible XP ledger page, public-profile skill plants.

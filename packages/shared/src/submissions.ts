@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { SolveRewards } from "./practice.js";
 import { LANGUAGE_VALUES, type LanguageValue } from "./problems.js";
 
 /** Submission, history, bookmark and note contracts (doc 11 §3-4, features D3, U2, U3). */
@@ -124,6 +125,8 @@ export interface SubmissionDetail {
   results: SubmissionTestResult[];
   note: string | null;
   hintsUsed: number;
+  /** What an accepted submission earned (XP, streak, badges); null otherwise. */
+  rewards: SolveRewards | null;
   createdAt: string;
   finishedAt: string | null;
   /** Source code: included once the submission has finished. */

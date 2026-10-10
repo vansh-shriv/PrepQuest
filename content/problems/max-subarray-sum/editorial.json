@@ -1,0 +1,36 @@
+{
+  "approaches": [
+    {
+      "name": "Every subarray",
+      "intuition": "Compute the sum of every start and end pair and keep the largest.",
+      "steps": [
+        "For each start `i`",
+        "Extend `j` and add `nums[j]` to a running sum",
+        "Track the largest sum"
+      ],
+      "code": {
+        "python": "class Solution:\n    def maxSubarray(self, nums):\n        best = nums[0]\n        for i in range(len(nums)):\n            total = 0\n            for j in range(i, len(nums)):\n                total += nums[j]\n                best = max(best, total)\n        return best\n"
+      },
+      "time": "O(n^2)",
+      "space": "O(1)"
+    },
+    {
+      "name": "Kadane's algorithm",
+      "intuition": "`current` is the best sum of a subarray that ends here. Each element either extends it or starts a new one.",
+      "steps": ["`current = max(x, current + x)`", "`best = max(best, current)`"],
+      "code": {
+        "python": {
+          "file": "solutions/ref.py"
+        }
+      },
+      "time": "O(n)",
+      "space": "O(1)",
+      "pitfalls": [
+        "All-negative arrays: the answer is the largest single element, so do not initialise `best` to 0.",
+        "Sums can exceed 32 bits: use a 64-bit type."
+      ]
+    }
+  ],
+  "talkTrackMd": "Define the subproblem (best sum ending at i), give the recurrence, and show the result only needs one number of state. Mention the all-negative case.",
+  "relatedSlugs": ["max-profit-single-trade", "product-except-self"]
+}

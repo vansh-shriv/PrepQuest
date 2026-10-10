@@ -1,0 +1,47 @@
+{
+  "approaches": [
+    {
+      "name": "Check every pair",
+      "intuition": "The answer is one pair of positions, so try them all and stop at the first pair that sums to the target.",
+      "steps": [
+        "For `i` from the first position to the second to last",
+        "For `j` after `i`",
+        "If `nums[i] + nums[j] == target`, return `[i, j]`"
+      ],
+      "code": {
+        "python": "class Solution:\n    def twoSum(self, nums, target):\n        for i in range(len(nums)):\n            for j in range(i + 1, len(nums)):\n                if nums[i] + nums[j] == target:\n                    return [i, j]\n        return []\n"
+      },
+      "time": "O(n^2): every pair is looked at once",
+      "space": "O(1)",
+      "pitfalls": ["Using the same position twice: start `j` at `i + 1`."]
+    },
+    {
+      "name": "Hash map of seen values",
+      "intuition": "When you reach `x`, the partner you need is `target - x`. If you remember every earlier value and its position, finding that partner is one lookup.",
+      "steps": [
+        "Scan left to right keeping a map from value to position",
+        "Look up `target - x` before inserting `x`",
+        "Return the stored position and the current one"
+      ],
+      "code": {
+        "python": {
+          "file": "solutions/ref.py"
+        },
+        "cpp": {
+          "file": "solutions/ref.cpp"
+        },
+        "java": {
+          "file": "solutions/ref.java"
+        }
+      },
+      "time": "O(n): one pass, constant-time lookups",
+      "space": "O(n) for the map",
+      "pitfalls": [
+        "Insert after the lookup, otherwise a value can pair with itself.",
+        "Repeated values are fine: the earlier position is found first."
+      ]
+    }
+  ],
+  "talkTrackMd": "Start with the pair check to show the baseline, then say: the slow part is searching for the partner, and a hash map turns that search into a lookup. Mention that you insert after looking up so one element is never used twice.",
+  "relatedSlugs": ["contains-duplicate", "three-sum"]
+}

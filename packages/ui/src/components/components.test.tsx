@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { ActivityHeatmap, buildHeatmap, heatLevel } from "./ActivityHeatmap";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
 import { Chip } from "./Chip";
@@ -159,5 +160,41 @@ describe("VerdictBanner", () => {
     expect(out).toContain("Failed on test 4");
     expect(out).toContain("3 / 12 passed");
     expect(html(<VerdictBanner verdict="IE" />)).toContain("Our bad");
+  });
+});
+
+describe("ActivityHeatmap", () => {
+  it("buckets counts into five levels", () => {
+    expect([0, 1, 2, 3, 4, 6, 7, 40].map(heatLevel)).toEqual([0, 1, 2, 2, 3, 3, 4, 4]);
+  });
+
+  it("lays out whole weeks that end on today, padding the days after it", () => {
+    // 2026-03-11 is a Wednesday
+    const cols = buildHeatmap("2026-03-11", 3, [
+      { day: "2026-03-11", count: 5 },
+      { day: "2026-03-01", count: 1 },
+    ]);
+    expect(cols).toHaveLength(3);
+    expect(cols.every((c) => c.length === 7)).toBe(true);
+    expect(cols[0]?.[0]?.day).toBe("2026-02-22"); // the Sunday two weeks before this week's Sunday (Mar 8)
+    expect(cols[1]?.[0]).toMatchObject({ day: "2026-03-01", count: 1, level: 1 });
+    expect(cols[2]?.[3]).toMatchObject({ day: "2026-03-11", count: 5, level: 3 });
+    expect(cols[2]?.slice(4)).toEqual([null, null, null]);
+  });
+
+  it("describes itself to screen readers", () => {
+    const out = html(
+      <ActivityHeatmap
+        today="2026-03-11"
+        weeks={4}
+        data={[
+          { day: "2026-03-10", count: 2 },
+          { day: "2026-03-09", count: 1 },
+        ]}
+      />,
+    );
+    expect(out).toContain('role="img"');
+    expect(out).toContain("3 problems solved on 2 days");
+    expect(out).toContain('title="2026-03-10: 2 solved"');
   });
 });

@@ -1,0 +1,41 @@
+{
+  "approaches": [
+    {
+      "name": "Remove matched pairs repeatedly",
+      "intuition": "A valid string always contains an adjacent pair like `()`; removing pairs until nothing changes leaves an empty string exactly when the input is valid.",
+      "steps": [
+        "Repeat: delete every occurrence of `()`, `[]`, `{}`",
+        "Stop when no pair is found",
+        "Valid if the string is now empty"
+      ],
+      "code": {
+        "python": "class Solution:\n    def isValid(self, s):\n        prev = None\n        while prev != s:\n            prev = s\n            s = s.replace('()', '').replace('[]', '').replace('{}', '')\n        return s == ''\n"
+      },
+      "time": "O(n^2) in the worst case: each pass is linear and there can be n/2 passes",
+      "space": "O(n)",
+      "pitfalls": ["Forgetting that removing one pair can create a new adjacent pair."]
+    },
+    {
+      "name": "Stack of open brackets",
+      "intuition": "Only the latest unmatched opener can legally be closed, so keep openers on a stack and match each closer against the top.",
+      "steps": [
+        "Push every opener",
+        "On a closer, compare with the top and pop",
+        "Empty stack at the end means valid"
+      ],
+      "code": {
+        "python": {
+          "file": "solutions/ref.py"
+        }
+      },
+      "time": "O(n)",
+      "space": "O(n) for the stack",
+      "pitfalls": [
+        "Popping from an empty stack: check for it before comparing.",
+        "Forgetting the final check: `((` never fails mid-way but is not valid."
+      ]
+    }
+  ],
+  "talkTrackMd": "Say that the structure is nested, so the last opened bracket closes first. Name the stack, walk the three failure cases (wrong kind, closer with nothing open, leftover openers), and give the linear complexity.",
+  "relatedSlugs": ["longest-substring-no-repeat", "trapping-rain-water"]
+}

@@ -57,6 +57,20 @@
       "when": 1791586137171,
       "tag": "0007_triggers_library",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791615192338,
+      "tag": "0008_progress",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791615206876,
+      "tag": "0009_triggers_progress",
+      "breakpoints": true
     }
   ]
 }

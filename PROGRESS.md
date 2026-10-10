@@ -9,8 +9,8 @@ Phase-by-phase build log. Plan source: `docs/18-ROADMAP-AND-SPRINTS.md`. Each ph
 | 2     | DB schema v1, auth, app shell                                                                                                               | M0        | Done (committed)      |
 | 2b    | Completion pass: Drizzle ORM, verified-email gate, rate limiting, OAuth, 2FA, breach check, export/deletion, public profiles, Husky, CI e2e | -         | Done (pending commit) |
 | 3     | Problem bank, content pipeline, Monaco editor, admin v0                                                                                     | M1        | Done (committed)      |
-| 4     | Judge (`isolate`), submissions, verdict UI, history/bookmarks/notes                                                                         | M2        | Done (pending commit) |
-| 5     | Hints, editorials, XP/streaks, dashboard, sheets                                                                                            | M3        | Not started           |
+| 4     | Judge (`isolate`), submissions, verdict UI, history/bookmarks/notes                                                                         | M2        | Done (committed)      |
+| 5     | Hints, editorials, XP/streaks, dashboard, sheets                                                                                            | M3        | Done (pending commit) |
 | 6     | AI interview MVP, resume parse, scorecards                                                                                                  | M4        | Not started           |
 | 7+    | Voice, analytics, planning, SRS, contests, peer, hardening                                                                                  | M5-M12    | Planned               |
 
@@ -177,3 +177,35 @@ Deferred:
 - Fair-share scheduling and reserved contest/interview capacity, test-data LRU cache, queue-wait estimates and backpressure, `special` checkers, seccomp/AppArmor/read-only rootfs for the container, a slim runtime image, judge metrics.
 - Mutant solutions and the reference/mutation checks in admin validation (the judge exists now, so this is next for content), hints and editorials (Phase 5), XP/streaks (Phase 5: the coin and sunflower counters in the top bar are still 0), personal tags, notes export and version history, code review (X3) and complexity analysis (X4).
 - The CI `judge-sandbox` job and the e2e job have not run on GitHub yet.
+
+## Phase 5 - Hints, editorials, XP, streaks, dashboard, admin editors (milestone M3)
+
+Done:
+
+- **`packages/analytics-core`** (pure, 39 tests): XP and level curve, timezone-aware streaks with a grace day, hint and editorial unlock rules, topic mastery and weak-area detection v1, recommendations, badge rules.
+- **Hints (D4):** three tiers, strict/relaxed cooldowns (counted from the first time a problem is opened), order enforced, text never sent while locked, `hint_usage` and `hints_used` feeding XP and submissions. Settings: hint mode and "open editorials" (new Practice section).
+- **Editorial (D5):** locked until solved, all hints viewed, the setting, or an explicit give-up after a wait (counts like three hints); approaches with code per language, complexity, pitfalls, talk track, related problems; self-rating after a solve. Rules enforced on the server.
+- **XP, levels, streaks, badges:** awarded inside the judge-result transaction (idempotent), ledger in `xp_events`, per-day activity, grace day, milestone bonuses, six badges, `rewards` stored on the submission and shown after Submit (the top bar refreshes).
+- **Dashboard (A1):** level, streak sunflower, next best action, solved by difficulty with a 30-day series, accuracy, activity heatmap, skill plants, weak areas with a diagnosis, sheets progress, recent activity, badges, placement countdown, range filter. Numbers reconcile with the raw tables (tested).
+- **Admin:** Hints and Editorial editors (audited, no version bump); the validation panel gained an editorial check and honestly marks reference/mutant checks as run by CI.
+- **Content:** hints (60) and editorials (20, two approaches each, code from the reference solutions plus inline brute force) for all 20 problems; 40 mutants (known-wrong solutions); `content:judge` runs references, editorial code and mutants through the real judge pipeline (94 checks, all pass on this machine; Java skipped locally without a JDK). Importer syncs hints and editorials without creating versions.
+- **UI:** Hints and Editorial tabs on the problem page, rewards panel, plant and sunflower growth sprites, `ActivityHeatmap`, new dashboard.
+- **Tests:** API 267 (new: practice 17, progress 26, admin hint/editorial 10), analytics-core 39, ui 80, content 30, judge 56 (+23 Linux/JDK-only), e2e 8 new specs (48 in total).
+
+Decisions / gotchas:
+
+- Hints and editorials are **not versioned**: the content hash ignores them (a constant keeps the hash of existing problems unchanged, so adding them created no new versions). Imports sync them every run; problems without `editorial.json` keep admin-written editorials.
+- XP arithmetic uses whole percentages: `25 * 0.9` drifted to 22 on float error where 22.5 should round to 23.
+- Independence in mastery only credits problems that were _solved_ without hints; otherwise an unsolved problem scored a third of mastery.
+- The streak freeze rule is a deterministic reading of "one freeze per week": one grace day is kept and a new one is earned at every multiple of 7 days.
+- Giving up on an editorial counts as three hints for XP and as not-clean for the Clean Sheet badge.
+- Zod 4 `z.record(enum, ...)` requires every key (again): editorial code uses `z.partialRecord`.
+- Playwright: a controlled checkbox that follows a saved setting changes after the round trip, so click and assert `toBeChecked` instead of `.check()`; two copies of the same rating group exist while the result panel and the editorial are both mounted, so scope by test id.
+- **Environment:** a VS Code extension (Console Ninja) had patched files inside `node_modules/next` (a 747-byte `start-server.js`), so `next start` failed with "startServer is not a function". Reinstalling Next fixed it; consider disabling the extension for this workspace. A shell whose working directory is inside `node_modules` blocks deleting it on Windows.
+- Old dev data: a demo account that solved problems before XP existed shows solved problems with 0 XP (no backfill).
+
+Deferred:
+
+- **Content volume:** the roadmap's "up to 100 problems" is not met: 20 problems ship (authoring is the bottleneck, doc 18 risk). Next content step is more problems with the same pipeline (tests, mutants, hints, editorials).
+- Today's quest board and daily goals, SRS (D6) and due reviews, readiness (A4), nightly consistency job, precomputed dashboard aggregates, XP from quizzes and interviews, XP tuning in the admin, AI hints, community solutions, hints disabled in interview and contest modes (those modes do not exist yet), sheet-level progress page beyond the dashboard widget and the problem list.
+- The CI `verify` job now runs `content:judge` (new, not yet run on GitHub).

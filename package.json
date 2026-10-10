@@ -23,6 +23,7 @@
     "content:validate": "pnpm --filter @prepquest/content content validate",
     "content:build-tests": "pnpm --filter @prepquest/content content build-tests",
     "content:verify": "pnpm --filter @prepquest/content content verify",
+    "content:judge": "pnpm --filter @prepquest/judge content:judge",
     "content:import": "pnpm --filter @prepquest/content content import",
     "content:new": "pnpm --filter @prepquest/content content new"
   },

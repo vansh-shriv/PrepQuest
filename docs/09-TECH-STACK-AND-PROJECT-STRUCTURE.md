@@ -168,3 +168,10 @@ pnpm storybook
 - **`apps/judge`**: the worker. BullMQ 6 consumers, `IsolateSandbox` and `ProcessSandbox`, a results publisher, its own minimal config. It depends on judge-core and storage only (no `@prepquest/db`, no `@prepquest/shared`), which is what keeps database credentials off judge hosts. Ships as `apps/judge/Dockerfile` (isolate built from source, g++, Python, OpenJDK 17).
 - **API**: `modules/submissions` (service, routes, `queue.ts` with BullMQ and in-memory implementations, `ingest.ts` with the stream consumer) and `modules/library` (bookmarks, notes). New dependency `bullmq`.
 - **Web**: `features/submissions/use-judge.ts` (send + poll), `components/problems/{ResultPanel,NotesPanel,SubmissionHistory}`, `components/library/*`, pages `/submissions`, `/submissions/[id]`, `/notes`. `packages/ui` gains `VerdictBanner` and eight verdict sprites, and `Tabs` can be controlled.
+
+### Phase 5 additions
+
+- **`packages/analytics-core`** (pure, no I/O, no clock): XP rules and the level curve, timezone-aware streaks with a grace day, hint and editorial unlock rules, topic mastery and weak-area detection v1, recommendations, badge rules. The API applies it (`modules/progress`, `modules/practice`) and the web app imports the badge catalog and display helpers.
+- **API:** `modules/practice` (hints, editorial, give up, self-rating), `modules/progress` (XP ledger, badges, dashboard; `award.ts` runs inside the judge-result transaction), admin hint and editorial editors.
+- **Content tooling:** `editorial.json` and `hints/` per problem, known-wrong `solutions/mutants/*.py`, and `pnpm content:judge` (`apps/judge/src/content-judge.ts`) that runs references, editorial code and mutants through the real judge pipeline.
+- **UI:** `ActivityHeatmap`, plant and sunflower growth sprites in `packages/ui`; `HintsPanel`, `EditorialPanel`, rewards in `ResultPanel`, `components/dashboard/Dashboard`, admin `LearningTabs`.

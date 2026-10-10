@@ -1,0 +1,36 @@
+{
+  "approaches": [
+    {
+      "name": "Concatenate and sort",
+      "intuition": "Join the arrays and sort the result. Correct and short, but it ignores the existing order.",
+      "steps": ["Build `a + b`", "Sort it"],
+      "code": {
+        "python": "class Solution:\n    def mergeSorted(self, a, b):\n        return sorted(a + b)\n"
+      },
+      "time": "O((n + m) log (n + m))",
+      "space": "O(n + m)"
+    },
+    {
+      "name": "Two pointers",
+      "intuition": "Because both inputs are sorted, the next output value is one of the two front elements.",
+      "steps": [
+        "Compare the two front elements",
+        "Output the smaller and advance its pointer",
+        "Copy the leftover tail"
+      ],
+      "code": {
+        "python": {
+          "file": "solutions/ref.py"
+        }
+      },
+      "time": "O(n + m)",
+      "space": "O(n + m) for the output",
+      "pitfalls": [
+        "Forgetting the leftover tail after one array runs out.",
+        "Taking from `b` on ties is fine for plain values, but taking from `a` keeps the merge stable."
+      ]
+    }
+  ],
+  "talkTrackMd": "This is the merge step of merge sort. Say why it is linear (each element is written once) and why the leftover tail needs no comparison.",
+  "relatedSlugs": ["merge-intervals", "move-zeroes"]
+}

@@ -17,6 +17,7 @@ import { useSubmit } from "@/lib/use-submit";
 import { Markdown } from "../problems/Markdown";
 import { FormError } from "../auth/AuthCard";
 import { STATUS_LABEL, STATUS_TONE } from "./AdminProblemList";
+import { EditorialTab, HintsTab } from "./LearningTabs";
 import { TagPicker } from "./TagPicker";
 
 type Detail = AdminProblemDetail;
@@ -599,6 +600,8 @@ export function ProblemEditor({ id }: { id: string }) {
     { id: "meta", label: "Meta", content: <MetaTab d={d} onSaved={saved} /> },
     { id: "statement", label: "Statement", content: <StatementTab d={d} onSaved={saved} /> },
     { id: "starters", label: "Starters", content: <StartersTab d={d} onSaved={saved} /> },
+    { id: "hints", label: "Hints", content: <HintsTab d={d} onSaved={saved} /> },
+    { id: "editorial", label: "Editorial", content: <EditorialTab d={d} onSaved={saved} /> },
     {
       id: "tests",
       label: "Tests",

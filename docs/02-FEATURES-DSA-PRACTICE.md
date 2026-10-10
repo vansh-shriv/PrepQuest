@@ -286,3 +286,9 @@ Many placement processes begin with online assessments (OAs) mixing aptitude, MC
 
 - Section timers continue server side even if the browser is closed; resuming restores remaining time.
 - Negative marking applied exactly as configured; report matches manual calculation on test scenarios.
+
+---
+
+## As built (Phase 5): D4 hints and D5 editorials
+
+Three tiers (nudge, approach, pseudocode), cooldowns, XP penalty and the "clean solve" flag are implemented as specified, in strict and relaxed modes. Editorials unlock after solving, using all hints, the "open editorials" setting, or an explicit give-up after a wait. Approaches carry intuition, steps, complexity, pitfalls and code per language; a talk track and related problems are shown. Self-rating after a solve is stored. Rules are server-side (`packages/analytics-core/src/unlock.ts`); see doc 11 for the exact behavior. Not built: AI hints [P2], community solutions [P3], "compare with mine" [P2], Mermaid diagrams, hints disabled in interview and contest modes (those modes do not exist yet).

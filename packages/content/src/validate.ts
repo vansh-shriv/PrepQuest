@@ -148,10 +148,39 @@ export function validateBundle(bundle: ProblemBundle, folder: string, taxonomy: 
       issues.push(err(p, `hints/${tier}.md is too short`));
   }
 
+  if (bundle.editorial) {
+    const langs = new Set(bundle.editorial.approaches.flatMap((a) => Object.keys(a.code)));
+    if (!langs.has("python")) issues.push(warn(p, "editorial has no Python code"));
+    for (const a of bundle.editorial.approaches) {
+      if (Object.keys(a.code).length === 0)
+        issues.push(warn(p, `editorial approach "${a.name}" has no code`));
+    }
+    if (bundle.editorial.relatedSlugs?.includes(meta.slug)) {
+      issues.push(err(p, "editorial lists the problem itself as related"));
+    }
+  } else {
+    issues.push(warn(p, "no editorial.json"));
+  }
+  const missingHints = ([1, 2, 3] as const).filter((t) => bundle.hints[t] === undefined);
+  if (missingHints.length) issues.push(warn(p, `missing hints: ${missingHints.join(", ")}`));
+
   issues.push(...validateTests(p, signature, meta.difficulty, examples.length, bundle.tests));
   return issues;
 }
 
 export function hasErrors(issues: Issue[]): boolean {
   return issues.some((i) => i.level === "error");
+}
+
+/** Cross-problem rules: related problems named in editorials must exist. */
+export function validateReferences(bundles: ProblemBundle[]): Issue[] {
+  const known = new Set(bundles.map((b) => b.meta.slug));
+  const issues: Issue[] = [];
+  for (const b of bundles) {
+    for (const slug of b.editorial?.relatedSlugs ?? []) {
+      if (!known.has(slug))
+        issues.push(err(b.meta.slug, `editorial relates to unknown problem "${slug}"`));
+    }
+  }
+  return issues;
 }

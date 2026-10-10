@@ -1,0 +1,41 @@
+{
+  "approaches": [
+    {
+      "name": "Prefix and suffix maxima",
+      "intuition": "Precompute the tallest wall to the left and to the right of every position; the water above a position is the lower of the two minus its height.",
+      "steps": [
+        "Left pass: running maximum",
+        "Right pass: running maximum",
+        "Sum `min(left, right) - height`"
+      ],
+      "code": {
+        "python": "class Solution:\n    def trap(self, height):\n        n = len(height)\n        if n == 0:\n            return 0\n        left = [0] * n\n        right = [0] * n\n        left[0] = height[0]\n        for i in range(1, n):\n            left[i] = max(left[i - 1], height[i])\n        right[-1] = height[-1]\n        for i in range(n - 2, -1, -1):\n            right[i] = max(right[i + 1], height[i])\n        return sum(min(left[i], right[i]) - height[i] for i in range(n))\n"
+      },
+      "time": "O(n)",
+      "space": "O(n)"
+    },
+    {
+      "name": "Two pointers",
+      "intuition": "The side with the smaller wall is the limiting side, so its water level is already known. Process that side and move inwards.",
+      "steps": [
+        "Compare the two end walls",
+        "Settle the lower side using its own running maximum",
+        "Move that pointer inwards"
+      ],
+      "code": {
+        "python": {
+          "file": "solutions/ref.py"
+        }
+      },
+      "time": "O(n)",
+      "space": "O(1)",
+      "pitfalls": [
+        "Compare the walls, not the running maxima, when choosing a side.",
+        "The answer can be large: use a 64-bit sum if your language needs it.",
+        "Fewer than three walls hold no water."
+      ]
+    }
+  ],
+  "talkTrackMd": "Start from the per-position formula, then show how to avoid the two arrays: the lower end wall bounds the water on its side. Give O(n) time and O(1) space.",
+  "relatedSlugs": ["max-profit-single-trade", "valid-parentheses"]
+}

@@ -1,0 +1,40 @@
+{
+  "approaches": [
+    {
+      "name": "Check every substring",
+      "intuition": "Try each start, extend until a character repeats, and track the longest run.",
+      "steps": [
+        "For each start `i`",
+        "Extend `j` while characters are new",
+        "Keep the longest length"
+      ],
+      "code": {
+        "python": "class Solution:\n    def lengthOfLongestSubstring(self, s):\n        best = 0\n        for i in range(len(s)):\n            seen = set()\n            for j in range(i, len(s)):\n                if s[j] in seen:\n                    break\n                seen.add(s[j])\n            best = max(best, len(seen))\n        return best\n"
+      },
+      "time": "O(n * k) where k is the alphabet size, O(n^2) in general",
+      "space": "O(k)"
+    },
+    {
+      "name": "Sliding window with last-seen positions",
+      "intuition": "The window only ever moves right. A repeat tells you exactly how far to move the left edge.",
+      "steps": [
+        "Remember the last index of every character",
+        "On a repeat inside the window, jump `left` past it",
+        "Track the window length"
+      ],
+      "code": {
+        "python": {
+          "file": "solutions/ref.py"
+        }
+      },
+      "time": "O(n)",
+      "space": "O(k) for the alphabet",
+      "pitfalls": [
+        "Only move `left` forward, never back: use the maximum of the old and the new value.",
+        "A character seen before the window started does not matter."
+      ]
+    }
+  ],
+  "talkTrackMd": "Explain the window invariant (no repeats inside), how a repeat moves the left edge, and why each character is visited a constant number of times.",
+  "relatedSlugs": ["longest-common-prefix", "contains-duplicate"]
+}

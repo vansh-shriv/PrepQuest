@@ -1,0 +1,46 @@
+{
+  "approaches": [
+    {
+      "name": "Column by column",
+      "intuition": "Check position 0 in every string, then position 1, and stop at the first column where the strings disagree or one runs out.",
+      "steps": [
+        "For each column `i` of the first string",
+        "Compare the character with the same column of every other string",
+        "Stop at the first mismatch or a short string"
+      ],
+      "code": {
+        "python": "class Solution:\n    def longestCommonPrefix(self, strs):\n        for i, ch in enumerate(strs[0]):\n            for s in strs[1:]:\n                if i >= len(s) or s[i] != ch:\n                    return strs[0][:i]\n        return strs[0]\n"
+      },
+      "time": "O(total characters)",
+      "space": "O(1)"
+    },
+    {
+      "name": "Shrink a running prefix",
+      "intuition": "Start from the whole first string and trim it each time the next string disagrees.",
+      "steps": [
+        "Candidate = first string",
+        "Trim to the shared length with each string",
+        "The candidate that survives is the answer"
+      ],
+      "code": {
+        "python": {
+          "file": "solutions/ref.py"
+        },
+        "cpp": {
+          "file": "solutions/ref.cpp"
+        },
+        "java": {
+          "file": "solutions/ref.java"
+        }
+      },
+      "time": "O(total characters)",
+      "space": "O(1) extra",
+      "pitfalls": [
+        "A string shorter than the candidate: stop at its length.",
+        "No common prefix returns the empty string, not an error."
+      ]
+    }
+  ],
+  "talkTrackMd": "Either direction is linear in the input size. Mention the early exit once the prefix is empty and that the answer can never be longer than the shortest string.",
+  "relatedSlugs": ["is-palindrome-alnum", "longest-substring-no-repeat"]
+}

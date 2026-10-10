@@ -1,0 +1,47 @@
+{
+  "approaches": [
+    {
+      "name": "Merge any pair until nothing changes",
+      "intuition": "Repeatedly look for two overlapping intervals and replace them by their union.",
+      "steps": [
+        "Find an overlapping pair",
+        "Replace it with the union",
+        "Stop when no pair overlaps; sort the result"
+      ],
+      "code": {
+        "python": "class Solution:\n    def mergeIntervals(self, intervals):\n        items = [list(x) for x in intervals]\n        changed = True\n        while changed:\n            changed = False\n            for i in range(len(items)):\n                for j in range(i + 1, len(items)):\n                    a, b = items[i], items[j]\n                    if a[0] <= b[1] and b[0] <= a[1]:\n                        items[i] = [min(a[0], b[0]), max(a[1], b[1])]\n                        items.pop(j)\n                        changed = True\n                        break\n                if changed:\n                    break\n        return sorted(items)\n"
+      },
+      "time": "O(n^3) in the worst case",
+      "space": "O(n)"
+    },
+    {
+      "name": "Sort by start, then sweep",
+      "intuition": "Sorting puts every group of overlapping intervals next to each other, so one pass merges them.",
+      "steps": [
+        "Sort by start",
+        "Compare each interval with the last merged one",
+        "Extend or append"
+      ],
+      "code": {
+        "python": {
+          "file": "solutions/ref.py"
+        },
+        "cpp": {
+          "file": "solutions/ref.cpp"
+        },
+        "java": {
+          "file": "solutions/ref.java"
+        }
+      },
+      "time": "O(n log n) for the sort",
+      "space": "O(n) for the output",
+      "pitfalls": [
+        "Intervals that only touch (`[1, 3]` and `[3, 5]`) do overlap here: use `<=`.",
+        "Take the maximum of the ends: a long interval can swallow the next one.",
+        "Do not assume the input is sorted."
+      ]
+    }
+  ],
+  "talkTrackMd": "The key step is sorting by start; after that overlap is a local property. State the touching-endpoints rule explicitly and the O(n log n) bound.",
+  "relatedSlugs": ["merge-sorted-arrays", "number-of-islands"]
+}

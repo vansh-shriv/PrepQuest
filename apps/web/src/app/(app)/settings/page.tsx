@@ -2,6 +2,7 @@
 
 import { AppearanceSection } from "@/components/settings/AppearanceSection";
 import { DataSection } from "@/components/settings/DataSection";
+import { PracticeSection } from "@/components/settings/PracticeSection";
 import { ProfileSection } from "@/components/settings/ProfileSection";
 import { SecuritySection } from "@/components/settings/SecuritySection";
 import { SessionsSection } from "@/components/settings/SessionsSection";
@@ -17,6 +18,7 @@ export default function SettingsPage() {
         </div>
         <div className="grid content-start gap-6">
           <AppearanceSection />
+          <PracticeSection />
           <SecuritySection />
           <SessionsSection />
         </div>

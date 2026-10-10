@@ -67,6 +67,8 @@ export const submissions = pgTable(
     activeSeconds: integer("active_seconds"), // A5 metrics
     firstRunSeconds: integer("first_run_seconds"),
     idempotencyKey: text("idempotency_key"),
+    /** XP, level-up, streak and badges this submission earned (set when it finishes). */
+    rewards: jsonb("rewards").$type<Record<string, unknown>>(),
     queuedAt: timestamp("queued_at", { withTimezone: true }),
     startedAt: timestamp("started_at", { withTimezone: true }),
     finishedAt: timestamp("finished_at", { withTimezone: true }),
@@ -174,6 +176,10 @@ export const userProblemState = pgTable(
     totalActiveSeconds: integer("total_active_seconds").notNull().default(0),
     solveRating: text("solve_rating"), // easy | good | hard | again
     lastSubmissionAt: timestamp("last_submission_at", { withTimezone: true }),
+    /** When the user first opened the problem: hint and give-up cooldowns count from here. */
+    firstSeenAt: timestamp("first_seen_at", { withTimezone: true }),
+    /** When the user chose "I give up" to unlock the editorial. */
+    gaveUpAt: timestamp("gave_up_at", { withTimezone: true }),
     ...timestamps,
   },
   (t) => [

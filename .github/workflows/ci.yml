@@ -46,6 +46,8 @@ jobs:
       # content gates: schema/rules, then re-run every reference solution against its committed tests
       - run: pnpm content:validate
       - run: pnpm content:verify
+      # reference solutions in every language, editorial code and known-wrong mutants, through the real judge
+      - run: pnpm content:judge
 
   # The real sandbox: builds the judge image (isolate, g++, Python, JDK) and runs the malicious-program suite
   # inside a privileged container (docs 12 and 16). Needs cgroup v2, which hosted Ubuntu runners provide.
