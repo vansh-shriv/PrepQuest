@@ -56,6 +56,10 @@ export interface CodeEditorProps {
   /** Where to put the caret when the editor opens. */
   initialCursor?: { line: number; column: number } | null;
   onCursorChange?: (cursor: { line: number; column: number }) => void;
+  /** Ctrl/Cmd+Enter. */
+  onRun?: () => void;
+  /** Ctrl/Cmd+Shift+Enter. */
+  onSubmit?: () => void;
   label?: string;
 }
 
@@ -66,6 +70,8 @@ export function CodeEditor({
   onChange,
   initialCursor,
   onCursorChange,
+  onRun,
+  onSubmit,
   label = "Code editor",
 }: CodeEditorProps) {
   const [fallback, setFallback] = useState(false);
@@ -96,6 +102,10 @@ export function CodeEditor({
   const initialCursorRef = useRef(initialCursor);
   const onCursorRef = useRef(onCursorChange);
   onCursorRef.current = onCursorChange;
+  const runRef = useRef(onRun);
+  runRef.current = onRun;
+  const submitRef = useRef(onSubmit);
+  submitRef.current = onSubmit;
 
   const onMount = useCallback<OnMount>((editor, monaco) => {
     loaded.current = true;
@@ -107,6 +117,10 @@ export function CodeEditor({
       editor.setPosition({ lineNumber: start.line, column: start.column });
       editor.revealLineInCenter(start.line);
     }
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => runRef.current?.());
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter, () =>
+      submitRef.current?.(),
+    );
     editor.onDidChangeCursorPosition((e) =>
       onCursorRef.current?.({ line: e.position.lineNumber, column: e.position.column }),
     );
@@ -136,6 +150,12 @@ export function CodeEditor({
           aria-label={label}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+              e.preventDefault();
+              (e.shiftKey ? onSubmit : onRun)?.();
+            }
+          }}
           spellCheck={false}
           className="min-h-0 flex-1 resize-none border-0 bg-surface p-3 text-ink outline-none"
           style={{ fontFamily: "var(--font-code)", fontSize: 14, tabSize: 4 }}

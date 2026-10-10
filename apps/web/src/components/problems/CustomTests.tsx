@@ -1,20 +1,34 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { Button, Input, Textarea } from "@prepquest/ui";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Button, Checkbox, Input, Textarea } from "@prepquest/ui";
 import { MAX_CUSTOM_TESTS, type CustomTest } from "@prepquest/shared";
 import { api } from "@/lib/api";
 import { useSubmit } from "@/lib/use-submit";
 import { FormError } from "../auth/AuthCard";
 
-/** Per-user test inputs for a problem (D2). Running them needs the judge, which arrives in Phase 4. */
-export function CustomTests({ slug }: { slug: string }) {
+export interface CustomTestsProps {
+  slug: string;
+  /** Ids of the tests the next Run will include. */
+  selected: ReadonlySet<string>;
+  onSelectedChange: (next: Set<string>) => void;
+  /** Reports the loaded list so the workspace can default new tests to selected. */
+  onLoaded?: (items: CustomTest[]) => void;
+}
+
+/** Per-user test inputs for a problem (D2). Ticked tests are included when you press Run. */
+export function CustomTests({ slug, selected, onSelectedChange, onLoaded }: CustomTestsProps) {
   const [items, setItems] = useState<CustomTest[] | null>(null);
   const [label, setLabel] = useState("");
   const [input, setInput] = useState("");
+  // a ref, so a parent passing a new function every render can't retrigger loading
+  const onLoadedRef = useRef(onLoaded);
+  onLoadedRef.current = onLoaded;
 
   const load = useCallback(async () => {
-    setItems((await api<{ items: CustomTest[] }>(`/problems/${slug}/custom-tests`)).items);
+    const loaded = (await api<{ items: CustomTest[] }>(`/problems/${slug}/custom-tests`)).items;
+    setItems(loaded);
+    onLoadedRef.current?.(loaded);
   }, [slug]);
 
   useEffect(() => {
@@ -39,8 +53,8 @@ export function CustomTests({ slug }: { slug: string }) {
   return (
     <div className="grid gap-4">
       <p className="m-0 text-sm text-ink-soft">
-        Save your own inputs here. Running them against your code arrives with the judge in the next
-        build phase.
+        Save your own inputs here. Ticked tests run together with the samples when you press Run,
+        and show your program&apos;s output.
       </p>
       {items === null ? (
         <p className="m-0">Loading...</p>
@@ -51,7 +65,16 @@ export function CustomTests({ slug }: { slug: string }) {
           {items.map((t, i) => (
             <li key={t.id} className="grid gap-1">
               <div className="flex items-center justify-between gap-2">
-                <span className="pq-font-ui text-sm uppercase">{t.label ?? `Test ${i + 1}`}</span>
+                <Checkbox
+                  label={t.label ?? `Test ${i + 1}`}
+                  checked={selected.has(t.id)}
+                  onChange={(e) => {
+                    const next = new Set(selected);
+                    if (e.target.checked) next.add(t.id);
+                    else next.delete(t.id);
+                    onSelectedChange(next);
+                  }}
+                />
                 <Button
                   size="sm"
                   variant="ghost"

@@ -224,3 +224,7 @@ Nodes with `topic_slug`, `prerequisites[]`, `problem_ids[]` (ladder: easy → me
 **Shipped content:** 20 original problems (10 easy, 8 medium, 2 hard; 19 to 31 tests each, 7 MB total) and the sheet `foundations-20`.
 
 **Admin v0** (`/admin/problems`): list with status and search, create a draft with a signature builder, editor tabs (Meta, Statement with preview and examples, Starters and limits, Tests with zip upload and the current test table, Versions, Audit for reviewers), a "Run checks" checklist, and the workflow buttons permitted for the signed-in role. Not built yet: the test generator runner, rejudge options, diff between versions, hints/editorial editors, mutation checks, and the other admin modules in §8.
+
+### Reference solutions in other languages (Phase 4)
+
+`solutions/ref.py` is required. `solutions/ref.cpp` and `solutions/ref.java` are optional: the judge's driver tests run every one that exists through the real C++/Java drivers against the committed tests, so a new parameter type or driver change is checked in all three languages. Seven problems have them today (two-sum, climbing-stairs, contains-duplicate, longest-common-prefix, merge-intervals, edit-distance, number-of-islands). Keep C++ compatible with older g++ (no structured bindings) so contributors on Windows toolchains can run the tests. Mutant (known-wrong) solutions for the publish gate (X7) are still to come.

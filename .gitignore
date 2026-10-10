@@ -19,3 +19,7 @@ e2e-screenshots
 secrets
 *.tsbuildinfo
 .data
+
+# Python bytecode (content reference solutions are imported by the harness)
+__pycache__/
+*.pyc

@@ -176,3 +176,7 @@ PostHog (self-host or cloud, EU region): event taxonomy (`problem_viewed`, `subm
 - [ ] README with architecture diagram, GIFs, setup instructions, live link, tech highlights (sandbox, queue, WebSockets, LLM guardrails).
 - [ ] Short walkthrough video (2 to 3 min).
 - [ ] Status page and uptime monitor.
+
+### Judge image and CI (as built)
+
+`apps/judge/Dockerfile` builds from the repository root (`docker build -f apps/judge/Dockerfile -t prepquest-judge .`): stage 1 compiles isolate 2.0, stage 2 is `node:20-bookworm-slim` with g++, Python 3, OpenJDK 17, the isolate binary and config (`isolate.conf`), and the built worker. Run it privileged with `JUDGE_SANDBOX=isolate JUDGE_CGROUPS=true`; the entrypoint prepares the cgroup subtree. It needs `REDIS_URL` and read access to the object store, nothing else. CI job `judge-sandbox` builds the image and runs the malicious suite and driver tests in it. Not done yet: a slimmer runtime image (it currently carries the whole workspace), seccomp/AppArmor profiles, read-only root filesystem, image signing, metrics (`judge_*`).

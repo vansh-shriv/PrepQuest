@@ -88,11 +88,17 @@ export function refreshSession(): Promise<LoginResponse | null> {
 export interface ApiOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   json?: unknown;
+  headers?: Record<string, string>;
 }
 
 /** JSON API call. Retries once after a silent token refresh when the access token has expired. */
 export async function api<T = void>(path: string, options: ApiOptions = {}): Promise<T> {
-  const send = () => request(path, { method: options.method ?? "GET", json: options.json });
+  const send = () =>
+    request(path, {
+      method: options.method ?? "GET",
+      json: options.json,
+      ...(options.headers ? { headers: options.headers } : {}),
+    });
   let res = await send();
   if (res.status === 401 && accessToken && !path.startsWith("/auth/")) {
     if (await refreshSession()) res = await send();

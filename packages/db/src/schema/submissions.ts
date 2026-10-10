@@ -20,7 +20,7 @@ import { users } from "./identity.js";
 import { problems } from "./problems.js";
 
 // Submissions, drafts and per-user problem state (D3, D2, U2, A5). Doc 10 §2.3-2.4 (core subset).
-// Hint usage, bookmarks, notes and SRS arrive with their features.
+// Hint usage and SRS arrive with their features; bookmarks and notes are in library.ts.
 
 export const verdict = pgEnum("verdict", [
   "QUEUED",
@@ -94,12 +94,19 @@ export const submissionResults = pgTable(
       .notNull()
       .references(() => submissions.id, { onDelete: "cascade" }),
     testOrdinal: integer("test_ordinal").notNull(),
+    /** sample | hidden | edge | stress | custom */
+    kind: text("kind"),
+    /** Author's label ("edge: empty input"); shown for the first failing test only. */
+    label: text("label"),
     verdict: verdict("verdict").notNull(),
     timeMs: integer("time_ms"),
     memoryKb: integer("memory_kb"),
     stdoutTail: text("stdout_tail"),
     stderrTail: text("stderr_tail"),
     checkerMsg: text("checker_msg"),
+    /** Input/expected output, stored for visible tests (samples, custom runs) only. */
+    inputPreview: text("input_preview"),
+    expectedPreview: text("expected_preview"),
     ...timestamps,
   },
   (t) => [primaryKey({ columns: [t.submissionId, t.testOrdinal] })],

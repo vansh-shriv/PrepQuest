@@ -96,7 +96,8 @@ test("opening a problem shows the statement, examples and a working editor", asy
   await expect(pane.getByText("nums = [2, 7, 11, 15]")).toBeVisible();
   await expect(page.getByText("2 <= nums.length <= 20000")).toBeVisible();
   await expect(page.locator(".monaco-editor").first()).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByRole("button", { name: "Submit" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Submit", exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Run", exact: true })).toBeEnabled();
 });
 
 test("code autosaves, survives a reload and keeps a separate draft per language", async ({

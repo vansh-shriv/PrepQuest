@@ -161,3 +161,10 @@ pnpm storybook
 - **Content lives in `content/`** (`problems/<slug>/`, `sheets/*.json`, `_lib/gentools.py` for test generators). Generated tests are committed.
 - **Frontend libraries added:** `@monaco-editor/react` (Monaco is loaded from a CDN at runtime; a plain textarea takes over if it can't load), `react-markdown` + `remark-gfm` + `remark-math` + `rehype-katex` (no raw HTML is ever rendered), `qrcode` (2FA setup), `fflate` (e2e zip building). API: `@fastify/multipart`, `fflate` (zip reading with size checks before inflating).
 - **Object storage dev default** is the `fs` driver under `.data/objects`; production uses S3/R2.
+
+### Phase 4 additions
+
+- **`packages/judge-core`**: language table, driver generators (Python, C++, Java), checkers, verdict mapping and the job pipeline over a `Sandbox` interface (no I/O of its own). Shared queue names and the results-stream name live here.
+- **`apps/judge`**: the worker. BullMQ 6 consumers, `IsolateSandbox` and `ProcessSandbox`, a results publisher, its own minimal config. It depends on judge-core and storage only (no `@prepquest/db`, no `@prepquest/shared`), which is what keeps database credentials off judge hosts. Ships as `apps/judge/Dockerfile` (isolate built from source, g++, Python, OpenJDK 17).
+- **API**: `modules/submissions` (service, routes, `queue.ts` with BullMQ and in-memory implementations, `ingest.ts` with the stream consumer) and `modules/library` (bookmarks, notes). New dependency `bullmq`.
+- **Web**: `features/submissions/use-judge.ts` (send + poll), `components/problems/{ResultPanel,NotesPanel,SubmissionHistory}`, `components/library/*`, pages `/submissions`, `/submissions/[id]`, `/notes`. `packages/ui` gains `VerdictBanner` and eight verdict sprites, and `Tabs` can be controlled.

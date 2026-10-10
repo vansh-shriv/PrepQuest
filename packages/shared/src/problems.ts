@@ -92,6 +92,8 @@ export interface ProblemDetail {
   archived: boolean;
   languages: ProblemLanguage[];
   state: { status: ProblemStatus; attempts: number } | null;
+  /** Whether the signed-in user bookmarked it; null for anonymous visitors. */
+  bookmarked: boolean | null;
 }
 
 export interface FacetTag {

@@ -1,4 +1,10 @@
-import { expect, type Browser, type BrowserContext, type Page } from "@playwright/test";
+import {
+  expect,
+  type APIRequestContext,
+  type Browser,
+  type BrowserContext,
+  type Page,
+} from "@playwright/test";
 
 export const PASSWORD = "e2e-an-unusual-passphrase-77";
 export const DEMO_PASSWORD = "demo-password";
@@ -55,3 +61,32 @@ export async function typeInEditor(page: Page, text: string) {
 /** The editor's text. Monaco renders spaces as non-breaking spaces, so normalise them. */
 export const editorText = async (page: Page) =>
   (await page.locator(".monaco-editor .view-lines").first().innerText()).replace(/\u00a0/g, " ");
+
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+
+/**
+ * Puts code straight into the user's draft through the API. Typing multi-line code into Monaco fights
+ * its auto-indent, and these tests are about the judge, not the editor.
+ */
+export async function saveDraft(
+  request: APIRequestContext,
+  credentials: { email: string; password?: string },
+  slug: string,
+  language: "python" | "cpp" | "java",
+  code: string,
+) {
+  const login = await request.post(`${API}/v1/auth/login`, {
+    data: { email: credentials.email, password: credentials.password ?? PASSWORD },
+  });
+  const { accessToken } = (await login.json()) as { accessToken: string };
+  const headers = { authorization: `Bearer ${accessToken}` };
+  const url = `${API}/v1/problems/${slug}/draft?language=${language}`;
+  const current = (await (await request.get(url, { headers })).json()) as {
+    draft: { version: number } | null;
+  };
+  const res = await request.put(url, {
+    headers,
+    data: { code, baseVersion: current.draft?.version ?? 0 },
+  });
+  expect(res.ok()).toBe(true);
+}

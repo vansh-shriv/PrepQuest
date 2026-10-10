@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Built in phases; see `PROGRESS.md` for status and `docs/18-ROADMAP-AND-SPRINTS.md` for the plan. The `docs/` folder (20 specs) is the source of truth for product, architecture, schema, API and design; update the relevant doc when a decision changes. Start with `docs/README.md` (doc map, feature ID index, vocabulary).
 
-**Implemented:** Phase 0 (monorepo, env validation, Docker Compose, CI), Phase 1 (`packages/ui` pixel design system + Storybook, `/design` showcase), Phase 2 + 2b (`packages/db` Drizzle schema and migrations; API auth with refresh rotation, email verification, password reset, TOTP 2FA, Google/GitHub OAuth, breach check, rate limiting and lockout, `/me`, prep settings, data export, account deletion with purge job, public profiles, verified-email gate for AI interviews; web login/signup/2FA/OAuth, protected app shell, dashboard, settings, `/u/[handle]`). Phase 3 (problem bank: `packages/content` pipeline + 20 problems in `content/`, `packages/storage`, problems/drafts/custom-tests/admin APIs, `/problems` list and Monaco workspace, `/admin/problems` v0). Judge/Run/Submit, hints, the interview engine and everything else in the docs are still planned.
+**Implemented:** Phase 0 (monorepo, env validation, Docker Compose, CI), Phase 1 (`packages/ui` pixel design system + Storybook, `/design` showcase), Phase 2 + 2b (`packages/db` Drizzle schema and migrations; API auth with refresh rotation, email verification, password reset, TOTP 2FA, Google/GitHub OAuth, breach check, rate limiting and lockout, `/me`, prep settings, data export, account deletion with purge job, public profiles, verified-email gate for AI interviews; web login/signup/2FA/OAuth, protected app shell, dashboard, settings, `/u/[handle]`). Phase 3 (problem bank: `packages/content` pipeline + 20 problems in `content/`, `packages/storage`, problems/drafts/custom-tests/admin APIs, `/problems` list and Monaco workspace, `/admin/problems` v0). Phase 4 (`packages/judge-core`, `apps/judge` worker with isolate/process sandboxes and Dockerfile, Run/Submit with real verdicts, submission history/detail/diff, bookmarks and notes, `/submissions`, `/notes`). Hints and editorials, XP/streaks, the interview engine and everything else in the docs are still planned.
 
 **Phase workflow:** at the end of every phase run lint/typecheck/test, update `CLAUDE.md`, `PROGRESS.md` and affected docs, then propose a commit message. Do not commit unless asked. Reference images in `refrence/` plus `docs/07-DESIGN-SYSTEM-PIXEL-UI.md` drive the UI (redraw sprites originally; don't copy the reference artwork).
 
@@ -35,9 +35,9 @@ Requirements: Node 20+, pnpm 10. `.env` is read by the API dev script via `tsx -
 
 Husky runs on commit: lint-staged (prettier + eslint --fix on staged files) and commitlint (Conventional Commits; `type(scope): subject`). Running `lint-staged --diff=...` by hand stages the files it fixes.
 
-Planned (not yet existing): `judge:*` (see docs 09 §6, 19 §5). `docker compose up -d s3` (Zenko CloudServer :9000) is only needed for `STORAGE_DRIVER=s3`; the default `fs` driver stores hidden tests in `.data/objects`.
+Judge: `pnpm dev` runs the worker with the unsandboxed process sandbox (needs Redis); the real sandbox is `docker compose --profile judge up -d --build judge` (privileged Linux container, isolate + cgroup v2). Malicious-program suite: `docker build -f apps/judge/Dockerfile -t prepquest-judge .` then `docker run --rm --privileged -e JUDGE_ISOLATE_TESTS=1 -e JUDGE_CGROUPS=true prepquest-judge sh -c "cd apps/judge && pnpm exec vitest run src/sandbox src/drivers.test.ts src/pipeline.test.ts"` (details: docs 19 §4). `E2E_EXTERNAL_JUDGE=1 pnpm test:e2e` uses a worker you started yourself. `docker compose up -d s3` (Zenko CloudServer :9000) is only needed for `STORAGE_DRIVER=s3`; the default `fs` driver stores hidden tests in `.data/objects`.
 
-Mock modes for dev without keys/sandbox: `LLM_MODE=mock`, `FAKE_JUDGE=true`, `FAKE_STT=true`, `TEST_CLOCK_ISO=<iso>`.
+Mock modes for dev without keys: `LLM_MODE=mock`, `FAKE_STT=true`, `TEST_CLOCK_ISO=<iso>`. The judge needs no mock: `JUDGE_SANDBOX=process` (default in dev) runs code in a plain child process.
 
 ## Layout
 
@@ -50,6 +50,8 @@ apps/web       Next.js App Router: src/app/(auth) signed-out pages, src/app/(app
 packages/config  shared tsconfig presets (base/node/next)
 packages/shared  Zod env schema, AppError (ESM, built with tsc to dist; imports use .js extensions)
 packages/db    Drizzle: src/schema/*.ts (source of truth), migrations/ (generated + custom SQL), migrate runner, createDatabase/withTransaction, newId (UUID v7), seed data (built to dist/)
+apps/judge     worker: BullMQ consumers, sandboxes (src/sandbox/{isolate,process}.ts), results publisher; no DB access
+packages/judge-core  pure judge logic: languages, drivers, checkers, verdicts, pipeline, queue names
 packages/storage  ObjectStore (fs + S3 drivers)
 packages/content  problem loader/validator/importer, canonical I/O codec, Python harness, `content:*` CLI; problems live in content/
 packages/ui    pixel design system, consumed as source (no build): src/styles (tokens/base/components CSS, `pq-` prefix),
@@ -89,3 +91,7 @@ Later phases add `apps/{worker,judge,scheduler}` and `packages/{ui,db,prompts,ju
 - Content: `content/problems/<slug>/` is the source of truth (see docs 17 §11); changing a problem's content creates a new version (hash), old versions keep their tests. Test I/O follows the codec in doc 12 (`packages/content/src/codec.ts` + `python/harness.py`); judge drivers must match it. Admin roles: editors touch only their own drafts, reviewers/admins publish/archive, every write is audited.
 - Drizzle gotcha: in single-table select-list subqueries `${table.col}` loses its table prefix; use raw qualified names. `TRUNCATE users CASCADE` also wipes problems in tests (import fixtures after `makeTestApp`).
 - Monaco: the editor owns its text while typing (never drive it with a controlled `value`); colors must be 6/8-digit hex (`editor-colors.ts`); a textarea fallback shows if the CDN load fails.
+- Judge protocol: API inserts the submission and enqueues a BullMQ job that carries everything (source, signature, checker, limits, test keys); the worker publishes events to the Redis stream `judge:results`; the API's `ResultIngester` is the only writer to the database and applies events idempotently (`applyJudgeEvent`). Hidden test data never reaches the browser (the worker omits it and `getSubmission` filters again). The worker must never receive database, JWT or SMTP settings (`apps/judge/src/config.ts`). A new parameter type needs the codec (`packages/content`), the Python harness and all three drivers (`packages/judge-core/src/drivers.ts`) changed together; the driver tests cover it.
+- Under isolate commands must be absolute paths (it doesn't search PATH, `/etc` is invisible); see `defaultCommands()`. Don't run submitted code with `ProcessSandbox` on shared hosts.
+- Web judge UI: send and poll in `features/submissions/use-judge.ts`; verdict display in `@prepquest/ui` `VerdictBanner`. In Playwright put code into drafts through the API (`saveDraft`), because typing into Monaco auto-indents.
+- Never commit `__pycache__` (ignored): reference solutions are imported by Python tools.

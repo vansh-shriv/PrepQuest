@@ -1,0 +1,17 @@
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/coverage
+.git
+.data
+secrets
+.env
+.env.*
+!.env.example
+refrence
+apps/web
+packages/ui
+docs
+**/test-results
+**/playwright-report

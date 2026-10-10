@@ -17,7 +17,10 @@ import type { AuthContext } from "./modules/auth/service.js";
 import { healthRoutes, type HealthChecks } from "./modules/health/routes.js";
 import { interviewRoutes } from "./modules/interviews/routes.js";
 import { meRoutes } from "./modules/me/routes.js";
+import { libraryRoutes } from "./modules/library/routes.js";
 import { problemRoutes } from "./modules/problems/routes.js";
+import type { JudgeQueue } from "./modules/submissions/queue.js";
+import { submissionRoutes } from "./modules/submissions/routes.js";
 import { userRoutes } from "./modules/users/routes.js";
 import { adminRoutes } from "./modules/admin/routes.js";
 import { registerAuth } from "./plugins/auth.js";
@@ -30,6 +33,8 @@ export interface AppDeps {
   mailer: Mailer;
   /** Object storage for hidden test data and uploads. */
   store: ObjectStore;
+  /** Hands submissions to the judge workers. */
+  judge: JudgeQueue;
   checks: HealthChecks;
   /** When set, rate-limit counters, lockouts and OAuth state live in Redis (shared across instances). */
   redis?: Redis;
@@ -167,6 +172,11 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(meRoutes, { prefix: "/v1", ctx });
   await app.register(userRoutes, { prefix: "/v1", db });
   await app.register(problemRoutes, { prefix: "/v1", db });
+  await app.register(submissionRoutes, {
+    prefix: "/v1",
+    ctx: { db, queue: deps.judge, limiter: ctx.limiter },
+  });
+  await app.register(libraryRoutes, { prefix: "/v1", db });
   await app.register(interviewRoutes, { prefix: "/v1" });
   await app.register(adminRoutes, {
     prefix: "/v1",

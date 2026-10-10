@@ -11,13 +11,16 @@ export interface TabItem {
 export interface TabsProps {
   items: TabItem[];
   defaultId?: string;
+  /** Controlled selection. Combine with `onChange`; omit for an uncontrolled tab set. */
+  value?: string;
   onChange?: (id: string) => void;
   "aria-label"?: string;
 }
 
-export function Tabs({ items, defaultId, onChange, "aria-label": ariaLabel }: TabsProps) {
+export function Tabs({ items, defaultId, value, onChange, "aria-label": ariaLabel }: TabsProps) {
   const base = useId();
-  const [active, setActive] = useState(defaultId ?? items[0]?.id);
+  const [inner, setActive] = useState(defaultId ?? items[0]?.id);
+  const active = value ?? inner;
   const refs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const select = (id: string) => {

@@ -685,3 +685,55 @@
 .pq-divider[data-dragging="true"] {
   background: var(--sky-light);
 }
+
+/* ---------- Verdict banner (judge result) ---------- */
+.pq-verdict {
+  --v: var(--leaf);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  background: color-mix(in srgb, var(--v) 22%, var(--surface));
+  color: var(--ink);
+}
+.pq-verdict--ac {
+  --v: var(--leaf);
+}
+.pq-verdict--wa {
+  --v: var(--danger);
+}
+.pq-verdict--tle {
+  --v: var(--sun);
+}
+.pq-verdict--mle {
+  --v: var(--coin);
+}
+.pq-verdict--re {
+  --v: #8f2c22;
+}
+.pq-verdict--ce {
+  --v: var(--blossom);
+}
+.pq-verdict--ole {
+  --v: var(--coin);
+}
+.pq-verdict--ie {
+  --v: var(--sky);
+}
+.pq-verdict__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 14px;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+.pq-verdict__detail {
+  margin: 2px 0 0;
+}
+.pq-verdict__meta {
+  margin: 4px 0 0;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}

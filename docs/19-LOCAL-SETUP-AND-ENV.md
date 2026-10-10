@@ -13,7 +13,7 @@
 
 ## 2. First run
 
-> Built so far: Docker services, `pnpm db:migrate`, `pnpm db:seed`, `pnpm content:*`, `pnpm dev`, tests and e2e (below). The judge arrives in a later phase (`docker compose up -d judge` doesn't exist yet). Postgres is published on host port **5433** (a native Postgres often owns 5432). The API generates dev JWT keys into `secrets/` on first start. Git hooks (Husky) install on `pnpm install`: staged files are formatted and linted, and commit messages must follow Conventional Commits.
+> Built so far: Docker services, `pnpm db:migrate`, `pnpm db:seed`, `pnpm content:*`, `pnpm dev`, tests and e2e (below). `pnpm dev` also starts the judge worker (development process sandbox); the real `isolate` sandbox runs in a container (section 4). Postgres is published on host port **5433** (a native Postgres often owns 5432). The API generates dev JWT keys into `secrets/` on first start. Git hooks (Husky) install on `pnpm install`: staged files are formatted and linted, and commit messages must follow Conventional Commits.
 
 ```bash
 git clone <repo> prepquest && cd prepquest
@@ -23,11 +23,11 @@ docker compose up -d postgres redis mailpit     # add `s3` only if you set STORA
 pnpm db:migrate
 pnpm db:seed                    # tags + demo player, content editor and reviewer (password: demo-password)
 pnpm content:validate && pnpm content:import --publish   # imports the 20 problems and the sheet (needs tags, so seed first)
-pnpm dev                        # web :3000, api :4000
-# later phases: worker, scheduler, and `docker compose up -d judge` (privileged, isolate)
+pnpm dev                        # web :3000, api :4000, judge worker (JUDGE_SANDBOX=process)
+# later phases: worker, scheduler. The isolate judge: docker compose --profile judge up -d --build judge
 ```
 
-Open `http://localhost:3000`, log in with `demo@prepquest.dev / demo-password` (seeded, local only). `editor@prepquest.dev` (content editor) and `reviewer@prepquest.dev` (reviewer) use the same password and open the Admin section. Python 3.9+ must be on PATH (or set `PYTHON`) for `content:build-tests` and `content:verify`.
+Open `http://localhost:3000`, log in with `demo@prepquest.dev / demo-password` (seeded, local only). `editor@prepquest.dev` (content editor) and `reviewer@prepquest.dev` (reviewer) use the same password and open the Admin section. Python 3.9+ must be on PATH (or set `PYTHON`) for `content:build-tests` and `content:verify`. To run code locally you also need Redis (compose) and, for C++/Java solutions, `g++` and a JDK on PATH (Python is enough to try the app). The dev judge runs submitted code in a plain child process: fine for your own code, never for strangers'.
 
 Mailpit UI: `http://localhost:8025` (verification emails). Hidden test data is stored under `.data/objects` (gitignored) by default; `docker compose up -d s3` starts a local S3-compatible server on `:9000` (Zenko CloudServer; MinIO's community images are no longer published) for `STORAGE_DRIVER=s3`.
 
@@ -107,12 +107,12 @@ LLM_SESSION_TOKEN_CAP=250000
 EMBEDDING_PROVIDER=             # provider key or "local"
 EMBEDDING_DIM=1024
 
-# --- Judge ---
-JUDGE_WORKER_SLOTS=2
-JUDGE_TESTDATA_CACHE_DIR=/var/cache/prepquest/tests
-JUDGE_TESTDATA_CACHE_GB=5
-JUDGE_RESULT_STREAM=judge:results
-ISOLATE_BIN=/usr/local/bin/isolate
+# --- Judge worker (apps/judge). It reads only Redis and the object store: no database, JWT or SMTP settings ---
+JUDGE_SANDBOX=process            # process (dev only, refused when NODE_ENV=production) | isolate (Linux container)
+JUDGE_CONCURRENCY=2              # concurrent submissions; runs get half as many slots on top
+JUDGE_CGROUPS=false              # true in the container: exact memory limits and peak usage via cgroup v2
+ISOLATE_BIN=isolate
+# process sandbox only: PYTHON_BIN, CXX_BIN, JAVA_HOME pick the interpreter/compilers on this machine
 
 # --- Rate limits (overridable at runtime via admin config) ---
 RL_SUBMIT_PER_MIN=10
@@ -144,35 +144,37 @@ Never commit `.env` or `secrets/` (gitignored; gitleaks pre-commit).
 
 ## 4. Judge dev setup
 
-`infra/docker/judge.Dockerfile` builds an image with: compilers (g++, OpenJDK 17, Python 3.11), `isolate` built from source, the judge worker (Node). Run:
+Two ways to run the judge worker (both consume the same BullMQ queues and write to the same results stream):
+
+1. **Process sandbox** (default with `pnpm dev`): `JUDGE_SANDBOX=process`. A temp directory plus a child process with a wall-clock limit and an output cap. No memory limit, no filesystem or network isolation. For your own code only.
+2. **isolate** (the real thing, Linux only, so on Windows/macOS inside Docker Desktop's Linux VM):
 
 ```bash
-docker compose up -d judge
-docker compose exec judge isolate --version
-pnpm judge:selftest          # runs canary (AC + TLE + MLE + CE programs)
-pnpm judge:malicious         # runs malicious suite (needs privileged container)
+docker compose --profile judge up -d --build judge     # apps/judge/Dockerfile: isolate 2.0 built from source, g++, Python 3, OpenJDK 17
+docker compose --profile judge logs judge              # {"msg":"judge ready","sandbox":"isolate",...}
 ```
 
-Compose service snippet:
+The container is privileged (isolate needs namespaces and cgroups); `docker-entrypoint.sh` prepares a cgroup v2 subtree for it. It reaches Redis by service name and reads hidden tests from `./.data/objects` (mounted read-only); with `STORAGE_DRIVER=s3` point it at the `s3` service. Stop your local `pnpm dev` judge first, or both will pull jobs.
 
-```yaml
-judge:
-  build: { context: ., dockerfile: infra/docker/judge.Dockerfile }
-  privileged: true # needed for isolate cgroups; production uses tuned caps instead
-  cgroup: host
-  environment: [REDIS_URL, S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY, S3_SECRET_KEY, JUDGE_WORKER_SLOTS]
-  networks: [internal] # no DB access; no internet
-  read_only: true
-  tmpfs: ["/var/local/lib/isolate:size=1g,exec", "/tmp:size=256m"]
+Run the malicious-program suite and the language driver tests under isolate:
+
+```bash
+docker build -f apps/judge/Dockerfile -t prepquest-judge .
+docker run --rm --privileged -e JUDGE_ISOLATE_TESTS=1 -e JUDGE_CGROUPS=true prepquest-judge \
+  sh -c "cd apps/judge && pnpm exec vitest run src/sandbox src/drivers.test.ts src/pipeline.test.ts"
+# iterate without rebuilding: add  -v "$PWD/apps/judge/src:/app/apps/judge/src:ro"
 ```
 
-On cgroup v1 hosts, enable cgroup v2 (`systemd.unified_cgroup_hierarchy=1`) or run the judge on a Linux VM.
+E2E against the isolate worker: start the container, then `E2E_EXTERNAL_JUDGE=1 pnpm test:e2e` (otherwise Playwright starts its own process-sandbox worker).
+
+On cgroup v1 hosts, enable cgroup v2 (`systemd.unified_cgroup_hierarchy=1`) or run the judge on a Linux VM. If cgroups can't be delegated, set `JUDGE_CGROUPS=false`: limits fall back to rlimits (memory is then address space, which is coarser).
 
 ## 5. Useful scripts
 
 ```
-pnpm dev:web | dev:api | dev:worker | dev:scheduler
-pnpm test | test:unit | test:int | test:e2e | test:judge | test:ai-eval
+pnpm --filter @prepquest/judge dev          # the judge worker alone
+pnpm dev:web | dev:api | dev:worker | dev:scheduler   (planned shortcuts; today use pnpm dev or --filter)
+pnpm test | test:e2e | (later: test:ai-eval)
 pnpm lint | typecheck | format
 pnpm db:generate | db:migrate | db:reset | db:seed | db:studio   # generate = diff the Drizzle schema into a new migration
 pnpm --filter @prepquest/api db:purge   # hard-delete accounts past the 14-day deletion grace period (daily)
@@ -196,7 +198,7 @@ pnpm llm:record                 # record LLM fixtures for tests
 ## 7. Mock modes for fast development
 
 - `LLM_MODE=mock`: deterministic scripted interviewer, scorecard from fixture (no API key needed).
-- `FAKE_JUDGE=true`: API returns scripted verdicts without sandbox (UI work on non-Linux hosts).
+- The judge needs no mock: `JUDGE_SANDBOX=process` runs real code with real verdicts on any OS (`FAKE_JUDGE` was removed).
 - `FAKE_STT=true`: use transcript fixtures for voice flows.
 - Time travel: `TEST_CLOCK_ISO=2026-11-01T09:00:00Z` for streak/SRS/plan testing.
 

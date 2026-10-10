@@ -439,3 +439,20 @@ Not built yet: hints, editorial, rating, bookmarks, notes, `/problems/:slug/simi
 - **Edits and versions:** changes to statement, constraints, examples, limits or starters create a new version (tests are copied forward); title, tags and estimates don't. Files in `content/` remain the source of truth for imported problems: the next `content:import` replaces admin edits with the file contents (as a new version).
 - **Test upload:** zip with `manifest.json` and `NN.in`/`NN.out` in its root; at most 25 MB zipped, 200 tests, 5 MB per file, 50 MB total, checked from the zip headers before anything is inflated; no nested folders or stray files; UTF-8 only; every input/output is parsed against the signature; the first N tests must be samples (N = number of examples). A bad zip changes nothing (422 with up to 50 issues).
 - **Validation checklist:** tags, statement, constraints, examples, signature, three starters, test validity (format, counts: 10/15/20 non-sample tests for easy/medium/hard, at least 2 stress, labelled edge/stress), hints (warning). Reference-solution and mutant runs are listed as "later" until the judge exists.
+
+### Submissions, history, bookmarks and notes (Phase 4)
+
+| Area | Endpoints |
+| ---- | --------- |
+| Judge | `POST /submissions` (202 `{submissionId, status, queuePosition}`), `GET /submissions/:id`, `GET /me/submissions`, `PATCH /submissions/:id/note`, `GET /submissions/:id/diff?against=` |
+| Library | `GET /me/bookmarks`, `PUT/DELETE /me/bookmarks/:slug` (slug, not id), `GET/PUT /problems/:slug/note`, `GET /me/notes?q=` |
+
+Not built yet: review (X3) and complexity (X4) endpoints, personal tags, notes export, note version history, `/me/tag-links`.
+
+**Behavior notes**
+- **Create:** body `{problemSlug, language, code, kind, customTestIds?, customInputs?}`. `kind=submit` judges every test of the problem's current version; `kind=run` judges the samples plus the chosen saved custom tests (numbered 1001+) and up to 5 ad-hoc inputs (each up to 256 KB). Custom tests on a submit, someone else's custom test id, an unavailable language, a problem without tests or with a special checker: 422. Only published problems accept code (404 otherwise). `Idempotency-Key` (8 to 100 chars, per user): a repeat returns the original submission with `Idempotent-Replay: true` and does not cost rate-limit budget.
+- **Limits:** submit 10/min and 200/day, run 30/min (429 `RATE_LIMITED`), at most 5 queued or running at once (429 `TOO_MANY_PENDING`). Queue unreachable: 503 `JUDGE_UNAVAILABLE`.
+- **Read:** only the owner sees a submission (404 for anyone else). `verdict` is `QUEUED`, `COMPILING`, `RUNNING` while judging; `finished` becomes true on any final verdict (including `IE`), and `code` is included from then on. `results[]` per test: hidden tests expose only `ordinal`, `kind`, `verdict`, `timeMs`, `memoryKb` (plus `stderr` for a runtime error and a fixed message for WA); samples and custom runs add `input`, `expected`, `stdout`, `stderr`, `checkerMsg`. `failing` names the first failing test and, for hidden ones, its author's label.
+- **Effects of a finished submit:** `user_problem_state` (status, attempts, first AC, first-try flag, best time) and the problem's submission/acceptance counters. Runs and `IE` never count.
+- **History:** `GET /me/submissions` filters `problem`, `verdict`, `language`, `mode`, `from`, `to`, `q` (problem title) and `kind` (`submit` default, `run`, `all`), newest first with an opaque cursor (`limit` up to 100). `diff` compares two of your attempts at the same problem (line diff).
+- **Notes:** `PUT` carries `baseVersion` (0 for a new note); a stale version is 409 `CONFLICT` with `details.current`; saving an empty body deletes the note; at most 20,000 characters. Notes of archived problems stay and are marked `archived` in the hub. `GET /problems/:slug` now includes `bookmarked` for signed-in users.

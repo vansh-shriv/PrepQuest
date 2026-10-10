@@ -156,3 +156,14 @@ Run same submission 50 times: verdict identical; time variance within 15% (CPU p
 ## 10. Quality gates summary
 
 A change merges only if: lint/types pass, unit + integration pass, coverage gates met, e2e pass, no new critical a11y issues, security scans clean, and (for relevant paths) judge and AI eval suites pass.
+
+## As built (Phase 4)
+
+- **Unit:** judge-core (checkers, verdict mapping, driver source generation); `interpretMeta` for isolate's meta file; worker config rules.
+- **Pipeline (process sandbox, any OS):** every verdict (AC, WA with and without leaking hidden data, RE, TLE, CE, float checker, custom runs, IE), submit vs run stop policy.
+- **Driver conformance:** every shipped reference solution (20 Python, 7 C++, 7 Java) runs through the real drivers against the committed tests. Java tests skip when no JDK is installed; CI and the judge container have one.
+- **Worker integration (real Redis):** BullMQ job in, ordered events out on the stream, retries of infrastructure errors end in exactly one IE, WA is not retried.
+- **API integration (real Postgres, real Redis when up):** submission creation rules, idempotency, rate and pending limits, queue failure, the ingester (`applyJudgeEvent`, stuck sweep, Redis stream consumer incl. redelivery of unacknowledged entries and poison messages), privacy of results, statistics updates, history filters and cursors, diff, bookmarks, notes (conflicts, concurrency).
+- **Malicious suite (`apps/judge/src/sandbox/isolate.container.test.ts`):** 16 tests under real isolate with cgroup v2, run inside the judge image (`JUDGE_ISOLATE_TESTS=1`); it is the CI `judge-sandbox` job. Every attack ends with a "still healthy" check that a normal submission is judged correctly afterwards.
+- **E2E (Playwright, real stack incl. the judge worker):** Run on samples, Submit and the solved status, WA details, runtime and compile errors, custom tests, notes autosave, bookmarks, history page, detail page and diff. Also verified against the isolate container (`E2E_EXTERNAL_JUDGE=1`).
+- **Not covered yet:** determinism/variance runs, 1,000-submission load test, mutant solutions (needs authored mutants), strace-level checks of the sandbox, outbound packet capture.

@@ -56,7 +56,6 @@ export const serverEnvSchema = z.object({
   EMAIL_FROM: z.string().default("PrepQuest <no-reply@prepquest.local>"),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
   LLM_MODE: z.enum(["live", "mock", "record"]).default("mock"),
-  FAKE_JUDGE: bool,
   FF_VOICE: bool,
   FF_PEER: bool,
   FF_CONTESTS: bool,

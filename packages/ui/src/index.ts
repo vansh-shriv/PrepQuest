@@ -12,6 +12,12 @@ export {
   type StageBarProps,
 } from "./components/LoadingBar";
 export { Chip, type ChipProps } from "./components/Chip";
+export {
+  VerdictBanner,
+  verdictTitle,
+  type VerdictBannerProps,
+  type VerdictCode,
+} from "./components/VerdictBanner";
 export { FolderCard, type FolderCardProps } from "./components/FolderCard";
 export { Dialog, type DialogProps } from "./components/Dialog";
 export { ToastProvider, useToast, type ToastOptions } from "./components/Toast";

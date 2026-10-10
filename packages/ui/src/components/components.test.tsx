@@ -9,6 +9,7 @@ import { Input } from "./Input";
 import { LoadingBar, StageBar } from "./LoadingBar";
 import { Sprite } from "./Sprite";
 import { Tabs } from "./Tabs";
+import { VerdictBanner, type VerdictCode } from "./VerdictBanner";
 
 const html = (node: React.ReactElement) => renderToStaticMarkup(node);
 
@@ -136,5 +137,27 @@ describe("Select and Textarea", () => {
     const area = html(<Textarea label="Statement" id="t" mono helper="Markdown" />);
     expect(area).toContain("pq-textarea--mono");
     expect(area).toContain('aria-describedby="t-note"');
+  });
+});
+
+describe("VerdictBanner", () => {
+  it("pairs every verdict with a text label and an icon, never color alone", () => {
+    const codes: VerdictCode[] = ["AC", "WA", "TLE", "MLE", "RE", "CE", "OLE", "IE"];
+    for (const code of codes) {
+      const out = html(<VerdictBanner verdict={code} />);
+      expect(out).toContain('role="status"');
+      expect(out).toContain(`data-verdict="${code}"`);
+      expect(out).toContain(`pq-verdict--${code.toLowerCase()}`);
+      expect(out).toContain("<svg"); // sprite
+      expect(out).toMatch(/pq-verdict__title">[^<]+</);
+    }
+  });
+
+  it("shows detail and meta lines when given", () => {
+    const out = html(<VerdictBanner verdict="WA" detail="Failed on test 4" meta="3 / 12 passed" />);
+    expect(out).toContain("Wrong answer");
+    expect(out).toContain("Failed on test 4");
+    expect(out).toContain("3 / 12 passed");
+    expect(html(<VerdictBanner verdict="IE" />)).toContain("Our bad");
   });
 });

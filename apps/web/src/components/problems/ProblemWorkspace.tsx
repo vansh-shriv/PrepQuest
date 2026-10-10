@@ -1,17 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, Chip, Dialog, LoadingBar, Sprite, Tabs, Window } from "@prepquest/ui";
-import type { DraftHistoryItem, LanguageValue, ProblemDetail } from "@prepquest/shared";
+import type { CustomTest, DraftHistoryItem, LanguageValue, ProblemDetail } from "@prepquest/shared";
 import { useDraft, type DraftStatus } from "@/features/problems/use-draft";
+import { useJudge } from "@/features/submissions/use-judge";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { readLocal, writeLocal } from "@/lib/local-store";
 import { CodeEditor } from "./CodeEditor";
 import { CustomTests } from "./CustomTests";
 import { Markdown } from "./Markdown";
+import { NotesPanel } from "./NotesPanel";
+import { ResultPanel } from "./ResultPanel";
 import { SplitPane } from "./SplitPane";
+import { SubmissionHistory } from "./SubmissionHistory";
 
 const LANGUAGE_LABEL: Record<LanguageValue, string> = {
   cpp: "C++17",
@@ -77,11 +81,44 @@ export function ProblemWorkspace({ slug }: { slug: string }) {
   return <Workspace problem={problem} />;
 }
 
+function BookmarkButton({ slug, initial }: { slug: string; initial: boolean | null }) {
+  const [on, setOn] = useState(initial === true);
+  const [busy, setBusy] = useState(false);
+  if (initial === null) return null; // signed out
+  const toggle = async () => {
+    setBusy(true);
+    const next = !on;
+    setOn(next); // optimistic
+    try {
+      await api(`/me/bookmarks/${slug}`, next ? { method: "PUT", json: {} } : { method: "DELETE" });
+    } catch {
+      setOn(!next);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Button
+      size="sm"
+      variant="ghost"
+      aria-pressed={on}
+      disabled={busy}
+      onClick={() => void toggle()}
+      title={on ? "Remove bookmark" : "Bookmark this problem"}
+    >
+      {on ? "Bookmarked" : "Bookmark"}
+    </Button>
+  );
+}
+
 function Description({ problem }: { problem: ProblemDetail }) {
   return (
     <article className="grid gap-5 p-4">
       <header className="grid gap-3">
-        <h1 className="pq-font-display m-0 text-base leading-relaxed">{problem.title}</h1>
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="pq-font-display m-0 text-base leading-relaxed">{problem.title}</h1>
+          <BookmarkButton slug={problem.slug} initial={problem.bookmarked} />
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <Chip tone={DIFFICULTY_TONE[problem.difficulty]}>{problem.difficulty}</Chip>
           {problem.estMinutes ? <Chip>~{problem.estMinutes} min</Chip> : null}
@@ -132,18 +169,6 @@ function Description({ problem }: { problem: ProblemDetail }) {
   );
 }
 
-function ComingSoon({ phase, what }: { phase: number; what: string }) {
-  return (
-    <div className="flex flex-col items-center gap-3 p-8 text-center">
-      <Sprite name="dino" scale={4} label="Dino" />
-      <p className="pq-font-pixel m-0 text-2xl">NOTHING HERE YET.</p>
-      <p className="m-0 text-sm text-ink-soft">
-        {what} arrives in build phase {phase}.
-      </p>
-    </div>
-  );
-}
-
 function Workspace({ problem }: { problem: ProblemDetail }) {
   const { user } = useAuth();
   const [language, setLanguage] = useState<LanguageValue>(() => {
@@ -161,6 +186,59 @@ function Workspace({ problem }: { problem: ProblemDetail }) {
   const [confirmReset, setConfirmReset] = useState(false);
   const [history, setHistory] = useState<DraftHistoryItem[] | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [bottomTab, setBottomTab] = useState("samples");
+  const [historyKey, setHistoryKey] = useState(0);
+  // saved custom tests: all are included in a Run unless the user unticks them
+  const [customIds, setCustomIds] = useState<string[]>([]);
+  const [unticked, setUnticked] = useState<ReadonlySet<string>>(new Set());
+  const selected = new Set(customIds.filter((id) => !unticked.has(id)));
+
+  const judge = useJudge((finished) => {
+    if (finished.kind === "submit") setHistoryKey((k) => k + 1);
+  });
+  const judgeRequest = () => ({
+    slug: problem.slug,
+    language,
+    code: draft.code,
+    customTestIds: [...selected],
+  });
+  const runCode = () => {
+    if (judge.busy) return;
+    setBottomTab("result");
+    void judge.run(judgeRequest());
+  };
+  const submitCode = () => {
+    if (judge.busy) return;
+    setBottomTab("result");
+    void judge.submit(judgeRequest());
+  };
+  // keep these fresh for the editor's keyboard shortcuts (the editor mounts once)
+  const runRef = useRef(runCode);
+  runRef.current = runCode;
+  const submitRef = useRef(submitCode);
+  submitRef.current = submitCode;
+
+  useEffect(() => {
+    api<{ items: CustomTest[] }>(`/problems/${problem.slug}/custom-tests`)
+      .then((r) => setCustomIds(r.items.map((t) => t.id)))
+      .catch(() => undefined);
+  }, [problem.slug]);
+
+  // "Load code" on a past submission page hands its code over through sessionStorage
+  useEffect(() => {
+    try {
+      const key = `pq:load-code:${problem.slug}`;
+      const raw = sessionStorage.getItem(key);
+      if (!raw) return;
+      sessionStorage.removeItem(key);
+      const { code, language: lang } = JSON.parse(raw) as { code: string; language: LanguageValue };
+      if (problem.languages.some((l) => l.language === lang)) setLanguage(lang);
+      // wait for the draft of that language to load before replacing it
+      setTimeout(() => draft.replace(code), 600);
+    } catch {
+      /* storage unavailable or malformed: nothing to load */
+    }
+  }, [problem.slug]);
 
   useEffect(() => {
     if (!focus) return;
@@ -192,9 +270,28 @@ function Workspace({ problem }: { problem: ProblemDetail }) {
         {
           id: "submissions",
           label: "Submissions",
-          content: <ComingSoon phase={4} what="Your submission history" />,
+          content: user ? (
+            <SubmissionHistory
+              slug={problem.slug}
+              refreshKey={historyKey}
+              onLoadCode={(code, lang) => {
+                if (lang !== language) chooseLanguage(lang);
+                draft.replace(code);
+              }}
+            />
+          ) : (
+            <p className="m-0 p-2">Sign in to see your submissions.</p>
+          ),
         },
-        { id: "notes", label: "Notes", content: <ComingSoon phase={5} what="Personal notes" /> },
+        {
+          id: "notes",
+          label: "Notes",
+          content: user ? (
+            <NotesPanel slug={problem.slug} />
+          ) : (
+            <p className="m-0 p-2">Sign in to keep notes.</p>
+          ),
+        },
       ]}
     />
   );
@@ -241,16 +338,20 @@ function Workspace({ problem }: { problem: ProblemDetail }) {
           <Button
             size="sm"
             variant="ghost"
-            disabled
-            title="The judge arrives in the next build phase"
+            loading={judge.busy && judge.state.kind === "run"}
+            disabled={judge.busy}
+            onClick={runCode}
+            title="Run on the samples and your custom tests (Ctrl+Enter)"
           >
             Run
           </Button>
           <Button
             size="sm"
             variant="accent"
-            disabled
-            title="The judge arrives in the next build phase"
+            loading={judge.busy && judge.state.kind === "submit"}
+            disabled={judge.busy}
+            onClick={submitCode}
+            title="Judge against every test (Ctrl+Shift+Enter)"
           >
             Submit
           </Button>
@@ -294,6 +395,8 @@ function Workspace({ problem }: { problem: ProblemDetail }) {
             onChange={draft.edit}
             initialCursor={draft.initialCursor}
             onCursorChange={draft.setCursor}
+            onRun={() => runRef.current()}
+            onSubmit={() => submitRef.current()}
             label={`${LANGUAGE_LABEL[language]} solution`}
           />
         )}
@@ -302,6 +405,8 @@ function Workspace({ problem }: { problem: ProblemDetail }) {
       <div className="max-h-[40%] min-h-[140px] overflow-auto border-t-[3px] border-ink bg-bg">
         <Tabs
           aria-label="Test panel"
+          value={bottomTab}
+          onChange={setBottomTab}
           items={[
             {
               id: "samples",
@@ -322,12 +427,21 @@ function Workspace({ problem }: { problem: ProblemDetail }) {
                 </div>
               ),
             },
-            { id: "custom", label: "Custom tests", content: <CustomTests slug={problem.slug} /> },
             {
-              id: "result",
-              label: "Result",
-              content: <ComingSoon phase={4} what="Run and Submit results" />,
+              id: "custom",
+              label: "Custom tests",
+              content: (
+                <CustomTests
+                  slug={problem.slug}
+                  selected={selected}
+                  onSelectedChange={(next) =>
+                    setUnticked(new Set(customIds.filter((id) => !next.has(id))))
+                  }
+                  onLoaded={(items) => setCustomIds(items.map((t) => t.id))}
+                />
+              ),
             },
+            { id: "result", label: "Result", content: <ResultPanel state={judge.state} /> },
           ]}
         />
       </div>

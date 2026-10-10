@@ -153,6 +153,8 @@ function MenuDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
       <ul className="m-0 grid list-none gap-2 p-0">
         {[
           ...navItemsFor(user?.role),
+          { href: "/submissions", label: "Submissions", icon: "code" as const },
+          { href: "/notes", label: "Notes", icon: "plan" as const },
           { href: "/settings", label: "Settings", icon: "user" as const },
         ].map((item) => (
           <li key={item.href}>

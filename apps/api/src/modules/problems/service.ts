@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, inArray, or, sql, type SQL } from "drizzle-orm";
 import {
+  bookmarks,
   companies,
   customTests,
   codeDrafts,
@@ -265,6 +266,7 @@ export async function getProblem(
     .orderBy(asc(companies.name));
 
   let state: ProblemDetail["state"] = null;
+  let bookmarked: boolean | null = null;
   if (userId) {
     const [s] = await db
       .select({ status: userProblemState.status, attempts: userProblemState.attempts })
@@ -272,6 +274,12 @@ export async function getProblem(
       .where(and(eq(userProblemState.userId, userId), eq(userProblemState.problemId, p.id)))
       .limit(1);
     state = { status: (s?.status ?? "unseen") as ProblemStatus, attempts: s?.attempts ?? 0 };
+    const [b] = await db
+      .select({ folder: bookmarks.folder })
+      .from(bookmarks)
+      .where(and(eq(bookmarks.userId, userId), eq(bookmarks.problemId, p.id)))
+      .limit(1);
+    bookmarked = b !== undefined;
   }
 
   return {
@@ -290,6 +298,7 @@ export async function getProblem(
     archived: p.status === "archived",
     languages: langs as ProblemDetail["languages"],
     state,
+    bookmarked,
   };
 }
 

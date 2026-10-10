@@ -40,7 +40,30 @@ services:
     image: axllent/mailpit:latest
     ports: ["1025:1025", "8025:8025"]
 
-  # judge service is added in Phase 4 (infra/docker/judge.Dockerfile)
+  # The real sandbox: isolate + g++/Python/JDK in a privileged Linux container (doc 12). Start it with
+  #   docker compose --profile judge up -d --build judge
+  # instead of `pnpm --filter @prepquest/judge dev` (which uses the unsandboxed process runner).
+  # It reaches Redis by service name and reads hidden tests from the API's `.data/objects` (fs driver);
+  # with STORAGE_DRIVER=s3 point it at the `s3` service instead.
+  judge:
+    profiles: ["judge"]
+    build:
+      context: .
+      dockerfile: apps/judge/Dockerfile
+    privileged: true
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      REDIS_URL: redis://redis:6379
+      JUDGE_SANDBOX: isolate
+      JUDGE_CGROUPS: "true"
+      JUDGE_CONCURRENCY: "2"
+      STORAGE_DRIVER: fs
+      STORAGE_FS_DIR: /data/objects
+    volumes:
+      - ./.data/objects:/data/objects:ro
 
 volumes:
   pgdata:

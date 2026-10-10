@@ -8,8 +8,8 @@ Phase-by-phase build log. Plan source: `docs/18-ROADMAP-AND-SPRINTS.md`. Each ph
 | 1     | Design system: tokens, `packages/ui`, sprites, Storybook, 3 themes                                                                          | -         | Done (committed)      |
 | 2     | DB schema v1, auth, app shell                                                                                                               | M0        | Done (committed)      |
 | 2b    | Completion pass: Drizzle ORM, verified-email gate, rate limiting, OAuth, 2FA, breach check, export/deletion, public profiles, Husky, CI e2e | -         | Done (pending commit) |
-| 3     | Problem bank, content pipeline, Monaco editor, admin v0                                                                                     | M1        | Done (pending commit) |
-| 4     | Judge (`isolate`), submissions, verdict UI, history/bookmarks/notes                                                                         | M2        | Not started           |
+| 3     | Problem bank, content pipeline, Monaco editor, admin v0                                                                                     | M1        | Done (committed)      |
+| 4     | Judge (`isolate`), submissions, verdict UI, history/bookmarks/notes                                                                         | M2        | Done (pending commit) |
 | 5     | Hints, editorials, XP/streaks, dashboard, sheets                                                                                            | M3        | Not started           |
 | 6     | AI interview MVP, resume parse, scorecards                                                                                                  | M4        | Not started           |
 | 7+    | Voice, analytics, planning, SRS, contests, peer, hardening                                                                                  | M5-M12    | Planned               |
@@ -143,3 +143,37 @@ Deferred:
 - Reference-solution and mutation checks in admin validation (need the judge, Phase 4), Run/Submit buttons (Phase 4), hints and editorial authoring (Phase 5), company packs, generator runner in the admin UI, version diffs.
 - The CI `e2e` job (now also importing content) has not run on GitHub yet.
 - First cold-start e2e signup can exceed 5 s on a slow machine; the suite uses a 10 s expect timeout.
+
+## Phase 4 - Judge, submissions, verdict UI, history, bookmarks, notes (milestone M2)
+
+Done:
+
+- **`packages/judge-core`** (pure): language table, drivers that read the canonical stdin format and call `Solution.<fn>` in Python, C++ (`#line` keeps the user's line numbers) and Java, checkers (exact, tokens, float, unordered), verdict mapping, and the job pipeline over a `Sandbox` interface.
+- **`apps/judge`** worker: BullMQ lanes (`judge-submit`, `judge-run`), `IsolateSandbox` (cgroup v2, no network, read-only system view) and a development `ProcessSandbox`, results published to a Redis stream. No database credentials; its own config knows only Redis, the object store and sandbox settings. `apps/judge/Dockerfile` (isolate 2.0 from source, g++, Python, OpenJDK 17) plus a compose `judge` service (`--profile judge`).
+- **API:** `POST /submissions` (run/submit, custom tests, idempotency keys, rate and in-flight limits, 503 when the queue is down), `GET /submissions/:id` with privacy rules, history with filters and cursors, submission notes, line diff, bookmarks, per-problem notes with conflict-safe saves and a notes hub search. The `ResultIngester` (Redis consumer group) writes results, updates `user_problem_state` and the problem's acceptance statistics, and a sweep closes submissions the judge never answered.
+- **DB:** migrations `0006` (bookmarks, notes, per-test columns) and `0007` (triggers).
+- **UI:** Run/Submit buttons (Ctrl+Enter, Ctrl+Shift+Enter), stage bar while judging, `VerdictBanner` with eight new verdict sprites, per-test results with expandable sample details, custom tests ticked into a run, per-problem history with "Load code", Notes and Bookmark on the problem page, `/submissions`, `/submissions/[id]` (code, note, diff, open in editor), `/notes` (notes hub and bookmarks).
+- **Content:** C++ and Java reference solutions for seven problems; driver tests run them against the committed tests.
+- **Tests:** API 214, judge 51 (+23 that need Linux/JDK/isolate), judge-core 16, ui 65, shared 7, content 27, storage 7, web 9; 16 malicious-program tests under real isolate in Docker; e2e 32 earlier specs + 8 judge specs.
+- **CI:** new `judge-sandbox` job (builds the image, runs the malicious suite and driver tests under isolate); the e2e job starts the judge worker.
+
+Verified: the full stack (browser, API, BullMQ, the dockerised isolate worker, stream, Postgres) with the judge e2e spec (`E2E_EXTERNAL_JUDGE=1`), and the process-sandbox worker with the same spec.
+
+Decisions / gotchas:
+
+- **Polling instead of WebSocket** for live progress (400 ms, then 1 s, 2 s): simplest thing that meets the p95 target; the WS gateway arrives with interviews and can reuse the stream events.
+- The final `done` event carries every test result, so the database write is complete even if live `test` events are late or out of order. The ingester is at-least-once; all writes are idempotent.
+- isolate does **not search `PATH`**, and `/etc` is not visible in a box: commands are mapped to absolute paths, the JDK's real `bin/` is used (the `/usr/bin/java` alternatives symlink would dangle) and `/etc/java-*` is mounted read-only. `--fsize` has to allow compiler output (it first capped `ld` at the 16 KB console limit).
+- Python ignores `SIGXFSZ`, so a stdout flood ends in `EFBIG`, not a signal: output reaching the cap is treated as `OLE`.
+- Driver conformance: the C++ driver is C++17 templates; on old MinGW (6.3) structured bindings in a _solution_ fail to compile, so the shared reference solutions avoid them.
+- Playwright: Monaco auto-indents, so tests put code into the draft through the API; controlled inputs discard text typed before hydration (wait for something that loads after it); the language defaults to the first one (C++) unless saved, so a test must select it.
+- Removed `FAKE_JUDGE`: the process sandbox gives real verdicts everywhere.
+- `docs/12` and `docs/11` have "as built" sections; deviations from the original design are listed there.
+
+Bug found by the tests and fixed: `__pycache__/*.pyc` had been committed in Phase 3 (reference solutions are imported by the harness). `.gitignore` now excludes them; run `git rm -r --cached -- $(git ls-files | grep __pycache__)` once to untrack the 21 files.
+
+Deferred:
+
+- Fair-share scheduling and reserved contest/interview capacity, test-data LRU cache, queue-wait estimates and backpressure, `special` checkers, seccomp/AppArmor/read-only rootfs for the container, a slim runtime image, judge metrics.
+- Mutant solutions and the reference/mutation checks in admin validation (the judge exists now, so this is next for content), hints and editorials (Phase 5), XP/streaks (Phase 5: the coin and sunflower counters in the top bar are still 0), personal tags, notes export and version history, code review (X3) and complexity analysis (X4).
+- The CI `judge-sandbox` job and the e2e job have not run on GitHub yet.

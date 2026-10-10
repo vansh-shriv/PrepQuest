@@ -15,7 +15,7 @@ describe("parseServerEnv", () => {
   });
 
   it("parses boolean flags", () => {
-    expect(parseServerEnv({ ...base, FAKE_JUDGE: "true" }).FAKE_JUDGE).toBe(true);
+    expect(parseServerEnv({ ...base, FF_VOICE: "true" }).FF_VOICE).toBe(true);
   });
 
   it("throws a readable error when required vars are missing", () => {

@@ -11,6 +11,7 @@ import { NoopBreachChecker, type BreachChecker } from "../lib/breach.js";
 import { MemoryKv, type Kv } from "../lib/kv.js";
 import { MemoryMailer } from "../lib/mailer.js";
 import { loadJwtKeys } from "../modules/auth/keys.js";
+import { MemoryJudgeQueue } from "../modules/submissions/queue.js";
 import { REFRESH_COOKIE } from "../modules/auth/routes.js";
 import { TEST_DATABASE_URL } from "./db-url.js";
 
@@ -22,6 +23,8 @@ export interface TestApp {
   pool: Database["$client"];
   kv: Kv;
   store: ObjectStore;
+  /** Records the jobs the API would send to the judge. */
+  judge: MemoryJudgeQueue;
   env: ServerEnv;
   close: () => Promise<void>;
 }
@@ -56,12 +59,14 @@ export async function makeTestApp(options: TestOptions = {}): Promise<TestApp> {
   const mailer = new MemoryMailer();
   const kv = options.kv ?? new MemoryKv();
   const store = options.store ?? new FsObjectStore(await mkdtemp(join(tmpdir(), "pq-objects-")));
+  const judge = new MemoryJudgeQueue();
   const app = await buildApp({
     env,
     db,
     mailer,
     kv,
     store,
+    judge,
     keys: await loadJwtKeys(env),
     checks: {},
     breach: options.breach ?? new NoopBreachChecker(),
@@ -74,6 +79,7 @@ export async function makeTestApp(options: TestOptions = {}): Promise<TestApp> {
     pool: db.$client,
     kv,
     store,
+    judge,
     env,
     close: async () => {
       await app.close();
