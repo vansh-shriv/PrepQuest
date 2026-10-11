@@ -56,6 +56,8 @@ export interface CodeEditorProps {
   /** Where to put the caret when the editor opens. */
   initialCursor?: { line: number; column: number } | null;
   onCursorChange?: (cursor: { line: number; column: number }) => void;
+  /** Called with the number of pasted characters (interviews record paste events). */
+  onPaste?: (chars: number) => void;
   /** Ctrl/Cmd+Enter. */
   onRun?: () => void;
   /** Ctrl/Cmd+Shift+Enter. */
@@ -70,6 +72,7 @@ export function CodeEditor({
   onChange,
   initialCursor,
   onCursorChange,
+  onPaste,
   onRun,
   onSubmit,
   label = "Code editor",
@@ -102,6 +105,8 @@ export function CodeEditor({
   const initialCursorRef = useRef(initialCursor);
   const onCursorRef = useRef(onCursorChange);
   onCursorRef.current = onCursorChange;
+  const pasteRef = useRef(onPaste);
+  pasteRef.current = onPaste;
   const runRef = useRef(onRun);
   runRef.current = onRun;
   const submitRef = useRef(onSubmit);
@@ -121,6 +126,10 @@ export function CodeEditor({
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter, () =>
       submitRef.current?.(),
     );
+    editor.onDidPaste((e) => {
+      const model = editor.getModel();
+      pasteRef.current?.(model ? model.getValueInRange(e.range).length : 0);
+    });
     editor.onDidChangeCursorPosition((e) =>
       onCursorRef.current?.({ line: e.position.lineNumber, column: e.position.column }),
     );
@@ -150,6 +159,7 @@ export function CodeEditor({
           aria-label={label}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onPaste={(e) => onPaste?.(e.clipboardData.getData("text").length)}
           onKeyDown={(e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
               e.preventDefault();

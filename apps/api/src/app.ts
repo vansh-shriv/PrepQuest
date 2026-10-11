@@ -16,6 +16,13 @@ import { authRoutes } from "./modules/auth/routes.js";
 import type { AuthContext } from "./modules/auth/service.js";
 import { healthRoutes, type HealthChecks } from "./modules/health/routes.js";
 import { interviewRoutes } from "./modules/interviews/routes.js";
+import { MemoryBus } from "./modules/interviews/bus.js";
+import { InterviewEngine } from "./modules/interviews/engine.js";
+import { attachInterviewGateway } from "./modules/interviews/gateway.js";
+import type { AiContext } from "./modules/ai-context.js";
+import { resumeRoutes } from "./modules/resumes/routes.js";
+import { BackgroundRunner } from "./lib/jobs.js";
+import { createLlmGateway, type LlmGateway } from "./lib/llm/index.js";
 import { meRoutes } from "./modules/me/routes.js";
 import { libraryRoutes } from "./modules/library/routes.js";
 import { practiceRoutes } from "./modules/practice/routes.js";
@@ -45,6 +52,17 @@ export interface AppDeps {
   kv?: Kv;
   breach?: BreachChecker;
   fetchFn?: typeof fetch;
+  /** Tests inject a gateway around their own provider. */
+  llm?: LlmGateway;
+}
+
+declare module "fastify" {
+  interface FastifyInstance {
+    /** Shared context of the AI features (resumes, interviews); also used by tests and background jobs. */
+    ai: AiContext;
+    /** The interview orchestrator; `main.ts` runs its timer sweep. */
+    interviews: InterviewEngine;
+  }
 }
 
 export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
@@ -183,7 +201,27 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(practiceRoutes, { prefix: "/v1", db });
   await app.register(progressRoutes, { prefix: "/v1", db });
   await ensureBadgeCatalog(db);
-  await app.register(interviewRoutes, { prefix: "/v1" });
+  const llmLog = (level: "warn" | "error", msg: string, extra?: Record<string, unknown>) =>
+    app.log[level]({ ...extra }, msg);
+  const ai: AiContext = {
+    db,
+    env,
+    store: deps.store,
+    llm: deps.llm ?? createLlmGateway(env, db, llmLog),
+    jobs: new BackgroundRunner((name, err) =>
+      app.log.error({ err, job: name }, "background job failed"),
+    ),
+    limiter: ctx.limiter,
+    kv,
+    log: app.log,
+    now: () => new Date(),
+  };
+  app.decorate("ai", ai);
+  await app.register(resumeRoutes, { prefix: "/v1", ctx: ai });
+  const engine = new InterviewEngine(ai, new MemoryBus());
+  app.decorate("interviews", engine);
+  await app.register(interviewRoutes, { prefix: "/v1", ctx: ai, engine, kv });
+  attachInterviewGateway(app, { ctx: ai, engine, kv, origins: env.CORS_ORIGINS.split(",") });
   await app.register(adminRoutes, {
     prefix: "/v1",
     ctx: { db, store: deps.store, allowSelfPublish: env.ALLOW_SELF_PUBLISH },

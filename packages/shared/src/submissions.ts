@@ -35,30 +35,37 @@ export const isTerminal = (v: VerdictValue) => TERMINAL_VERDICTS.includes(v);
 
 const byteLength = (s: string) => new TextEncoder().encode(s).length;
 
-export const submissionCreateSchema = z.object({
-  problemSlug: z
-    .string()
-    .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/)
-    .max(60),
-  language: z.enum(LANGUAGE_VALUES),
-  code: z
-    .string()
-    .min(1, "Write some code first")
-    .refine((s) => byteLength(s) <= MAX_SOURCE_BYTES, { message: "Code is larger than 64 KB" }),
-  kind: z.enum(["run", "submit"]),
-  /** Saved custom tests to include in a run. */
-  customTestIds: z.array(z.string().uuid()).max(20).default([]),
-  /** Ad-hoc inputs for a run (not saved). */
-  customInputs: z
-    .array(
-      z.string().refine((s) => byteLength(s) <= MAX_CUSTOM_INPUT_BYTES, {
-        message: "Input is larger than 256 KB",
-      }),
-    )
-    .max(5)
-    .default([]),
-  mode: z.literal("practice").default("practice"),
-});
+export const submissionCreateSchema = z
+  .object({
+    problemSlug: z
+      .string()
+      .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/)
+      .max(60),
+    language: z.enum(LANGUAGE_VALUES),
+    code: z
+      .string()
+      .min(1, "Write some code first")
+      .refine((s) => byteLength(s) <= MAX_SOURCE_BYTES, { message: "Code is larger than 64 KB" }),
+    kind: z.enum(["run", "submit"]),
+    /** Saved custom tests to include in a run. */
+    customTestIds: z.array(z.string().uuid()).max(20).default([]),
+    /** Ad-hoc inputs for a run (not saved). */
+    customInputs: z
+      .array(
+        z.string().refine((s) => byteLength(s) <= MAX_CUSTOM_INPUT_BYTES, {
+          message: "Input is larger than 256 KB",
+        }),
+      )
+      .max(5)
+      .default([]),
+    mode: z.enum(["practice", "interview"]).default("practice"),
+    /** Required when `mode` is `interview`: the session the run belongs to. */
+    interviewSessionId: z.string().uuid().optional(),
+  })
+  .refine((v) => v.mode !== "interview" || Boolean(v.interviewSessionId), {
+    message: "An interview run needs the interview session",
+    path: ["interviewSessionId"],
+  });
 export type SubmissionCreate = z.infer<typeof submissionCreateSchema>;
 
 export const submissionListQuerySchema = z.object({

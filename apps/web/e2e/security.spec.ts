@@ -65,13 +65,13 @@ test.describe("AI interviews need a verified email", () => {
     await expect(
       page.getByText("AI mock interviews unlock once your email is verified"),
     ).toBeVisible();
-    await expect(page.getByText("You're cleared for AI interviews")).toHaveCount(0);
+    await expect(page.getByTestId("new-interview")).toHaveCount(0);
 
     await page.goto(await linkFromMail(page, user.email, "verify-email"));
     await expect(page.getByText("QUEST COMPLETE! Your email is verified.")).toBeVisible();
 
     await page.goto("/interview");
-    await expect(page.getByText("You're cleared for AI interviews")).toBeVisible();
+    await expect(page.getByTestId("new-interview")).toBeVisible();
   });
 });
 

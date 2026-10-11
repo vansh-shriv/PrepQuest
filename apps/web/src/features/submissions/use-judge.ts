@@ -44,6 +44,8 @@ export interface JudgeRequest {
   language: LanguageValue;
   code: string;
   customTestIds?: string[];
+  /** Tags the run to a live interview (the server checks the session and the problem). */
+  interviewSessionId?: string;
 }
 
 /**
@@ -77,6 +79,9 @@ export function useJudge(onFinished?: (s: SubmissionDetail) => void) {
           code: req.code,
           kind,
           customTestIds: req.customTestIds ?? [],
+          ...(req.interviewSessionId
+            ? { mode: "interview", interviewSessionId: req.interviewSessionId }
+            : {}),
         },
       });
       if (!alive()) return;

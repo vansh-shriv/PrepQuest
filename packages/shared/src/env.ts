@@ -56,6 +56,21 @@ export const serverEnvSchema = z.object({
   EMAIL_FROM: z.string().default("PrepQuest <no-reply@prepquest.local>"),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
   LLM_MODE: z.enum(["live", "mock", "record"]).default("mock"),
+  ANTHROPIC_API_KEY: z.string().optional(),
+  /** Model names come from configuration, never from business logic (doc 13 �2). */
+  LLM_MODEL_INTERVIEWER: z.string().default("claude-sonnet-5-5"),
+  LLM_MODEL_EVALUATOR: z.string().default("claude-sonnet-5-5"),
+  LLM_MODEL_LIGHT: z.string().default("claude-haiku-5-5"),
+  /** Fallback when the primary model fails with a server error or times out. */
+  LLM_MODEL_FALLBACK: z.string().default("claude-haiku-5-5"),
+  LLM_DAILY_TOKEN_BUDGET_PER_USER: z.coerce.number().int().positive().default(400_000),
+  LLM_SESSION_TOKEN_CAP: z.coerce.number().int().positive().default(250_000),
+  /** Where `LLM_MODE=record` appends request/response fixtures. */
+  LLM_RECORD_DIR: z.string().default("../../.data/llm-record"),
+  /** Interviews a user may create per hour / per day (doc 11 �14). */
+  RL_INTERVIEWS_PER_HOUR: z.coerce.number().int().positive().default(5),
+  RL_INTERVIEWS_PER_DAY: z.coerce.number().int().positive().default(15),
+  RL_RESUMES_PER_DAY: z.coerce.number().int().positive().default(10),
   FF_VOICE: bool,
   FF_PEER: bool,
   FF_CONTESTS: bool,
@@ -68,6 +83,9 @@ export type ServerEnv = z.infer<typeof serverEnvSchema>;
 function checkProduction(env: ServerEnv): string | null {
   if (env.NODE_ENV === "production" && !env.DATA_ENCRYPTION_KEY) {
     return "DATA_ENCRYPTION_KEY: required in production";
+  }
+  if (env.LLM_MODE !== "mock" && !env.ANTHROPIC_API_KEY) {
+    return "ANTHROPIC_API_KEY: required when LLM_MODE is live or record";
   }
   return null;
 }

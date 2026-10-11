@@ -1,3 +1,4 @@
+import { assertInterviewSubmissionAllowed } from "../interviews/access.js";
 import { createHash } from "node:crypto";
 import { and, asc, desc, eq, ilike, inArray, lt, or, sql, type SQL } from "drizzle-orm";
 import {
@@ -101,6 +102,9 @@ export async function createSubmission(
   ) {
     throw new AppError("VALIDATION_ERROR", 422, "Custom tests only apply to runs.");
   }
+  if (input.mode === "interview") {
+    await assertInterviewSubmissionAllowed(db, userId, input.interviewSessionId ?? "", problem.id);
+  }
   const checker = checkerFor(problem);
 
   const [lang] = await db
@@ -198,6 +202,7 @@ export async function createSubmission(
       codeHash: sha256(input.code),
       kind: input.kind,
       mode: input.mode,
+      interviewSessionId: input.mode === "interview" ? (input.interviewSessionId ?? null) : null,
       verdict: "QUEUED",
       total: tests.length,
       hintsUsed: priorState?.hintsUsed ?? 0,

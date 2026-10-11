@@ -198,3 +198,71 @@ describe("ActivityHeatmap", () => {
     expect(out).toContain('title="2026-03-10: 2 solved"');
   });
 });
+
+describe("Interview components", () => {
+  const segments = [
+    { key: "a", name: "Intro", startMs: 0, endMs: 300_000 },
+    { key: "b", name: "Problem", startMs: 300_000, endMs: 1_200_000 },
+  ];
+
+  it("formats the clock and shifts the warning level", async () => {
+    const { InterviewTimer, formatClock } = await import("./Interview");
+    expect(formatClock(65_000)).toBe("01:05");
+    expect(formatClock(-5)).toBe("00:00");
+    const total = 1_200_000;
+    expect(
+      html(<InterviewTimer remainingMs={900_000} totalMs={total} segments={segments} />),
+    ).toContain("pq-timer--ok");
+    expect(
+      html(<InterviewTimer remainingMs={500_000} totalMs={total} segments={segments} />),
+    ).toContain("pq-timer--soon");
+    const crit = html(<InterviewTimer remainingMs={30_000} totalMs={total} segments={segments} />);
+    expect(crit).toContain("pq-timer--crit");
+    expect(crit).toContain("Under 1 min"); // the level is also in words, not just colour
+    expect(
+      html(<InterviewTimer remainingMs={900_000} totalMs={total} segments={segments} paused />),
+    ).toContain("PAUSED");
+  });
+
+  it("marks the segment that is running", async () => {
+    const { InterviewTimer } = await import("./Interview");
+    const out = html(
+      <InterviewTimer remainingMs={800_000} totalMs={1_200_000} segments={segments} />,
+    );
+    expect(out.match(/data-current="true"/g)).toHaveLength(1);
+  });
+
+  it("renders a streaming bubble with a cursor and a hint flag", async () => {
+    const { ChatBubble } = await import("./Interview");
+    const out = html(
+      <ChatBubble who="interviewer" streaming hint time="03:12">
+        Hi
+      </ChatBubble>,
+    );
+    expect(out).toContain("pq-bubble__cursor");
+    expect(out).toContain("HINT");
+    expect(out).toContain("03:12");
+    expect(html(<ChatBubble who="candidate">Yo</ChatBubble>)).not.toContain("pq-bubble__cursor");
+  });
+
+  it("describes scores for assistive technology, including missing evidence", async () => {
+    const { ScoreBar, RadarScore } = await import("./Interview");
+    expect(html(<ScoreBar label="Testing" score={4} weight={0.1} />)).toContain(
+      "Testing: 4 out of 5",
+    );
+    const none = html(<ScoreBar label="Testing" score={null} />);
+    expect(none).toContain("not enough evidence");
+    expect(none).toContain("n/a");
+    const radar = html(
+      <RadarScore
+        axes={[
+          { label: "A", value: 3 },
+          { label: "B", value: null },
+          { label: "C", value: 5 },
+        ]}
+      />,
+    );
+    expect(radar).toContain("Radar chart: A 3, B n/a, C 5");
+    expect(radar.match(/<polygon/g)).toHaveLength(6); // five rings and the score shape
+  });
+});

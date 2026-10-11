@@ -769,3 +769,223 @@
 .pq-heat__cell[data-level="4"] {
   background: var(--leaf-dark);
 }
+
+/* ---------- Interview: timer, avatar, chat, scores ---------- */
+.pq-timer {
+  --t: var(--leaf);
+  display: grid;
+  gap: 6px;
+  min-width: 180px;
+}
+.pq-timer--soon {
+  --t: var(--sun);
+}
+.pq-timer--warn {
+  --t: var(--coin);
+}
+.pq-timer--crit {
+  --t: var(--danger);
+}
+.pq-timer__row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.pq-timer__clock {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 1px;
+  color: var(--ink);
+  border-bottom: 4px solid var(--t);
+}
+.pq-timer--crit .pq-timer__clock {
+  animation: pq-blink 1s steps(1) infinite;
+}
+.pq-timer__flag {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.pq-timer__bar {
+  display: flex;
+  gap: 3px;
+}
+.pq-timer__seg {
+  position: relative;
+  flex-basis: 0;
+  height: 10px;
+  background: var(--surface-alt);
+  border: 2px solid var(--ink);
+}
+.pq-timer__seg[data-current="true"] {
+  border-color: var(--t);
+}
+.pq-timer__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--t);
+}
+
+.pq-avatar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pq-avatar__frame {
+  display: grid;
+  place-items: center;
+  padding: 6px;
+  background: var(--surface-alt);
+  border: var(--border) solid var(--ink);
+}
+.pq-avatar[data-state="speaking"] .pq-avatar__sprite,
+.pq-avatar[data-state="typing"] .pq-avatar__sprite {
+  animation: pq-bob 0.6s steps(2) infinite;
+}
+@keyframes pq-bob {
+  50% {
+    transform: translateY(-3px);
+  }
+}
+.pq-avatar__meta {
+  display: grid;
+  gap: 2px;
+}
+.pq-avatar__name {
+  font-family: var(--font-ui);
+  text-transform: uppercase;
+}
+.pq-avatar__sub,
+.pq-avatar__status {
+  font-family: var(--font-pixel);
+  font-size: 18px;
+  color: var(--ink-soft);
+  min-height: 1em;
+}
+
+.pq-bubble {
+  display: grid;
+  gap: 4px;
+  max-width: min(640px, 92%);
+}
+.pq-bubble--candidate {
+  justify-self: end;
+}
+.pq-bubble--system {
+  justify-self: center;
+  max-width: 100%;
+}
+.pq-bubble__text {
+  padding: 8px 12px;
+  border: var(--border) solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-read);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.pq-bubble--candidate .pq-bubble__text {
+  background: var(--sky-light);
+  color: #1a1a1a;
+}
+.pq-bubble--system .pq-bubble__text {
+  border-style: dashed;
+  background: var(--surface-alt);
+  font-family: var(--font-pixel);
+  font-size: 18px;
+  padding: 2px 10px;
+}
+.pq-bubble__cursor {
+  display: inline-block;
+  width: 8px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--ink);
+  animation: pq-blink 0.8s steps(1) infinite;
+}
+.pq-bubble__meta {
+  display: flex;
+  gap: 8px;
+  font-family: var(--font-pixel);
+  font-size: 16px;
+  color: var(--ink-soft);
+}
+.pq-bubble--candidate .pq-bubble__meta {
+  justify-content: flex-end;
+}
+.pq-bubble__hint {
+  padding: 0 6px;
+  background: var(--sun);
+  color: var(--on-coin);
+  border: 2px solid var(--ink);
+}
+
+.pq-scorebar {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.2fr) 1fr 40px;
+  align-items: center;
+  gap: 10px;
+}
+.pq-scorebar__label {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  text-transform: uppercase;
+}
+.pq-scorebar__label small {
+  color: var(--ink-soft);
+}
+.pq-scorebar__track {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border: 2px solid var(--ink);
+  background: var(--surface);
+}
+.pq-scorebar__block {
+  flex: 1;
+  height: 12px;
+  background: var(--surface-alt);
+}
+.pq-scorebar__block[data-on="true"] {
+  background: var(--lime);
+}
+.pq-scorebar__value {
+  font-family: var(--font-pixel);
+  font-size: 20px;
+  text-align: right;
+}
+
+.pq-radar__ring {
+  fill: none;
+  stroke: var(--cursor);
+  stroke-width: 2;
+}
+.pq-radar__axis {
+  stroke: var(--cursor);
+  stroke-width: 2;
+}
+.pq-radar__shape {
+  fill: color-mix(in srgb, var(--sky) 45%, transparent);
+  stroke: var(--ink);
+  stroke-width: 3;
+  stroke-linejoin: miter;
+}
+.pq-radar__dot {
+  fill: var(--ink);
+}
+.pq-radar__label {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  text-transform: uppercase;
+  fill: var(--ink);
+}
+@media (prefers-reduced-motion: reduce) {
+  .pq-avatar[data-state] .pq-avatar__sprite,
+  .pq-timer--crit .pq-timer__clock,
+  .pq-bubble__cursor {
+    animation: none;
+  }
+}

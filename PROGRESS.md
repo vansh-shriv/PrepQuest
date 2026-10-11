@@ -11,7 +11,7 @@ Phase-by-phase build log. Plan source: `docs/18-ROADMAP-AND-SPRINTS.md`. Each ph
 | 3     | Problem bank, content pipeline, Monaco editor, admin v0                                                                                     | M1        | Done (committed)      |
 | 4     | Judge (`isolate`), submissions, verdict UI, history/bookmarks/notes                                                                         | M2        | Done (committed)      |
 | 5     | Hints, editorials, XP/streaks, dashboard, sheets                                                                                            | M3        | Done (pending commit) |
-| 6     | AI interview MVP, resume parse, scorecards                                                                                                  | M4        | Not started           |
+| 6     | AI interview MVP, resume parse, scorecards                                                                                                  | M4        | Done (pending commit) |
 | 7+    | Voice, analytics, planning, SRS, contests, peer, hardening                                                                                  | M5-M12    | Planned               |
 
 ## Phase 0 - Foundation
@@ -209,3 +209,36 @@ Deferred:
 - **Content volume:** the roadmap's "up to 100 problems" is not met: 20 problems ship (authoring is the bottleneck, doc 18 risk). Next content step is more problems with the same pipeline (tests, mutants, hints, editorials).
 - Today's quest board and daily goals, SRS (D6) and due reviews, readiness (A4), nightly consistency job, precomputed dashboard aggregates, XP from quizzes and interviews, XP tuning in the admin, AI hints, community solutions, hints disabled in interview and contest modes (those modes do not exist yet), sheet-level progress page beyond the dashboard widget and the problem list.
 - The CI `verify` job now runs `content:judge` (new, not yet run on GitHub).
+
+## Phase 6 - AI interview engine, resumes, scorecards (milestone M4, product side)
+
+Done:
+
+- **`packages/interview-core`** (pure, 49 tests): DSA and project templates with segment layout, the coding and project rubrics, the interview state machine (automatic transitions, guards, 85% wrap-up, the model can never end a session), control-channel parser and stream filter, hint policy and clamps, solution-leak guard, quote-verified scorecard validation and weighted aggregation, judge-derived correctness, question selection and adaptive difficulty, moderation.
+- **`packages/prompts`** (11 tests): versioned interviewer, scorecard, annotation, resume, JD and question-generation prompts; every untrusted input is delimited and tag lookalikes are neutralised.
+- **LLM gateway** (`apps/api/src/lib/llm`): model routing from env, retry then fallback model, retraction of streamed text from a failed attempt, token accounting (`llm_usage`), per-user daily and per-session budgets, JSON with a repair loop, Anthropic provider (streaming, cache breakpoints, effort), scripted mock and a recorder (`LLM_MODE=live|mock|record`).
+- **Resumes and JDs (I3):** PDF/DOCX upload with content sniffing, background parsing, user review and confirm, pgvector retrieval (local hashing embedder), default resume, deletion of everything derived, JD analysis with gap.
+- **Interview engine (I1, I4, I7, I8):** plan preview, create (idempotent, limits), start, server-authoritative timer with warnings and graceful end within seconds, pause rules, hint budget enforced in code, idle prompts, abuse handling, adaptive second problem, code events and judge integration (interview-tagged submissions, hints and editorial locked for the live problem), Socket.IO gateway with single-use tickets and replay, REST fallback, question memory.
+- **Evaluation (E1, E2, E5):** async scorecard (evidence verified, overall computed in code, band, coverage, strengths, red flags, next actions), annotated transcript, notes, feedback, markdown export, retry of failed scorecards.
+- **UI:** `/interview` hub and history, `/interview/new` (preview, overrides, JD analysis), the room (briefing, avatar, pixel timer, streaming chat with retry, editor + judge for DSA, reconnect banner), `/interview/[id]/review` (radar, bars, evidence, filtered transcript), `/resumes` (upload, review editor). New `@prepquest/ui` pieces: `InterviewTimer`, `InterviewerAvatar`, `ChatBubble`, `ScoreBar`, `RadarScore`, an interviewer sprite.
+- **DB:** migrations `0010` (resumes, chunks, JDs, sessions, turns, events, scorecards, scores, annotations, question memory, `llm_usage`) and `0011` (triggers).
+- **Tests:** API 357+ (interviews in five files: flow, guards, scorecard, outages and limits, WebSocket; resumes 22), interview-core 49, prompts 11, ui 86, web 18, e2e 7 new specs (resume, project interview, DSA with the judge, history, phone).
+
+Decisions / gotchas:
+
+- The verdict an interview sees comes from the judge's own submission row, never from the browser; the browser only sends the submission id.
+- Streaming and enforcement coexist through `interviewer.retract`: tokens stream, the checks run on the full reply, and a failed reply is withdrawn before the corrected one. Retracted and final replies use different turn ids; the stored turn id is the successful attempt's.
+- `ControlStreamFilter` holds back trailing whitespace and partial `<control>` prefixes so the block never flashes on screen.
+- Socket handlers must be registered before the first `await` of the connection handler, or an early client event (`sync`) is lost.
+- A rejected socket.io handshake is not retried by the client; the room hook reconnects with a fresh ticket.
+- The five-series Claude models reject `temperature`; effort is the latency control. Model names are env config (`LLM_MODEL_*`).
+- In mock mode repair rounds must read the original prompt (first message), not the repair message.
+- `TRUNCATE users CASCADE` in `makeTestApp` wipes the shared test database: a second app in the same file breaks the first one's users (rate-limit tests live in their own files).
+- The room reducer (`features/interview/room-state.ts`) keeps in-flight bubbles across a reload; the first version wiped a streaming greeting (found by the phone e2e spec).
+- Heredocs with quotes and backslashes break in the Bash tool; use the Write tool for files (again).
+
+Deferred:
+
+- **Live model quality:** golden sessions, consistency runs, persona identifiability, the adversarial leak set (need the live model and a budget). Nothing has been run against the real Anthropic API in this phase; the provider code follows the SDK docs and is covered only through the mock and fakes. Run a manual smoke with `LLM_MODE=live` before relying on it.
+- Voice (I5), live-coding reactions beyond "accepted" (I6), company packs (I2), more interview types, ideal answers (E3), STAR and speech analytics (E4), PDF export, audio upload, Redis pub/sub bus, `apps/worker`, XP for interviews, Sprint 4 deploy and observability (Sentry, metrics, hosting), content volume (still 20 problems).
+- The CI `e2e` job has not run on GitHub (LLM mock is the default there).

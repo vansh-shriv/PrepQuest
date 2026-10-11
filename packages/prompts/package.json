@@ -1,0 +1,29 @@
+{
+  "name": "@prepquest/prompts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@prepquest/interview-core": "workspace:*",
+    "@prepquest/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@prepquest/config": "workspace:*",
+    "@types/node": "^26.6.4"
+  }
+}

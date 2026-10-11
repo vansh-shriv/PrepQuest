@@ -307,3 +307,29 @@ export async function getDashboard(
       : null,
   };
 }
+
+/** What interview planning needs to know about a user: weak topics and problems already solved cleanly. */
+export async function interviewSignals(
+  db: Database,
+  userId: string,
+  now = new Date(),
+): Promise<{ weakTopics: string[]; solvedClean: string[] }> {
+  const { rows, topics, patterns } = await loadEvidence(db, userId);
+  const topicList = [...new Set([...topics.values()].flat())].sort();
+  const evidence: ProblemEvidence[] = rows.map((r) => ({
+    slug: r.slug,
+    difficulty: r.difficulty,
+    topics: topics.get(r.problem_id) ?? [],
+    patterns: patterns.get(r.problem_id) ?? [],
+    attempted: r.attempted,
+    solved: r.solved,
+    firstTry: r.first_try,
+    hinted: r.hinted,
+    lastAt: r.last_at ? new Date(r.last_at) : null,
+    verdicts: { WA: r.wa, TLE: r.tle, RE: r.re, MLE: r.mle, CE: r.ce },
+  }));
+  return {
+    weakTopics: weakAreas(topicMastery(evidence, topicList, now)).map((m) => m.topic),
+    solvedClean: rows.filter((r) => r.solved && !r.hinted).map((r) => r.slug),
+  };
+}

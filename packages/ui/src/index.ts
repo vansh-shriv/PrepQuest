@@ -40,3 +40,16 @@ export {
 } from "./components/ThemeSwitcher";
 export { SPRITE_NAMES, type SpriteName } from "./sprites/art";
 export { cx } from "./lib/cx";
+export {
+  ChatBubble,
+  InterviewTimer,
+  InterviewerAvatar,
+  RadarScore,
+  ScoreBar,
+  formatClock,
+  type ChatBubbleProps,
+  type InterviewTimerProps,
+  type InterviewerAvatarProps,
+  type RadarScoreProps,
+  type ScoreBarProps,
+} from "./components/Interview";

@@ -45,7 +45,13 @@ const ingester = redisUp
   : null;
 await ingester?.start();
 
+// server-authoritative interview clock: ends expired sessions within seconds, sends warnings
+const sweeper = setInterval(() => {
+  app.interviews.sweep().catch((err: unknown) => app.log.error({ err }, "interview sweep failed"));
+}, 5000);
+
 const shutdown = async () => {
+  clearInterval(sweeper);
   await ingester?.stop();
   await judge.close();
   await app.close();

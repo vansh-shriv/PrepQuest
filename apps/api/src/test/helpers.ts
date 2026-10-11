@@ -11,6 +11,7 @@ import { NoopBreachChecker, type BreachChecker } from "../lib/breach.js";
 import { MemoryKv, type Kv } from "../lib/kv.js";
 import { MemoryMailer } from "../lib/mailer.js";
 import { loadJwtKeys } from "../modules/auth/keys.js";
+import { createLlmGateway, MockProvider, type LlmProvider } from "../lib/llm/index.js";
 import { MemoryJudgeQueue } from "../modules/submissions/queue.js";
 import { REFRESH_COOKIE } from "../modules/auth/routes.js";
 import { TEST_DATABASE_URL } from "./db-url.js";
@@ -25,6 +26,10 @@ export interface TestApp {
   store: ObjectStore;
   /** Records the jobs the API would send to the judge. */
   judge: MemoryJudgeQueue;
+  /** The scripted model behind the LLM gateway (replace replies with `mock.overrides`). */
+  mock: MockProvider;
+  /** Await background jobs (resume parsing, scorecards). */
+  idle: () => Promise<void>;
   env: ServerEnv;
   close: () => Promise<void>;
 }
@@ -35,6 +40,7 @@ export interface TestOptions {
   fetchFn?: typeof fetch;
   kv?: Kv;
   store?: ObjectStore;
+  llmProvider?: LlmProvider;
 }
 
 export async function makeTestApp(options: TestOptions = {}): Promise<TestApp> {
@@ -48,6 +54,9 @@ export async function makeTestApp(options: TestOptions = {}): Promise<TestApp> {
     RL_FORGOT_PER_HOUR: "1000",
     RL_ANON_PER_MIN: "10000",
     RL_USER_PER_MIN: "10000",
+    RL_INTERVIEWS_PER_HOUR: "1000",
+    RL_INTERVIEWS_PER_DAY: "1000",
+    RL_RESUMES_PER_DAY: "1000",
     GOOGLE_CLIENT_ID: "google-id",
     GOOGLE_CLIENT_SECRET: "google-secret",
     GITHUB_CLIENT_ID: "github-id",
@@ -60,6 +69,10 @@ export async function makeTestApp(options: TestOptions = {}): Promise<TestApp> {
   const kv = options.kv ?? new MemoryKv();
   const store = options.store ?? new FsObjectStore(await mkdtemp(join(tmpdir(), "pq-objects-")));
   const judge = new MemoryJudgeQueue();
+  const mock = new MockProvider();
+  const llm = createLlmGateway(env, db, () => undefined, options.llmProvider ?? mock, {
+    retryDelayMs: 0,
+  });
   const app = await buildApp({
     env,
     db,
@@ -67,6 +80,7 @@ export async function makeTestApp(options: TestOptions = {}): Promise<TestApp> {
     kv,
     store,
     judge,
+    llm,
     keys: await loadJwtKeys(env),
     checks: {},
     breach: options.breach ?? new NoopBreachChecker(),
@@ -80,6 +94,8 @@ export async function makeTestApp(options: TestOptions = {}): Promise<TestApp> {
     kv,
     store,
     judge,
+    mock,
+    idle: () => app.ai.jobs.idle(),
     env,
     close: async () => {
       await app.close();

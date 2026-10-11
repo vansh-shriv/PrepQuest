@@ -476,3 +476,22 @@ Settings gained `openEditorials` (`PATCH /me/settings`); `hintMode` (strict or r
 - **Rewards** arrive on `GET /submissions/:id` as `rewards` for an accepted submit (XP split, level before and after, streak, new badge ids). They are written in the same transaction as the verdict, so a redelivered judge event can never pay twice.
 - **Dashboard:** one call returns everything: level and XP, streak, solved by difficulty with a 30-day daily series, accuracy (acceptance, first-try rate, average submissions to first AC), a 26-week heatmap, a skill plant per topic (seed, sprout, bud, bloom), weak areas with a diagnosis, three recommended problems, recent submissions, sheet progress, badges and the placement countdown. `range` filters the "solved in range" and accuracy numbers; totals ignore it. Numbers reconcile with the raw tables (tested).
 - **Badges** today: First Blood, Ten Down, Week Warrior, Hard Mode, Clean Sheet (5 first-try solves without hints), Polyglot (accepted in three languages).
+
+### Resumes, job descriptions and interviews (Phase 6, as built)
+
+All routes need a verified email (`403 EMAIL_NOT_VERIFIED`). Deviations from sections 7 and 8 above:
+
+| Area | As built |
+| ---- | -------- |
+| Resume upload | `POST /resumes` takes `multipart/form-data` (`file`, optional `label`) instead of a presigned URL: PDF or DOCX up to 5 MB, content sniffed (a renamed file is `422`), max 10 resumes, 10 uploads/day. Answers `202`; parsing runs as a background job (`status`: `parsing`, then `needs_review` or `failed`; `POST /resumes/:id/retry`). Nothing is used until the user confirms (`PATCH /resumes/:id/parsed` with `confirm: true` makes it `ready`, rebuilds the retrieval chunks and sets the first one as default). |
+| Retrieval | Chunks per project, job and the skills block, embedded with a local hashing embedder into `vector(1024)` and searched with pgvector cosine distance. The embedder is swappable. |
+| JD | `POST /jds` analyses synchronously (required skills, gap against a resume). Text only; URL fetch is P2. |
+| Plan | `POST /interviews/plan` never calls the model. DSA: picks problems by level, weak topics, recent questions (60 days) and cleanly solved problems; `problemSlugs` overrides. Project: lists resume items, `projectRefs` overrides. |
+| Create | `POST /interviews` (idempotent, 5/hour, 15/day) returns `{session, wsTicket}`. Project questions are written here by the model (each cites a resume item) and hidden until asked. A never-started plan is replaced by the next one; only one interview can be live (`409 INTERVIEW_IN_PROGRESS`). |
+| Control | `POST /interviews/:id/start`, `pause`, `resume`, `end`. Pause is practice-mode only, once, up to 3 minutes (a longer pause is credited 3). |
+| Conversation | WebSocket (Socket.IO namespace `/interview`, path `/ws`, `auth: {ticket}`); tickets are single use and live 60 s. REST equivalent: `POST /interviews/:id/messages` (`clientMsgId` makes a retry idempotent, and a retry after a model outage answers once). Events: `candidate.message`, `interviewer.token`, `interviewer.retract` (a streamed reply that failed a check is withdrawn), `interviewer.message`, `interviewer.typing`, `session.state`, `timer.tick` (with `warning` at 10, 5, 1 minutes), `system.notice`, `session.ended`, `scorecard.ready`, `error`. `sync {lastSeq}` returns the turns the client missed; replay comes from Postgres, not a Redis stream. |
+| Code | `POST /interviews/:id/events` with `snapshot`, `run`, `submit`, `paste`, `focus_lost`. For `run`/`submit` the browser sends only the submission id: the verdict is read from the judge's own record. Submissions accept `mode: "interview"` + `interviewSessionId`. While a problem is part of a live interview, its hints and editorial are `403 HINT_LOCKED`. |
+| Review | `GET /interviews/:id/review` (`202` while generating, `409` while running), `POST .../review/retry` after a failure, `GET .../transcript?format=json\|md`, `POST .../annotations/:id/note`, `POST .../feedback`, `GET .../events` (replay data). `GET /interviews` is the history with score and band. |
+| Not built yet | company packs, voice, live proactive reactions beyond the "accepted" reaction, ideal answers, STAR and speech analytics, PDF export, audio upload, `retry-question`, `GET /me/question-history`. |
+
+Errors added: `INTERVIEW_IN_PROGRESS` (409), `INTERVIEW_PAUSED` (409), `RESUME_REQUIRED` (422), `QUOTA_EXCEEDED` (429, daily or per-session token budget), `UPSTREAM_AI_UNAVAILABLE` (503).

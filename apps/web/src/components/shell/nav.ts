@@ -12,7 +12,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Home", icon: "home" },
   { href: "/problems", label: "Practice", icon: "code", phase: 3 },
-  { href: "/interview", label: "Interview", icon: "chat", phase: 6 },
+  { href: "/interview", label: "Interview", icon: "chat" },
   { href: "/quizzes", label: "Quizzes", icon: "quiz", phase: 8 },
   { href: "/plan", label: "Plan", icon: "plan", phase: 8 },
   { href: "/analytics", label: "Analytics", icon: "chart", phase: 8 },
@@ -30,7 +30,8 @@ export function navItemsFor(role: UserRole | undefined): NavItem[] {
 
 /** Pages that use the whole viewport (no centered column, no padding), e.g. the problem workspace. */
 export function isFullBleed(pathname: string): boolean {
-  return /^\/problems\/[^/]+/.test(pathname);
+  // the live interview room (a session id), but not its review or the setup pages
+  return /^\/problems\/[^/]+/.test(pathname) || /^\/interview\/[0-9a-f-]{36}$/.test(pathname);
 }
 
 /** The five tabs shown on the mobile bottom bar; everything else lives behind MENU. */
