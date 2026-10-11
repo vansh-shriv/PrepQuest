@@ -1,5 +1,11 @@
 import type { interviewSessions } from "@prepquest/db";
-import type { InterviewPlan, InterviewState, MachineFacts } from "@prepquest/interview-core";
+import type {
+  InterviewPlan,
+  InterviewState,
+  MachineFacts,
+  PendingReaction,
+  ReactionKind,
+} from "@prepquest/interview-core";
 import { getTemplate } from "@prepquest/interview-core";
 
 export type SessionRow = typeof interviewSessions.$inferSelect;
@@ -38,6 +44,14 @@ export interface StateData {
   pausedMs: number;
   /** Interview time of the last candidate or code activity. */
   lastActivityMs: number;
+  /** Interview time of the last change to the code (typing-burst suppression). */
+  lastCodeChangeMs: number | null;
+  /** Length of the first snapshot of the question: the starter code the candidate was given. */
+  starterLen: number | null;
+  lastProactiveMs: number | null;
+  reactionsOnQuestion: number;
+  reactedKinds: ReactionKind[];
+  pendingReaction: PendingReaction | null;
   /** Set when the previous turn nudged the candidate (start coding / move on). */
   nudge: string | null;
 }
@@ -62,6 +76,12 @@ export function initialStateData(difficulty: number): StateData {
     summaryUpTo: 0,
     pausedMs: 0,
     lastActivityMs: 0,
+    lastCodeChangeMs: null,
+    starterLen: null,
+    lastProactiveMs: null,
+    reactionsOnQuestion: 0,
+    reactedKinds: [],
+    pendingReaction: null,
     nudge: null,
   };
 }

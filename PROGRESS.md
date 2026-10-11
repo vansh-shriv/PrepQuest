@@ -12,7 +12,8 @@ Phase-by-phase build log. Plan source: `docs/18-ROADMAP-AND-SPRINTS.md`. Each ph
 | 4     | Judge (`isolate`), submissions, verdict UI, history/bookmarks/notes                                                                         | M2        | Done (committed)      |
 | 5     | Hints, editorials, XP/streaks, dashboard, sheets                                                                                            | M3        | Done (pending commit) |
 | 6     | AI interview MVP, resume parse, scorecards                                                                                                  | M4        | Done (pending commit) |
-| 7+    | Voice, analytics, planning, SRS, contests, peer, hardening                                                                                  | M5-M12    | Planned               |
+| 7     | Voice, live-coding awareness, AI eval harness                                                                                               | M5        | Done (pending commit) |
+| 8+    | Evaluation depth, analytics, planning, SRS, contests, peer, hardening                                                                       | M6-M12    | Planned               |
 
 ## Phase 0 - Foundation
 
@@ -242,3 +243,29 @@ Deferred:
 - **Live model quality:** golden sessions, consistency runs, persona identifiability, the adversarial leak set (need the live model and a budget). Nothing has been run against the real Anthropic API in this phase; the provider code follows the SDK docs and is covered only through the mock and fakes. Run a manual smoke with `LLM_MODE=live` before relying on it.
 - Voice (I5), live-coding reactions beyond "accepted" (I6), company packs (I2), more interview types, ideal answers (E3), STAR and speech analytics (E4), PDF export, audio upload, Redis pub/sub bus, `apps/worker`, XP for interviews, Sprint 4 deploy and observability (Sentry, metrics, hosting), content volume (still 20 problems).
 - The CI `e2e` job has not run on GitHub (LLM mock is the default there).
+
+## Phase 7 - Voice, live-coding awareness, AI eval harness (milestone M5)
+
+Done:
+
+- **Live-coding reactions (I6):** `interview-core/reactions.ts` holds the rules (60 s cooldown, no message within 5 s of a code change, 4 per question, "rarely" halves it, off means never). Triggers: accepted solution (immediate), failed run (after 20 s), code before any approach, nested loops (after 15 s, asks for the complexity without stating it), long silence while coding (a nudge that is a question, not a hint, persona-dependent). A small light-model classifier (`reaction` task) decides whether speaking is worth it; any failure means "speak" because the rules already gated it. Pending reactions live in `state_data`, are processed by the timer sweep, and are dropped when the candidate speaks first or the state moved on. Replies carry `meta.proactive`.
+- **Replay (E2/I6):** the review has a "Code replay" tab (scrubber, markers for runs, submits, pastes and tab changes, line change counts, a list of moments). It opens on the final code. Frames come from the stored `interview_events`.
+- **Voice (I5):** sessions have `mode` text/mixed/voice behind `FF_VOICE` (now on in `.env.example`; `422 VOICE_DISABLED` when off; `GET /interview/templates` returns `features.voice`). Browser Web Speech: push-to-talk (hold the button or Space), hands-free with a configurable silence, captions always on, replies read aloud once they are final, speed and mute controls, mic check in the briefing (permission, level meter, quiet and speech samples, advice). Denying the microphone or having no recognition leaves a working text interview. Voice answers are stored with `modality: voice` and approximate word timestamps; barge-in (`POST /interviews/:id/barge-in` or `user.barge_in`) keeps the full reply in the transcript, records what was heard, and tells the next turn the reply was interrupted. The interviewer prompt gets plain-speech rules in voice sessions. `speakableText` strips the control block, markdown and code (said as "code omitted, see the editor").
+- **AI eval harness v1 (`pnpm eval:ai`, `apps/api/src/evals`):** 51 adversarial messages in 8 families (ignore-instructions, roleplay, solution requests, prompt reveal, forged markup, authority, pressure, encoding) with a canary in the confidential notes, 12 behaviour scenarios (length, stacked questions, hint rules, plain speech), and 5 golden interviews for scorecards (schema validity, quote verification, MAE, run-to-run std dev, rank correlation). Hard gates on every run: nothing harmful reaches the candidate after the guards. Model-quality thresholds (raw leak rate, MAE 0.6, std 0.3, rank 0.7) gate only `--live`. Reports go to `.data/evals`. CI runs the mock harness; the live run is manual. New guard: replies containing fragments of the interviewer's own instructions are blocked (`prompt_leak`).
+- **Tests:** interview-core 57, API interview tests 92 (reactions 12, voice 6), evals 11, web 33, 5 voice e2e specs with a fake Web Speech API, replay assertions in the DSA e2e spec.
+
+Decisions / gotchas:
+
+- Replies are spoken only after they pass the leak and hint checks (final message), not sentence by sentence while streaming: a streamed sentence cannot be retracted from a speaker. The cost is a second or two of first-audio latency against doc 13's budget.
+- Chrome exposes the unprefixed `SpeechRecognition` too; the hook prefers it, and the e2e fake has to define both names.
+- Without headphones the microphone closes while the interviewer speaks in hands-free mode (speaker echo would trigger barge-in); push-to-talk always cuts in.
+- The Web Speech API gives no word timings: words are spread evenly over the utterance and are estimates. The `words` column is ready for a streaming STT service.
+- The code panel sends a snapshot every 5 s only when the code changed; the first snapshot of a question is treated as the starter code, so only code beyond it counts as "started coding".
+- Layout moves when the editor appears in the room; e2e presses on the push-to-talk button use dispatched pointer events, not cached coordinates.
+- Pointer capture can throw for synthetic pointers; the button swallows it.
+
+Deferred:
+
+- Server-side STT/TTS (streaming, word-level timestamps, neural voices), voice-activity detection beyond the silence timer, audio retention (opt-in), speech analytics (E4), latency measurement against the 2.5 s target.
+- Live runs of the eval harness and real golden sessions (the five transcripts here are hand-written); persona identifiability panel.
+- Reconnect robustness beyond ticket renewal and sync (event replay from a stream), `interrupted` shown in the chat UI, the timer's "mid-answer" pause for long voice answers.

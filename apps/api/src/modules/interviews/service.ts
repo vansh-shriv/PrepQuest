@@ -162,6 +162,9 @@ export async function createSession(
       sessionId: live.id,
     });
   }
+  if (input.mode !== "text" && !ctx.env.FF_VOICE) {
+    throw new AppError("VOICE_DISABLED", 422, "Voice interviews are not enabled on this server.");
+  }
   await ctx.limiter.enforce(
     `interview:h:${userId}`,
     ctx.env.RL_INTERVIEWS_PER_HOUR,
@@ -201,6 +204,7 @@ export async function createSession(
       resumeId: res.resumeId,
       jdId: res.jdId,
       persona: input.persona,
+      mode: input.mode,
       difficulty: input.difficulty,
       adaptive: input.adaptive,
       hintBudget: res.template.type === "dsa" ? input.hintBudget : 0,
@@ -296,6 +300,8 @@ export async function getTurns(db: Database, sessionId: string, afterSeq = 0) {
     offsetMs: r.offsetMs,
     turnId: r.id,
     hintUsed: Boolean((r.meta as { hint_level?: number } | null)?.hint_level),
+    modality: r.modality as "text" | "voice",
+    interrupted: Boolean((r.meta as { interrupted?: boolean } | null)?.interrupted),
   }));
 }
 

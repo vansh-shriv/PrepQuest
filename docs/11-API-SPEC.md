@@ -495,3 +495,13 @@ All routes need a verified email (`403 EMAIL_NOT_VERIFIED`). Deviations from sec
 | Not built yet | company packs, voice, live proactive reactions beyond the "accepted" reaction, ideal answers, STAR and speech analytics, PDF export, audio upload, `retry-question`, `GET /me/question-history`. |
 
 Errors added: `INTERVIEW_IN_PROGRESS` (409), `INTERVIEW_PAUSED` (409), `RESUME_REQUIRED` (422), `QUOTA_EXCEEDED` (429, daily or per-session token budget), `UPSTREAM_AI_UNAVAILABLE` (503).
+
+### Voice and live coding (Phase 7, as built)
+
+| Area | As built |
+| ---- | -------- |
+| Mode | `POST /interviews` takes `mode: text \| mixed \| voice` (default `text`); anything else than `text` is `422 VOICE_DISABLED` unless `FF_VOICE` is on. `GET /interview/templates` returns `{items, features: {voice}}`. Speech runs in the browser (Web Speech API); the server never receives audio. |
+| Spoken answers | `user.message` and `POST /interviews/:id/messages` accept `modality: "voice"` and `words: [{w, startMs, endMs}]` (up to 1500; malformed stamps are dropped). Turns store `modality` and `words`; `GET /interviews/:id` and the transcript return `modality` and `interrupted` per turn. |
+| Barge-in | `POST /interviews/:id/barge-in {turnId, charIndex}` (or socket `user.barge_in`): marks the interviewer turn `meta.interrupted` with `meta.heard` (the part spoken), logs a `barge_in` event, and the next turn's history shows the reply as cut short. The transcript keeps the full text. |
+| Reactions | Proactive interviewer messages are ordinary interviewer turns with `meta.proactive` = `ac_reached`, `run_failed`, `no_approach_before_code`, `complexity_smell` or `idle_coding`. Nothing new on the wire. |
+| Replay | `GET /interviews/:id/events` now also carries `barge_in` and `paste` markers used by the replay tab. |

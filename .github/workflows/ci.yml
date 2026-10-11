@@ -43,6 +43,8 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      # the AI harness on the scripted model: guards and wiring (the live run is manual, with a key)
+      - run: pnpm eval:ai
       # content gates: schema/rules, then re-run every reference solution against its committed tests
       - run: pnpm content:validate
       - run: pnpm content:verify

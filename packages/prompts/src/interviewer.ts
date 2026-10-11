@@ -5,7 +5,7 @@ import type {
   Persona,
   PlannedQuestion,
 } from "@prepquest/interview-core";
-import { neutralizeTags } from "@prepquest/interview-core";
+import { VOICE_PROMPT_RULES, neutralizeTags } from "@prepquest/interview-core";
 
 // Interviewer prompts (doc 13 §5.1-5.2). Prompts are versioned; the version is stored per session.
 
@@ -17,6 +17,7 @@ export const PROMPT_VERSIONS = {
   qgen: "1.0.0",
   jd: "1.0.0",
   summary: "1.0.0",
+  reaction: "1.0.0",
 } as const;
 
 export const PERSONA_TEXT: Record<Persona, string> = {
@@ -46,10 +47,17 @@ export interface InterviewerConfig {
   minutes: number;
   hintBudget: number;
   interruptionLevel: InterruptionLevel;
+  /** The candidate listens to replies (text-to-speech) instead of reading them. */
+  voice?: boolean;
 }
 
 /** Static per session: cached by the provider. Nothing that changes per turn goes here. */
 export function buildInterviewerSystem(c: InterviewerConfig): string {
+  const voice = c.voice
+    ? `
+
+${VOICE_PROMPT_RULES}`
+    : "";
   const kind =
     c.type === "dsa"
       ? "a data-structures-and-algorithms coding"
@@ -79,7 +87,7 @@ Your spoken reply first. Then, on the last line, exactly one control block:
 <control>{"intent":"followup|clarify_answer|prompt_approach|nudge|hint|challenge|praise|transition|close|redirect|warn","hint_level":0,"next_state":"<optional state>","topic_tags":[],"flags":[]}</control>
 - hint_level is 0 unless intent is "hint" (then 1, 2 or 3 following the ladder).
 - next_state is optional and only a suggestion; the system decides. Valid values: ${c.type === "dsa" ? "CLARIFY, APPROACH, CODING, TESTING, OPTIMIZE, FOLLOWUP, PROBLEM (next problem), WRAPUP" : "FOLLOWUP, PROBLEM (next project), WRAPUP"}.
-- flags may include: candidate_vague, approach_stated (the candidate described an approach), candidate_done (the candidate says they are finished), off_topic, abusive, asked_for_hint, asked_if_ai.`;
+- flags may include: candidate_vague, approach_stated (the candidate described an approach), candidate_done (the candidate says they are finished), off_topic, abusive, asked_for_hint, asked_if_ai.${voice}`;
 }
 
 export interface ProblemFacts {

@@ -67,6 +67,18 @@ function interviewerReply(req: LlmRequest): string {
   if (event.startsWith("The judge accepted")) {
     return `Nice, that passes. What are its time and space complexity?${control({ intent: "challenge" })}`;
   }
+  if (event.startsWith("The candidate's last run did not pass")) {
+    return `What does that failing case tell you?${control({ intent: "challenge" })}`;
+  }
+  if (event.startsWith("The candidate started writing code")) {
+    return `Before you go further, could you walk me through your plan?${control({ intent: "prompt_approach" })}`;
+  }
+  if (event.startsWith("The code has nested loops")) {
+    return `What is the time complexity of what you have so far?${control({ intent: "challenge" })}`;
+  }
+  if (event.startsWith("The candidate has been quiet")) {
+    return `How is it going? What are you weighing right now?${control({ intent: "nudge" })}`;
+  }
   if (event.startsWith("The candidate has been silent")) {
     return `Take your time. What are you thinking?${control({ intent: "nudge" })}`;
   }
@@ -424,6 +436,7 @@ export class MockProvider implements LlmProvider {
       text = JSON.stringify(
         parseResume(/<resume_text>\n([\s\S]*?)\n<\/resume_text>/.exec(firstUser(req))?.[1] ?? ""),
       );
+    else if (req.task === "reaction") text = JSON.stringify({ speak: true, reason: "mock" });
     else if (req.task === "qgen") text = JSON.stringify(qgen(req));
     else if (req.task === "jd_analysis") text = JSON.stringify(jd(req));
     else if (req.task === "scorecard") text = JSON.stringify(scorecard(req));

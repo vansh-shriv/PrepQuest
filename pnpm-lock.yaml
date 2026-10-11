@@ -178,6 +178,9 @@ importers:
       '@prepquest/analytics-core':
         specifier: workspace:*
         version: link:../../packages/analytics-core
+      '@prepquest/interview-core':
+        specifier: workspace:*
+        version: link:../../packages/interview-core
       '@prepquest/shared':
         specifier: workspace:*
         version: link:../../packages/shared

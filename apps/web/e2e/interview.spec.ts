@@ -167,6 +167,16 @@ test("a DSA interview with the editor, the judge and a scorecard that counts the
     .first()
     .click();
   await expect(page.getByTestId("scorecard")).toBeVisible({ timeout: 30_000 });
+  // the replay shows the code as it evolved, with the submit marked
+  await page.getByRole("tab", { name: "Code replay" }).click();
+  const scrub = page.getByLabel(/Time:/);
+  await expect(page.getByTestId("replay-code")).toContainText("def twoSum"); // opens on the final code
+  await scrub.focus();
+  await scrub.press("Home");
+  await expect(page.getByText("Nothing written yet")).toBeVisible();
+  await scrub.press("End");
+  await expect(page.getByTestId("replay-code")).toContainText("def twoSum");
+  await expect(page.getByRole("list", { name: "Moments" })).toContainText("Submit: AC");
   await page.getByRole("tab", { name: "Evidence" }).click();
   await page.locator("summary", { hasText: "Correctness" }).click();
   await expect(page.getByText(/accepted by the judge|final verdict AC/i).first()).toBeVisible();

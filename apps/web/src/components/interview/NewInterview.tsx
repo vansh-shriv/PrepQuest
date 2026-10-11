@@ -23,6 +23,7 @@ import type {
   ResumeDto,
 } from "@prepquest/shared";
 import { PERSONA_HELP, PERSONA_LABEL } from "@/features/interview/format";
+import { speechSupport } from "@/features/interview/voice/speech";
 import { api, ApiError } from "@/lib/api";
 import { useSubmit } from "@/lib/use-submit";
 import { FormError } from "../auth/AuthCard";
@@ -30,6 +31,7 @@ import { FormError } from "../auth/AuthCard";
 interface Form {
   type: "dsa" | "project";
   persona: "friendly" | "neutral" | "strict" | "rapid";
+  mode: "text" | "mixed" | "voice";
   difficulty: number;
   minutes: number | null;
   hintBudget: number;
@@ -47,6 +49,7 @@ interface Form {
 const DEFAULT_FORM: Form = {
   type: "dsa",
   persona: "neutral",
+  mode: "text",
   difficulty: 3,
   minutes: null,
   hintBudget: 2,
@@ -64,6 +67,7 @@ const DEFAULT_FORM: Form = {
 const bodyOf = (f: Form) => ({
   type: f.type,
   persona: f.persona,
+  mode: f.mode,
   difficulty: f.difficulty,
   ...(f.minutes ? { minutes: f.minutes } : {}),
   hintBudget: f.type === "dsa" ? f.hintBudget : 0,
@@ -97,6 +101,11 @@ export function NewInterview() {
   const [reroll, setReroll] = useState(0);
   const [jd, setJd] = useState<JdDto | null>(null);
   const [jdText, setJdText] = useState("");
+  const [voiceAllowed, setVoiceAllowed] = useState(false);
+  const speech = useMemo(
+    () => (typeof window === "undefined" ? null : speechSupport(window as never)),
+    [],
+  );
 
   const set = useCallback(
     <K extends keyof Form>(key: K, value: Form[K]) => setForm((f) => ({ ...f, [key]: value })),
@@ -104,8 +113,11 @@ export function NewInterview() {
   );
 
   useEffect(() => {
-    api<{ items: InterviewTemplateDto[] }>("/interview/templates")
-      .then((r) => setTemplates(r.items))
+    api<{ items: InterviewTemplateDto[]; features?: { voice?: boolean } }>("/interview/templates")
+      .then((r) => {
+        setTemplates(r.items);
+        setVoiceAllowed(Boolean(r.features?.voice));
+      })
       .catch(() => undefined);
     api<{ items: ResumeDto[] }>("/resumes")
       .then((r) => setResumes(r.items))
@@ -276,6 +288,24 @@ export function NewInterview() {
                     </option>
                   ))}
                 </Select>
+                {voiceAllowed && (
+                  <Select
+                    label="How you answer"
+                    value={form.mode}
+                    onChange={(e) => set("mode", e.target.value as Form["mode"])}
+                    helper={
+                      form.mode === "text"
+                        ? "Type your answers."
+                        : speech?.recognition
+                          ? "Speak and type. Uses your browser's speech tools; audio is not stored."
+                          : "This browser can't listen. You'll hear the interviewer and type your answers (Chrome or Edge can do both)."
+                    }
+                  >
+                    <option value="text">Typing</option>
+                    <option value="mixed">Voice and typing</option>
+                    <option value="voice">Voice first</option>
+                  </Select>
+                )}
                 <Select
                   label="Difficulty"
                   value={String(form.difficulty)}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { Button, ChatBubble } from "@prepquest/ui";
 import { clock } from "@/features/interview/format";
 import type { ChatItem } from "@/features/interview/room-state";
@@ -18,6 +18,8 @@ export interface ChatProps {
   error: string | null;
   onSend: (text: string, retryId?: string) => Promise<{ ok: boolean }>;
   onDismissError: () => void;
+  /** Shown between the transcript and the message box (voice controls). */
+  aboveComposer?: ReactNode;
 }
 
 /** The transcript (a live region) and the message box. Enter sends, Shift+Enter adds a line. */
@@ -30,6 +32,7 @@ export function Chat({
   error,
   onSend,
   onDismissError,
+  aboveComposer,
 }: ChatProps) {
   const [draft, setDraft] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
@@ -114,6 +117,7 @@ export function Chat({
         </p>
       )}
 
+      {aboveComposer}
       <div className="grid gap-2 border-t-[3px] border-ink bg-surface-alt p-3">
         <label className="pq-label" htmlFor="chat-input">
           Your answer

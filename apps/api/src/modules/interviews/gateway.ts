@@ -1,6 +1,11 @@
 import type { FastifyInstance } from "fastify";
 import { Server, type Socket } from "socket.io";
-import { AppError, interviewCodeEventSchema, interviewMessageSchema } from "@prepquest/shared";
+import {
+  AppError,
+  bargeInSchema,
+  interviewCodeEventSchema,
+  interviewMessageSchema,
+} from "@prepquest/shared";
 import type { Kv } from "../../lib/kv.js";
 import type { AiContext } from "../ai-context.js";
 import type { ServerEvent } from "./bus.js";
@@ -77,6 +82,12 @@ export function attachInterviewGateway(
           await deps.ctx.limiter.enforce(`interview-msg:${userId}`, 40, 60, "messages");
           return deps.engine.sendMessage(userId, sessionId, input);
         }),
+      );
+      socket.on(
+        "user.barge_in",
+        handle(async (p: unknown) =>
+          deps.engine.bargeIn(userId, sessionId, bargeInSchema.parse(p)),
+        ),
       );
       socket.on(
         "code.event",

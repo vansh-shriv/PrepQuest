@@ -7,6 +7,7 @@ export type LlmTask =
   | "scorecard"
   | "annotations"
   | "summary"
+  | "reaction"
   | "resume_parse"
   | "jd_analysis"
   | "qgen";

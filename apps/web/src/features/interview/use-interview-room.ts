@@ -176,17 +176,26 @@ export function useInterviewRoom(sessionId: string) {
   );
 
   const send = useCallback(
-    async (text: string, retryId?: string) => {
+    async (
+      text: string,
+      retryId?: string,
+      extra?: { words: { w: string; startMs: number; endMs: number }[] },
+    ) => {
       const clientMsgId = retryId ?? crypto.randomUUID();
       dispatch({ type: "sending", clientMsgId, text });
-      let res = await emit("user.message", { clientMsgId, text });
+      const body = {
+        clientMsgId,
+        text,
+        ...(extra ? { modality: "voice", words: extra.words } : {}),
+      };
+      let res = await emit("user.message", body);
       if (!res.ok && (res.code === "OFFLINE" || res.code === "TIMEOUT")) {
         // fall back to REST: same client id, so the server answers each message once
         try {
           const rest = await api<{
             candidateSeq: number;
             replies: { seq: number; turnId: string; text: string; hintUsed: boolean }[];
-          }>(`/interviews/${sessionId}/messages`, { method: "POST", json: { clientMsgId, text } });
+          }>(`/interviews/${sessionId}/messages`, { method: "POST", json: body });
           await reload();
           res = { ok: true, replies: rest.replies };
         } catch (err) {
@@ -206,6 +215,19 @@ export function useInterviewRoom(sessionId: string) {
       return { ok: res.ok, clientMsgId };
     },
     [emit, reload, sessionId],
+  );
+
+  /** Tells the server the candidate talked over a reply (what was heard is kept in the transcript). */
+  const bargeIn = useCallback(
+    async (turnId: string, charIndex: number) => {
+      const viaSocket = await emit("user.barge_in", { turnId, charIndex });
+      if (viaSocket.ok || viaSocket.code !== "OFFLINE") return;
+      await api(`/interviews/${sessionId}/barge-in`, {
+        method: "POST",
+        json: { turnId, charIndex },
+      }).catch(() => undefined);
+    },
+    [emit, sessionId],
   );
 
   const control = useCallback(
@@ -252,6 +274,7 @@ export function useInterviewRoom(sessionId: string) {
     loadError,
     remainingMs: remainingNow(room, now),
     send,
+    bargeIn,
     control,
     codeEvent,
     start,

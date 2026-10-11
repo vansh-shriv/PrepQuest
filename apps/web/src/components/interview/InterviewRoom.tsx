@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Button,
   Chip,
@@ -18,7 +18,10 @@ import { PERSONA_HELP, PERSONA_LABEL, PERSONA_NAME } from "@/features/interview/
 import { useInterviewRoom } from "@/features/interview/use-interview-room";
 import { useSubmit } from "@/lib/use-submit";
 import { SplitPane } from "../problems/SplitPane";
+import { useVoice } from "@/features/interview/voice/use-voice";
 import { Chat } from "./Chat";
+import { MicCheck } from "./MicCheck";
+import { VoiceBar } from "./VoiceBar";
 import { CodePanel } from "./CodePanel";
 
 const LIVE_STATES = new Set([
@@ -45,6 +48,29 @@ export function InterviewRoom({ id }: { id: string }) {
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [mobile, setMobile] = useState<"left" | "right">("left");
   const begin = useSubmit(async () => r.start());
+
+  // voice: replies are read aloud once they are final, and what the candidate says becomes a message
+  const wantsVoice = session !== null && session.mode !== "text";
+  const voice = useVoice({
+    enabled: wantsVoice,
+    onUtterance: (u) => void r.send(u.text, undefined, { words: u.words }),
+    onBargeIn: (turnId, charIndex) => void r.bargeIn(turnId, charIndex),
+  });
+  const spoken = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    if (!wantsVoice || !room.live) return;
+    const replies = room.items.filter((i) => i.speaker === "interviewer");
+    if (spoken.current === null) {
+      // what was already said before this page loaded is not read out again
+      spoken.current = new Set(replies.map((i) => i.key));
+      return;
+    }
+    for (const item of replies) {
+      if (item.streaming || item.seq === null || spoken.current.has(item.key)) continue;
+      spoken.current.add(item.key);
+      voice.speak(item.key, item.text);
+    }
+  }, [wantsVoice, room.items, room.live, voice]);
 
   // keep the tab title useful when the user switches to the editor
   useEffect(() => {
@@ -129,6 +155,11 @@ export function InterviewRoom({ id }: { id: string }) {
         error={room.error}
         onSend={r.send}
         onDismissError={r.clearError}
+        aboveComposer={
+          wantsVoice && voice.support.recognition ? (
+            <VoiceBar voice={voice} disabled={!enabled} />
+          ) : null
+        }
       />
     </div>
   );
@@ -316,6 +347,7 @@ function Briefing({
           <li>Leaving the tab or pasting large code is recorded and can appear in your review.</li>
         </ul>
       </Window>
+      {session.mode !== "text" && <MicCheck onResult={() => undefined} />}
       {error && (
         <p role="alert" className="m-0 text-danger">
           ! {error}

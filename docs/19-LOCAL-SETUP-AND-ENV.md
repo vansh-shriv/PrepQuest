@@ -131,7 +131,7 @@ POSTHOG_KEY=
 POSTHOG_HOST=
 
 # --- Feature flags (defaults) ---
-FF_VOICE=false
+FF_VOICE=true                       # voice interviews (browser speech); false hides them
 FF_PEER=false
 FF_CONTESTS=false
 FF_CANVAS=false

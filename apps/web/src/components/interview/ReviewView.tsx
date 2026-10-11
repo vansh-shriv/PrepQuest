@@ -22,6 +22,7 @@ import {
   clock,
 } from "@/features/interview/format";
 import { api, apiDownload, ApiError } from "@/lib/api";
+import { CodeReplay } from "./CodeReplay";
 import { useSubmit } from "@/lib/use-submit";
 
 const KIND_LABEL: Record<AnnotationDto["kind"], string> = {
@@ -179,6 +180,15 @@ function Loaded({
             label: "Transcript",
             content: <Transcript review={review} onChanged={onChanged} />,
           },
+          ...(session.usesEditor
+            ? [
+                {
+                  id: "replay",
+                  label: "Code replay",
+                  content: <CodeReplay sessionId={session.id} durationMs={session.elapsedMs} />,
+                },
+              ]
+            : []),
           ...(scorecard
             ? [
                 { id: "evidence", label: "Evidence", content: <Evidence review={review} /> },

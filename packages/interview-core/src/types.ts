@@ -101,4 +101,6 @@ export interface TranscriptTurn {
   speaker: "interviewer" | "candidate" | "system";
   text: string;
   offsetMs: number;
+  /** Set when the candidate cut an interviewer reply short: the part they heard. */
+  interruptedAfter?: string;
 }

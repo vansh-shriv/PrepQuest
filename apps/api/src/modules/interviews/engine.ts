@@ -12,6 +12,15 @@ import {
 } from "@prepquest/db";
 import {
   ABUSE_LIMIT,
+  cleanWords,
+  spokenPrefix,
+  type SpokenWord,
+  REACTION_NOTE,
+  idleCodingDue,
+  mayReact,
+  reactionForRun,
+  reactionForSnapshot,
+  type ReactionKind,
   ControlStreamFilter,
   MAX_PAUSE_MS,
   PERSONAS,
@@ -39,6 +48,8 @@ import {
 } from "@prepquest/interview-core";
 import {
   CLOSING_LINE,
+  REACTION_SYSTEM,
+  buildReactionPrompt,
   PROMPT_VERSIONS,
   REGENERATE_NOTES,
   buildInterviewerSystem,
@@ -46,7 +57,7 @@ import {
   buildTurnMessage,
   type TurnEvent,
 } from "@prepquest/prompts";
-import { AppError } from "@prepquest/shared";
+import { AppError, type BargeInInput } from "@prepquest/shared";
 import type { InterviewCodeEventInput, InterviewMessageInput } from "@prepquest/shared";
 import type { LlmMessage } from "../../lib/llm/index.js";
 import type { AiContext } from "../ai-context.js";
@@ -74,6 +85,12 @@ import {
   type StateData,
 } from "./state.js";
 import { createHash } from "node:crypto";
+import { z } from "zod";
+
+const reactionDecisionSchema = z.object({
+  speak: z.boolean(),
+  reason: z.string().max(200).optional(),
+});
 
 const NAMES: Record<Persona, string> = {
   friendly: "Priya",
@@ -217,6 +234,40 @@ export class InterviewEngine {
     });
   }
 
+  /**
+   * The candidate talked over an interviewer reply (voice barge-in). The reply stays in the
+   * transcript, marked as interrupted with the part that was actually heard, so the next turn knows.
+   */
+  async bargeIn(userId: string, id: string, input: BargeInInput): Promise<{ ok: true }> {
+    return this.serial(id, async () => {
+      const s = await this.requireActive(userId, id);
+      const [turn] = await this.ctx.db
+        .select()
+        .from(interviewTurns)
+        .where(
+          and(
+            eq(interviewTurns.id, input.turnId),
+            eq(interviewTurns.sessionId, id),
+            eq(interviewTurns.speaker, "interviewer"),
+          ),
+        );
+      if (!turn) throw new AppError("NOT_FOUND", 404, "That interviewer message doesn't exist");
+      const heard = spokenPrefix(turn.text, input.charIndex);
+      const meta = {
+        ...((turn.meta as Record<string, unknown> | null) ?? {}),
+        interrupted: true,
+        heard,
+      };
+      await this.ctx.db.update(interviewTurns).set({ meta }).where(eq(interviewTurns.id, turn.id));
+      await this.logEvent(id, elapsedMs(s, this.ctx.now()), "barge_in", {
+        turnId: turn.id,
+        seq: turn.seq,
+        heardChars: heard.length,
+      });
+      return { ok: true };
+    });
+  }
+
   async pause(userId: string, id: string): Promise<SessionRow> {
     return this.serial(id, async () => {
       const s = await this.requireActive(userId, id);
@@ -322,8 +373,11 @@ export class InterviewEngine {
       sd.turnsInState += 1;
       sd.lastActivityMs = e;
       sd.idlePrompts = 0;
+      sd.pendingReaction = null; // they are talking: no need to interrupt
       const seq = await this.insertTurn(id, "candidate", text, e, {
         clientMsgId: input.clientMsgId,
+        modality: input.modality,
+        words: input.words ? cleanWords(input.words) : null,
       });
       this.bus.publish(id, {
         type: "candidate.message",
@@ -405,7 +459,14 @@ export class InterviewEngine {
     speaker: "interviewer" | "candidate" | "system",
     text: string,
     offsetMs: number,
-    extra: { meta?: Record<string, unknown>; clientMsgId?: string; id?: string; db?: Db } = {},
+    extra: {
+      meta?: Record<string, unknown>;
+      clientMsgId?: string;
+      id?: string;
+      db?: Db;
+      modality?: "text" | "voice";
+      words?: SpokenWord[] | null;
+    } = {},
   ): Promise<number> {
     const db = extra.db ?? this.ctx.db;
     const [row] = await db
@@ -420,7 +481,8 @@ export class InterviewEngine {
       speaker,
       text,
       offsetMs,
-      modality: "text",
+      modality: extra.modality ?? "text",
+      words: extra.words && extra.words.length > 0 ? extra.words : null,
       meta: extra.meta ?? null,
       clientMsgId: extra.clientMsgId ?? null,
     });
@@ -450,6 +512,19 @@ export class InterviewEngine {
         if (sd.lastCode?.hash === hash) return { ok: true };
         sd.lastCode = { language: ev.language ?? "unknown", code: ev.code, hash };
         sd.lastActivityMs = e;
+        sd.lastCodeChangeMs = e;
+        if (sd.starterLen === null) {
+          sd.starterLen = ev.code.length; // the first snapshot of a question is the starter code
+        } else if (!sd.pendingReaction) {
+          sd.pendingReaction = reactionForSnapshot({
+            state: s.state,
+            code: ev.code,
+            starterLength: sd.starterLen,
+            approachStated: sd.approachStated,
+            elapsedMs: e,
+            reactedKinds: sd.reactedKinds,
+          });
+        }
         await this.logEvent(id, e, "code_snapshot", {
           language: sd.lastCode.language,
           code: ev.code,
@@ -489,6 +564,12 @@ export class InterviewEngine {
       if (firstAc) {
         sd.ac = true;
         if (q) q.solved = true;
+        sd.pendingReaction = null;
+        sd.lastProactiveMs = e;
+        sd.reactionsOnQuestion += 1;
+        sd.reactedKinds.push("ac_reached");
+      } else if (sub.verdict !== "AC" && !sd.pendingReaction) {
+        sd.pendingReaction = reactionForRun({ elapsedMs: e, reactedKinds: sd.reactedKinds });
       }
       await this.logEvent(id, e, sub.kind === "submit" ? "submit" : "run", {
         submissionId: sub.id,
@@ -521,11 +602,12 @@ export class InterviewEngine {
       await this.save(this.ctx.db, id, { state, stateData: sd });
       this.publishState(await this.getSession(id));
       if (firstAc && prevState !== "OPTIMIZE") {
-        // the one proactive reaction in the MVP: acknowledge the accepted solution (doc 03 I6)
-        await this.runTurn(id, {
-          kind: "timer",
-          note: "The judge accepted the candidate's solution. Acknowledge briefly, then ask about its time and space complexity.",
-        });
+        // acknowledge the accepted solution right away (doc 03 I6)
+        await this.runTurn(
+          id,
+          { kind: "timer", note: REACTION_NOTE.ac_reached },
+          { proactive: "ac_reached" },
+        );
       }
       return { ok: true };
     });
@@ -580,7 +662,11 @@ export class InterviewEngine {
     for (const t of recent) {
       push(
         t.speaker === "interviewer" ? "assistant" : "user",
-        t.speaker === "interviewer" ? t.text : `<candidate_message>${t.text}</candidate_message>`,
+        t.speaker === "interviewer"
+          ? t.interruptedAfter !== undefined
+            ? `${t.interruptedAfter || "(nothing)"} [interrupted: the candidate heard only this part]`
+            : t.text
+          : `<candidate_message>${t.text}</candidate_message>`,
       );
     }
     if (messages[0]?.role === "assistant")
@@ -645,6 +731,7 @@ export class InterviewEngine {
           minutes: plan.minutes,
           hintBudget: s.hintBudget,
           interruptionLevel: s.interruptionLevel as "off" | "low" | "normal",
+          voice: s.mode !== "text",
         }),
         context: buildSessionFacts({
           questions: plan.questions,
@@ -674,7 +761,12 @@ export class InterviewEngine {
   private async runTurn(
     sessionId: string,
     event: TurnEvent,
-    opts: { note?: string; localAbuse?: boolean; asksHint?: boolean } = {},
+    opts: {
+      note?: string;
+      localAbuse?: boolean;
+      asksHint?: boolean;
+      proactive?: ReactionKind;
+    } = {},
   ): Promise<{ replies: TurnOutcome[] }> {
     const replies: TurnOutcome[] = [];
     let s = await this.getSession(sessionId);
@@ -834,6 +926,11 @@ export class InterviewEngine {
         runs: 0,
       });
       sd2.hintsOnQuestion = 0;
+      sd2.reactionsOnQuestion = 0;
+      sd2.reactedKinds = [];
+      sd2.pendingReaction = null;
+      sd2.starterLen = null;
+      sd2.lastCodeChangeMs = null;
       sd2.approachStated = false;
       sd2.hasRun = false;
       sd2.ac = false;
@@ -899,6 +996,7 @@ export class InterviewEngine {
       latency_ms: Date.now() - started,
       prompt_version: PROMPT_VERSIONS.interviewer,
       event: event.kind,
+      proactive: opts.proactive ?? null,
     };
     const seq = await withTransaction(this.ctx.db, async (tx) => {
       const n = await this.insertTurn(sessionId, "interviewer", spoken, e, {
@@ -1163,7 +1261,121 @@ export class InterviewEngine {
       this.bus.publish(row.id, { type: "timer.tick", remainingMs: remaining });
       this.lastTick.set(row.id, now.getTime());
     }
+    await this.maybeReact(row, now);
     await this.maybeIdlePrompt(row, now);
+  }
+
+  /**
+   * Proactive reactions to the candidate's coding (doc 03 I6): due reactions wait for the cooldown and
+   * for the typing to stop, a small model decides whether speaking is worth it, and the interviewer
+   * phrases it. Everything about when and how often is rules, not the model's call.
+   */
+  private async maybeReact(row: SessionRow, now: Date) {
+    if (this.busy(row.id) || !getTemplate(row.templateKey)?.usesEditor) return;
+    const sd = readStateData(row);
+    const e = elapsedMs(row, now);
+    const persona = (PERSONAS as readonly string[]).includes(row.persona)
+      ? (row.persona as Persona)
+      : "neutral";
+    let pending = sd.pendingReaction;
+    if (
+      !pending &&
+      idleCodingDue({
+        state: row.state,
+        persona,
+        elapsedMs: e,
+        lastActivityMs: sd.lastActivityMs,
+        reactedKinds: sd.reactedKinds,
+      })
+    ) {
+      pending = { kind: "idle_coding", dueMs: e };
+    }
+    if (!pending || pending.dueMs > e) return;
+
+    const stillRelevant =
+      pending.kind === "no_approach_before_code"
+        ? row.state === "CLARIFY" || row.state === "APPROACH"
+        : pending.kind === "run_failed"
+          ? (row.state === "CODING" || row.state === "TESTING") && !sd.ac
+          : row.state === "CODING";
+    if (!stillRelevant || e - pending.dueMs > 180_000) {
+      if (sd.pendingReaction) {
+        sd.pendingReaction = null;
+        await this.save(this.ctx.db, row.id, { stateData: sd });
+      }
+      return;
+    }
+    const gate = mayReact({
+      state: row.state,
+      persona,
+      interruptionsOff: row.interruptionLevel === "off",
+      elapsedMs: e,
+      lastProactiveMs: sd.lastProactiveMs,
+      lastCodeChangeMs: sd.lastCodeChangeMs,
+      // "rarely" allows half as many
+      reactionsOnQuestion:
+        row.interruptionLevel === "low" ? sd.reactionsOnQuestion * 2 : sd.reactionsOnQuestion,
+      reactedKinds: sd.reactedKinds,
+    });
+    if (!gate.ok) return; // due, but not now: the next sweep tries again
+
+    const kind = pending.kind;
+    await this.serial(row.id, async () => {
+      const s = await this.getSession(row.id);
+      if (s.endedAt || s.pausedAt) return;
+      const sd2 = readStateData(s);
+      const at = elapsedMs(s, this.ctx.now());
+      const speak = await this.shouldSpeak(s, kind, at);
+      sd2.pendingReaction = null;
+      sd2.reactedKinds.push(kind); // asked once, spoken or not: never retried for this question
+      if (speak) {
+        sd2.lastProactiveMs = at;
+        sd2.lastActivityMs = at;
+        sd2.reactionsOnQuestion += 1;
+      }
+      await this.save(this.ctx.db, s.id, { stateData: sd2 });
+      if (speak) {
+        await this.runTurn(s.id, { kind: "timer", note: REACTION_NOTE[kind] }, { proactive: kind });
+      }
+    });
+  }
+
+  /** The small classifier: any failure means "speak", because the rules above already gated it. */
+  private async shouldSpeak(s: SessionRow, kind: ReactionKind, at: number): Promise<boolean> {
+    try {
+      const turns = (await loadTurns(this.ctx.db, s.id)).slice(-4);
+      const lastInterviewer = [...turns].reverse().find((t) => t.speaker === "interviewer");
+      const { value } = await this.ctx.llm.json(
+        {
+          task: "reaction",
+          modelClass: "light",
+          system: REACTION_SYSTEM,
+          messages: [
+            {
+              role: "user",
+              content: buildReactionPrompt({
+                trigger: kind,
+                note: REACTION_NOTE[kind],
+                recent: turns,
+                minutesSinceInterviewerSpoke: lastInterviewer
+                  ? Math.max(0, at - lastInterviewer.offsetMs) / 60_000
+                  : at / 60_000,
+              }),
+            },
+          ],
+          maxTokens: 120,
+          effort: "low",
+          userId: s.userId,
+          sessionId: s.id,
+          promptVersion: PROMPT_VERSIONS.reaction,
+        },
+        reactionDecisionSchema,
+        { maxRepairs: 0 },
+      );
+      return value.speak;
+    } catch {
+      return true;
+    }
   }
 
   /** Silence after the interviewer spoke: one gentle prompt, at most twice per question (doc 03 I4). */

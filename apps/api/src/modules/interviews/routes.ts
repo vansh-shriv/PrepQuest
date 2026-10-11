@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import { z } from "zod";
 import {
   AppError,
+  bargeInSchema,
   createInterviewSchema,
   interviewCodeEventSchema,
   interviewFeedbackSchema,
@@ -40,7 +41,10 @@ export const interviewRoutes: FastifyPluginAsync<{
   const uid = (req: { auth?: { userId: string } }) => req.auth!.userId;
 
   app.get("/interviews/access", async () => ({ allowed: true }));
-  app.get("/interview/templates", async () => ({ items: svc.templatesDto() }));
+  app.get("/interview/templates", async () => ({
+    items: svc.templatesDto(),
+    features: { voice: ctx.env.FF_VOICE },
+  }));
 
   app.post("/interviews/plan", async (req) =>
     svc.previewPlan(ctx, uid(req), parse(createInterviewSchema, req.body)),
@@ -106,6 +110,11 @@ export const interviewRoutes: FastifyPluginAsync<{
     const { id } = parse(idParams, req.params);
     await ctx.limiter.enforce(`interview-msg:${uid(req)}`, 40, 60, "messages");
     return engine.sendMessage(uid(req), id, parse(interviewMessageSchema, req.body));
+  });
+
+  app.post("/interviews/:id/barge-in", async (req) => {
+    const { id } = parse(idParams, req.params);
+    return engine.bargeIn(uid(req), id, parse(bargeInSchema, req.body));
   });
 
   app.post("/interviews/:id/events", async (req) => {

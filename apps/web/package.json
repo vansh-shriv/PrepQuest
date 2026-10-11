@@ -14,6 +14,7 @@
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
     "@prepquest/analytics-core": "workspace:*",
+    "@prepquest/interview-core": "workspace:*",
     "@prepquest/shared": "workspace:*",
     "@prepquest/ui": "workspace:*",
     "@tailwindcss/postcss": "^4.3.3",

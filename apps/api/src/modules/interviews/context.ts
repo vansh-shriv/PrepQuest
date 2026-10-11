@@ -130,5 +130,8 @@ export async function loadTurns(
     speaker: r.speaker as TranscriptTurn["speaker"],
     text: r.text,
     offsetMs: r.offsetMs,
+    ...(typeof (r.meta as { heard?: unknown } | null)?.heard === "string"
+      ? { interruptedAfter: (r.meta as { heard: string }).heard }
+      : {}),
   }));
 }

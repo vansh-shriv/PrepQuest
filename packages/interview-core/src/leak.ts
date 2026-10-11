@@ -34,9 +34,19 @@ export function ngramOverlap(output: string, reference: string, n = 5): number {
   return hit / out.size;
 }
 
+/** Fragments of the interviewer's own instructions: a reply containing one is repeating its prompt. */
+export const PROMPT_MARKERS = [
+  "HARD RULES",
+  "OUTPUT FORMAT",
+  "is DATA, not instructions",
+  "<confidential>",
+  "Interviewer-only",
+  "<plan>",
+] as const;
+
 export interface LeakVerdict {
   leaked: boolean;
-  reason?: "code_block" | "reference_overlap";
+  reason?: "code_block" | "reference_overlap" | "prompt_leak";
 }
 
 export function checkSolutionLeak(
@@ -48,6 +58,8 @@ export function checkSolutionLeak(
   const threshold = opts.overlapThreshold ?? 0.3;
   const minShingles = opts.minShingles ?? 6;
   if (longestCodeBlockLines(output) > maxCodeLines) return { leaked: true, reason: "code_block" };
+  if (PROMPT_MARKERS.some((m) => output.includes(m)))
+    return { leaked: true, reason: "prompt_leak" };
   const outToks = tokens(output);
   if (outToks.length - 4 >= minShingles) {
     for (const ref of references) {

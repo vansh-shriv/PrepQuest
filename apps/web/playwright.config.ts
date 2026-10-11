@@ -17,6 +17,10 @@ export default defineConfig({
     baseURL: "http://localhost:3000",
     channel: "chrome",
     trace: "retain-on-failure",
+    // a fake microphone and auto-granted permission prompts for the voice specs
+    launchOptions: {
+      args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"],
+    },
   },
   webServer: [
     {
@@ -27,6 +31,7 @@ export default defineConfig({
       // the suite signs in many times from one IP and uses made-up passwords; keep it offline-safe
       env: {
         BREACH_CHECK: "off",
+        FF_VOICE: "true",
         RL_LOGIN_PER_10MIN: "1000",
         RL_AUTH_PER_MIN: "1000",
         RL_ANON_PER_MIN: "10000",

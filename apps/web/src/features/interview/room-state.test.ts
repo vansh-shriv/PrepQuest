@@ -22,6 +22,8 @@ const turn = (
   offsetMs: seq * 1000,
   turnId: `t${seq}`,
   hintUsed: false,
+  modality: "text",
+  interrupted: false,
 });
 
 const session = {

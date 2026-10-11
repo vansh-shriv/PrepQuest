@@ -16,6 +16,7 @@
     "db:migrate": "pnpm --filter @prepquest/db db:migrate",
     "db:reset": "pnpm --filter @prepquest/db db:reset",
     "db:seed": "pnpm --filter @prepquest/api db:seed",
+    "eval:ai": "pnpm --filter @prepquest/api eval:ai",
     "test:e2e": "pnpm --filter @prepquest/web test:e2e",
     "db:generate": "pnpm --filter @prepquest/db db:generate",
     "db:studio": "pnpm --filter @prepquest/db db:studio",

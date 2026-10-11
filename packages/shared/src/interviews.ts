@@ -104,6 +104,8 @@ export const planInterviewSchema = z.object({
   company: str(120).nullish(),
   level: z.enum(["intern", "sde1", "sde2"]).default("sde1"),
   persona: z.enum(["friendly", "neutral", "strict", "rapid"]).default("neutral"),
+  /** How the candidate talks to the interviewer: typing, speaking, or both. */
+  mode: z.enum(["text", "voice", "mixed"]).default("text"),
   difficulty: z.number().int().min(1).max(5).default(3),
   adaptive: z.boolean().default(true),
   hintBudget: z.number().int().min(0).max(3).default(2),
@@ -126,7 +128,20 @@ export type CreateInterviewInput = z.infer<typeof createInterviewSchema>;
 export const interviewMessageSchema = z.object({
   clientMsgId: z.string().min(1).max(80),
   text: z.string().min(1).max(4000),
+  modality: z.enum(["text", "voice"]).default("text"),
+  /** Word timestamps from speech recognition, relative to the start of the utterance. */
+  words: z
+    .array(z.object({ w: z.string().max(80), startMs: z.number(), endMs: z.number() }))
+    .max(1500)
+    .optional(),
 });
+
+/** The candidate cut an interviewer reply short; `charIndex` is how far the speech engine got. */
+export const bargeInSchema = z.object({
+  turnId: z.string().uuid(),
+  charIndex: z.number().int().min(0).max(10_000),
+});
+export type BargeInInput = z.infer<typeof bargeInSchema>;
 export type InterviewMessageInput = z.infer<typeof interviewMessageSchema>;
 
 export const interviewFeedbackSchema = z.object({
@@ -221,6 +236,9 @@ export interface InterviewTurnDto {
   offsetMs: number;
   turnId: string;
   hintUsed: boolean;
+  modality: "text" | "voice";
+  /** The candidate cut this reply short (voice). */
+  interrupted: boolean;
 }
 
 export interface InterviewTemplateDto {

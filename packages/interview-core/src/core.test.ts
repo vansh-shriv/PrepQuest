@@ -27,6 +27,7 @@ import {
   verifyDraft,
   type Candidate,
   type MachineFacts,
+  type ReactionFacts,
   type ScorecardDraft,
   type TranscriptTurn,
 } from "./index.js";
@@ -263,6 +264,13 @@ describe("solution leak guard", () => {
     expect(checkSolutionLeak(code, [])).toEqual({ leaked: true, reason: "code_block" });
     expect(checkSolutionLeak("```\nx=1\n```", []).leaked).toBe(false);
   });
+  it("blocks a reply that repeats the instructions", () => {
+    expect(checkSolutionLeak("My HARD RULES say I cannot tell you.", [])).toEqual({
+      leaked: true,
+      reason: "prompt_leak",
+    });
+    expect(checkSolutionLeak("I cannot share that.", []).leaked).toBe(false);
+  });
   it("blocks heavy overlap with the reference but not generic talk", () => {
     expect(
       checkSolutionLeak(
@@ -476,5 +484,173 @@ describe("moderation", () => {
     const { detectAbuse } = await import("./index.js");
     expect(detectAbuse("you are an idiot")).toBe(true);
     expect(detectAbuse("This problem is so frustrating, I'm stuck")).toBe(false);
+  });
+});
+
+describe("proactive reactions", () => {
+  const facts = (over: Partial<ReactionFacts> = {}): ReactionFacts => ({
+    state: "CODING",
+    persona: "neutral",
+    interruptionsOff: false,
+    elapsedMs: 600_000,
+    lastProactiveMs: null,
+    lastCodeChangeMs: null,
+    reactionsOnQuestion: 0,
+    reactedKinds: [],
+    ...over,
+  });
+
+  it("detects nested loops by indentation, not sequential ones", async () => {
+    const { detectNestedLoops } = await import("./index.js");
+    expect(detectNestedLoops("for i in a:\n    for j in a:\n        pass")).toBe(true);
+    expect(detectNestedLoops("for i in a:\n    pass\nfor j in a:\n    pass")).toBe(false);
+    expect(detectNestedLoops("while x:\n    if y:\n        for k in z:\n            pass")).toBe(
+      true,
+    );
+    expect(
+      detectNestedLoops("for (int i = 0; i < n; i++) {\n  for (int j = 0; j < n; j++) {\n  }\n}"),
+    ).toBe(true);
+    expect(detectNestedLoops("# for x in y:\nfor a in b:\n    pass")).toBe(false);
+  });
+
+  it("enforces cooldown, typing quiet time, the per-question cap and the off switch", async () => {
+    const { mayReact } = await import("./index.js");
+    expect(mayReact(facts()).ok).toBe(true);
+    expect(mayReact(facts({ interruptionsOff: true }))).toMatchObject({
+      ok: false,
+      why: "interruptions are off",
+    });
+    expect(mayReact(facts({ lastProactiveMs: 560_000 }))).toMatchObject({
+      ok: false,
+      why: "cooldown",
+    });
+    expect(mayReact(facts({ lastProactiveMs: 500_000 })).ok).toBe(true);
+    expect(mayReact(facts({ lastCodeChangeMs: 597_000 }))).toMatchObject({
+      ok: false,
+      why: "typing",
+    });
+    expect(mayReact(facts({ lastCodeChangeMs: 590_000 })).ok).toBe(true);
+    expect(mayReact(facts({ reactionsOnQuestion: 4 }))).toMatchObject({
+      ok: false,
+      why: "reaction cap",
+    });
+  });
+
+  it("schedules reactions from snapshots and runs", async () => {
+    const { reactionForSnapshot, reactionForRun } = await import("./index.js");
+    const big = "x".repeat(200);
+    expect(
+      reactionForSnapshot({
+        state: "APPROACH",
+        code: big,
+        starterLength: 0,
+        approachStated: false,
+        elapsedMs: 100,
+        reactedKinds: [],
+      }),
+    ).toEqual({ kind: "no_approach_before_code", dueMs: 100 });
+    expect(
+      reactionForSnapshot({
+        state: "APPROACH",
+        code: big,
+        starterLength: big.length,
+        approachStated: false,
+        elapsedMs: 100,
+        reactedKinds: [],
+      }),
+    ).toBeNull(); // only the starter code
+    expect(
+      reactionForSnapshot({
+        state: "CODING",
+        code: "for a in b:\n  for c in d:\n    pass",
+        starterLength: 0,
+        approachStated: true,
+        elapsedMs: 100,
+        reactedKinds: [],
+      }),
+    ).toEqual({ kind: "complexity_smell", dueMs: 100 + 15_000 });
+    expect(
+      reactionForSnapshot({
+        state: "CODING",
+        code: "for a in b:\n  for c in d:\n    pass",
+        starterLength: 0,
+        approachStated: true,
+        elapsedMs: 100,
+        reactedKinds: ["complexity_smell"],
+      }),
+    ).toBeNull();
+    expect(reactionForRun({ elapsedMs: 0, reactedKinds: [] })).toEqual({
+      kind: "run_failed",
+      dueMs: 20_000,
+    });
+    expect(reactionForRun({ elapsedMs: 0, reactedKinds: ["run_failed", "run_failed"] })).toBeNull();
+  });
+
+  it("nudges after persona-specific silence while coding, twice at most", async () => {
+    const { idleCodingDue } = await import("./index.js");
+    const base = {
+      state: "CODING" as const,
+      persona: "friendly" as const,
+      lastActivityMs: 0,
+      reactedKinds: [] as never[],
+    };
+    expect(idleCodingDue({ ...base, elapsedMs: 3 * 60_000 })).toBe(true);
+    expect(idleCodingDue({ ...base, persona: "strict", elapsedMs: 3 * 60_000 })).toBe(false);
+    expect(idleCodingDue({ ...base, state: "CLARIFY" as never, elapsedMs: 99 * 60_000 })).toBe(
+      false,
+    );
+    expect(
+      idleCodingDue({
+        ...base,
+        elapsedMs: 9e6,
+        reactedKinds: ["idle_coding", "idle_coding"] as never[],
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("speech helpers", () => {
+  it("makes text speakable: no control block, markdown or code", async () => {
+    const { speakableText } = await import("./index.js");
+    expect(speakableText('Walk me through it.\n<control>{"intent":"followup"}</control>')).toBe(
+      "Walk me through it.",
+    );
+    expect(speakableText("Try **this** and `that`:\n```python\nx = 1\n```\nThen tell me.")).toBe(
+      "Try this and that: code omitted, see the editor. Then tell me.",
+    );
+    expect(speakableText("See [the docs](https://example.com/a) or https://x.dev/p")).toBe(
+      "See the docs or a link",
+    );
+    expect(speakableText("# Title\n- one\n- two\n1. three")).toBe("Title one two three");
+    expect(speakableText("an unterminated ```fence\nx")).toContain("code omitted");
+  });
+
+  it("cleans word timestamps from an untrusted client", async () => {
+    const { cleanWords, wordsPerMinute } = await import("./index.js");
+    const raw = [
+      { w: "hello", startMs: 0, endMs: 400 },
+      { w: "", startMs: 400, endMs: 500 },
+      { w: "world", startMs: 450, endMs: 900 },
+      { w: "bad", startMs: 900, endMs: 100 },
+      { w: "again", startMs: 1000, endMs: 1400 },
+      { w: "nan", startMs: Number.NaN, endMs: 1 },
+    ];
+    expect(cleanWords(raw).map((x) => x.w)).toEqual(["hello", "world", "again"]);
+    const many = Array.from({ length: 30 }, (_, i) => ({
+      w: "w",
+      startMs: i * 400,
+      endMs: i * 400 + 300,
+    }));
+    expect(wordsPerMinute(many)).toBe(Math.round((30 / 11_900) * 60_000));
+    expect(wordsPerMinute(many.slice(0, 3))).toBeNull();
+  });
+
+  it("returns what was heard of an interrupted reply", async () => {
+    const { spokenPrefix } = await import("./index.js");
+    const t = "What is the time complexity of your approach?";
+    expect(spokenPrefix(t, 0)).toBe("");
+    expect(spokenPrefix(t, 17)).toBe("What is the time");
+    expect(spokenPrefix(t, 999)).toBe(t);
+    expect(spokenPrefix(t, -5)).toBe("");
   });
 });

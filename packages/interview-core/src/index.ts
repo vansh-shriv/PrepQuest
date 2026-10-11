@@ -9,3 +9,5 @@ export * from "./leak.js";
 export * from "./scorecard.js";
 export * from "./selection.js";
 export * from "./moderation.js";
+export * from "./reactions.js";
+export * from "./speech.js";
