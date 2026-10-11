@@ -98,8 +98,25 @@ export type JdGap = z.infer<typeof jdGapSchema>;
 
 // --- interviews -----------------------------------------------------------------------------
 
+export const INTERVIEW_TYPE_VALUES = [
+  "dsa",
+  "project",
+  "resume",
+  "cs",
+  "behavioral",
+  "lld",
+  "hld",
+] as const;
+export type InterviewTypeValue = (typeof INTERVIEW_TYPE_VALUES)[number];
+
 export const planInterviewSchema = z.object({
-  type: z.enum(["dsa", "project"]),
+  type: z.enum(INTERVIEW_TYPE_VALUES),
+  /** A curated company pack (by slug) that shapes the plan and the scorecard weights. */
+  packSlug: z
+    .string()
+    .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/)
+    .max(80)
+    .nullish(),
   role: str(120).nullish(),
   company: str(120).nullish(),
   level: z.enum(["intern", "sde1", "sde2"]).default("sde1"),
@@ -122,6 +139,8 @@ export const createInterviewSchema = planInterviewSchema.extend({
   problemSlugs: z.array(z.string().max(120)).max(2).optional(),
   /** Resume items (`projects[0]`, `experience[1]`) to cover in a project deep-dive. */
   projectRefs: z.array(z.string().max(40)).max(3).optional(),
+  /** Bank questions (`bank:<slug>` slugs) to ask instead of a random draw. */
+  questionSlugs: z.array(z.string().max(80)).max(8).optional(),
 });
 export type CreateInterviewInput = z.infer<typeof createInterviewSchema>;
 
@@ -185,7 +204,7 @@ export interface InterviewSegmentDto {
 }
 
 export type InterviewQuestionDto =
-  | { kind: "problem" | "project"; segment: string; hidden: true }
+  | { kind: "problem" | "project" | "verbal"; segment: string; hidden: true }
   | {
       kind: "problem";
       segment: string;
@@ -194,11 +213,19 @@ export type InterviewQuestionDto =
       title: string;
       difficulty: "easy" | "medium" | "hard";
     }
-  | { kind: "project"; segment: string; hidden: false; sourceRef: string; title: string };
+  | { kind: "project"; segment: string; hidden: false; sourceRef: string; title: string }
+  | {
+      kind: "verbal";
+      segment: string;
+      hidden: false;
+      sourceRef: string;
+      title: string;
+      category: string;
+    };
 
 export interface InterviewSessionDto {
   id: string;
-  type: "dsa" | "project";
+  type: InterviewTypeValue;
   title: string;
   usesEditor: boolean;
   state: InterviewStateName;
@@ -242,7 +269,7 @@ export interface InterviewTurnDto {
 }
 
 export interface InterviewTemplateDto {
-  type: "dsa" | "project";
+  type: InterviewTypeValue;
   title: string;
   description: string;
   defaultMinutes: number;
@@ -254,7 +281,7 @@ export interface InterviewTemplateDto {
 }
 
 export interface InterviewPlanPreviewDto {
-  type: "dsa" | "project";
+  type: InterviewTypeValue;
   title: string;
   minutes: number;
   segments: InterviewSegmentDto[];
@@ -267,7 +294,14 @@ export interface InterviewPlanPreviewDto {
         tags: string[];
       }
     | { kind: "project"; sourceRef: string; title: string }
+    | { kind: "verbal"; sourceRef: string; title: string; category: string; topic: string }
   )[];
+  /** The pack applied (curated, or inferred from the free-text target and flagged). */
+  pack: { slug: string; title: string; provisional: boolean } | null;
+  /** What the pack changes, in plain words. */
+  packEffects: string[];
+  /** Rubric weights (percent) in effect. */
+  rubricWeights: { key: string; name: string; weight: number }[];
   resumeId: string | null;
   jdId: string | null;
   warnings: string[];
@@ -369,4 +403,74 @@ export interface JdDto {
   gap: JdGap | null;
   resumeId: string | null;
   createdAt: string;
+}
+
+// --- company packs, ideal answers, STAR, speech analytics, question history ---------------------
+
+export interface CompanyPackDto {
+  slug: string;
+  title: string;
+  role: string;
+  level: string;
+  disclaimer: string;
+  provisional: boolean;
+  reviewedAt: string | null;
+  process: { round: string; type?: string; format?: string; minutes: number }[];
+  topWeights: { topic: string; weight: number }[];
+  difficultyBand: { easy: number; medium: number; hard: number };
+  style: { bar: string; followUpDepth: number; hintPolicy: string; notes: string };
+  competencies: string[];
+  checklist: string[];
+  pitfalls: string[];
+}
+
+export interface IdealAnswerDto {
+  questionIndex: number;
+  questionRef: string;
+  questionText: string;
+  userAnswerSummary: string;
+  idealMd: string;
+  gaps: string[];
+  extras: string[];
+  starRewriteMd: string | null;
+  addedSuggestions: string[];
+}
+
+export interface StarScoreDto {
+  turnSeq: number;
+  s: number;
+  t: number;
+  a: number;
+  r: number;
+  specificity: number;
+  impact: number;
+  reflection: number;
+  completeness: number;
+  ownershipRatio: number | null;
+  justification: string | null;
+  rewriteMd: string | null;
+}
+
+export interface SpeechMetricsDto {
+  basis: "voice" | "text";
+  words: number;
+  wpm: number | null;
+  fillerCounts: Record<string, number>;
+  fillerPerMin: number | null;
+  hedgingRate: number;
+  longPauses: { seq: number; atMs: number; lengthMs: number; kind: "thinking" | "dead_air" }[];
+  series: { seq: number; offsetMs: number; wpm: number | null; words: number }[];
+  flags: string[];
+  /** Always shown with the numbers: these are indicators, not a diagnosis. */
+  note: string;
+}
+
+export interface QuestionHistoryItemDto {
+  id: string;
+  kind: string;
+  questionText: string;
+  topic: string | null;
+  outcome: number | null;
+  weak: boolean;
+  askedAt: string;
 }

@@ -3,6 +3,7 @@ import {
   bigserial,
   boolean,
   check,
+  date,
   index,
   integer,
   jsonb,
@@ -20,6 +21,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { timestamps } from "./columns.js";
 import { users } from "./identity.js";
+import { publishStatus } from "./problems.js";
 
 // Resumes, job descriptions, interview sessions and evaluation (I1-I8, E1, E2, E5, X5).
 // Doc 10 §2.6-2.7. As built: templates live in code (`@prepquest/interview-core`), so sessions
@@ -234,6 +236,9 @@ export const interviewScorecards = pgTable(
     coverage: jsonb("coverage"),
     model: text("model"),
     promptVersion: text("prompt_version"),
+    /** The deeper review (ideal answers, STAR, speech): pending | running | ready | failed. */
+    extrasStatus: text("extras_status").notNull().default("pending"),
+    extrasAttempts: smallint("extras_attempts").notNull().default(0),
     helpful: smallint("helpful"),
     feedbackText: text("feedback_text"),
     ...timestamps,
@@ -301,11 +306,133 @@ export const questionMemory = pgTable(
     questionText: text("question_text").notNull(),
     outcome: smallint("outcome"),
     weak: boolean("weak").notNull().default(false),
+    /** Behavioural competency or CS topic, for variety rules. */
+    topic: text("topic"),
+    /** Local embedding of the question text: semantic de-duplication (X5). */
+    embedding: vector("embedding", { dimensions: 1024 }),
     askedAt: timestamp("asked_at", { withTimezone: true }).notNull().defaultNow(),
     ...timestamps,
   },
-  (t) => [index("question_memory_user_idx").on(t.userId, t.askedAt.desc())],
+  (t) => [
+    index("question_memory_user_idx").on(t.userId, t.askedAt.desc()),
+    index("question_memory_embedding_idx").using("hnsw", t.embedding.op("vector_cosine_ops")),
+  ],
 );
+
+/** CS, behavioural and design questions (doc 10 question_bank). `slug` is the stable id from content/. */
+export const questionBank = pgTable(
+  "question_bank",
+  {
+    id: uuid("id").primaryKey(),
+    slug: text("slug").notNull().unique(),
+    /** cs | behavioral | hld | lld */
+    category: text("category").notNull(),
+    topic: text("topic").notNull(),
+    competency: text("competency"),
+    difficulty: smallint("difficulty").notNull().default(3),
+    text: text("text").notNull(),
+    referenceAnswer: text("reference_answer"),
+    followups: jsonb("followups").$type<string[]>().notNull().default([]),
+    rubricPoints: jsonb("rubric_points").$type<string[]>().notNull().default([]),
+    tags: text("tags")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    status: publishStatus("status").notNull().default("published"),
+    ...timestamps,
+  },
+  (t) => [
+    index("question_bank_category_idx").on(t.category, t.status),
+    check("question_bank_category_check", sql`${t.category} IN ('cs','behavioral','hld','lld')`),
+    check("question_bank_difficulty_check", sql`${t.difficulty} BETWEEN 1 AND 5`),
+  ],
+);
+
+/** Curated interview styles per company/role (doc 17 section 6). Practice style, never official. */
+export const companyPacks = pgTable(
+  "company_packs",
+  {
+    id: uuid("id").primaryKey(),
+    slug: text("slug").notNull().unique(),
+    title: text("title").notNull(),
+    role: text("role").notNull().default("SDE"),
+    level: text("level").notNull().default("sde1"),
+    version: integer("version").notNull().default(1),
+    /** Rounds, topic weights, difficulty band, rubric weights, competencies, style, checklist. */
+    data: jsonb("data").notNull(),
+    status: publishStatus("status").notNull().default("published"),
+    reviewedAt: date("reviewed_at"),
+    /** Inferred by the model from a user's free-text target: flagged "unverified" in the UI. */
+    provisional: boolean("provisional").notNull().default(false),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "cascade" }),
+    ...timestamps,
+  },
+  (t) => [index("company_packs_status_idx").on(t.status, t.provisional)],
+);
+
+/** Strong-candidate answers and gaps per question asked (E3). */
+export const idealAnswers = pgTable(
+  "ideal_answers",
+  {
+    id: uuid("id").primaryKey(),
+    sessionId: uuid("session_id")
+      .notNull()
+      .references(() => interviewSessions.id, { onDelete: "cascade" }),
+    questionIndex: smallint("question_index").notNull(),
+    questionRef: text("question_ref").notNull(),
+    questionText: text("question_text").notNull(),
+    userAnswerSummary: text("user_answer_summary").notNull(),
+    idealMd: text("ideal_md").notNull(),
+    gaps: jsonb("gaps").$type<string[]>().notNull().default([]),
+    extras: jsonb("extras").$type<string[]>().notNull().default([]),
+    /** Behavioural rewrite in STAR form from the candidate's own facts, with what was added flagged. */
+    starRewriteMd: text("star_rewrite_md"),
+    addedSuggestions: jsonb("added_suggestions").$type<string[]>().notNull().default([]),
+    ...timestamps,
+  },
+  (t) => [unique("ideal_answers_session_question_key").on(t.sessionId, t.questionIndex)],
+);
+
+export const starScores = pgTable(
+  "star_scores",
+  {
+    id: uuid("id").primaryKey(),
+    sessionId: uuid("session_id")
+      .notNull()
+      .references(() => interviewSessions.id, { onDelete: "cascade" }),
+    turnSeq: integer("turn_seq").notNull(),
+    s: smallint("s").notNull(),
+    t: smallint("t").notNull(),
+    a: smallint("a").notNull(),
+    r: smallint("r").notNull(),
+    specificity: smallint("specificity").notNull(),
+    /** Share of first-person singular among I/we words, computed in code. */
+    ownershipRatio: numeric("ownership_ratio", { precision: 4, scale: 3 }),
+    impact: smallint("impact").notNull(),
+    reflection: smallint("reflection").notNull(),
+    justification: text("justification"),
+    rewriteMd: text("rewrite_md"),
+    ...timestamps,
+  },
+  (t) => [unique("star_scores_session_turn_key").on(t.sessionId, t.turnSeq)],
+);
+
+export const speechMetrics = pgTable("speech_metrics", {
+  sessionId: uuid("session_id")
+    .primaryKey()
+    .references(() => interviewSessions.id, { onDelete: "cascade" }),
+  words: integer("words").notNull(),
+  /** Words per minute over spoken turns; null for typed interviews. */
+  wpm: numeric("wpm", { precision: 6, scale: 1 }),
+  fillerCounts: jsonb("filler_counts").$type<Record<string, number>>().notNull().default({}),
+  fillerPerMin: numeric("filler_per_min", { precision: 6, scale: 2 }),
+  longPauses: jsonb("long_pauses").notNull().default([]),
+  hedgingRate: numeric("hedging_rate", { precision: 6, scale: 3 }),
+  series: jsonb("series").notNull().default([]),
+  /** voice | text */
+  basis: text("basis").notNull().default("text"),
+  ...timestamps,
+});
 
 /** One row per LLM call: token accounting for budgets and dashboards (doc 13 §12). */
 export const llmUsage = pgTable(

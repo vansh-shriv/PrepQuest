@@ -1,0 +1,555 @@
+{
+  "category": "cs",
+  "questions": [
+    {
+      "slug": "os-process-vs-thread",
+      "topic": "os",
+      "difficulty": 2,
+      "text": "What is the difference between a process and a thread, and when would you choose one over the other?",
+      "reference_answer": "A process has its own address space, file descriptors and resources; threads of one process share memory and resources but have their own stack and registers. Threads are cheaper to create and switch and share data easily, but a bug or a race in one can corrupt the others. Processes give isolation and fault containment at the cost of heavier switching and explicit inter-process communication.",
+      "followups": [
+        "What do threads of one process share, and what is private to each?",
+        "How would a crash in one thread affect a browser compared to a crash in one process?"
+      ],
+      "rubric_points": [
+        "address space isolation vs sharing",
+        "cost of creation and context switch",
+        "communication and synchronisation",
+        "fault isolation trade-off"
+      ],
+      "tags": ["concurrency"]
+    },
+    {
+      "slug": "os-deadlock",
+      "topic": "os",
+      "difficulty": 3,
+      "text": "What is a deadlock? Name the conditions required for it and how you would prevent or avoid one.",
+      "reference_answer": "A deadlock is a state where each process in a set waits for a resource held by another in the set, so none can proceed. It needs mutual exclusion, hold and wait, no preemption and circular wait. Prevention breaks one condition, for example a global lock ordering to avoid circular wait or acquiring all locks at once. Avoidance uses algorithms like the banker's algorithm; detection and recovery is the alternative.",
+      "followups": [
+        "How does a consistent lock ordering prevent circular wait?",
+        "How is a deadlock different from starvation?"
+      ],
+      "rubric_points": [
+        "the four Coffman conditions",
+        "a concrete example",
+        "prevention by breaking a condition",
+        "detection or avoidance as alternatives"
+      ],
+      "tags": ["concurrency"]
+    },
+    {
+      "slug": "os-virtual-memory",
+      "topic": "os",
+      "difficulty": 3,
+      "text": "Explain virtual memory. What happens on a page fault?",
+      "reference_answer": "Virtual memory gives each process its own address space mapped to physical frames through page tables, letting memory be larger than RAM and isolating processes. On a page fault the CPU traps to the kernel, which checks the access is valid, finds or loads the page from disk into a free frame (evicting another if needed), updates the page table and restarts the instruction. The TLB caches translations to keep access fast.",
+      "followups": [
+        "What is thrashing and what causes it?",
+        "What does the TLB do and what happens on a TLB miss?"
+      ],
+      "rubric_points": [
+        "address translation through page tables",
+        "demand paging and the fault path",
+        "page replacement",
+        "TLB role"
+      ],
+      "tags": ["memory"]
+    },
+    {
+      "slug": "os-scheduling",
+      "topic": "os",
+      "difficulty": 2,
+      "text": "Compare first-come-first-served, shortest job first and round robin scheduling. Which would you use for an interactive system and why?",
+      "reference_answer": "FCFS is simple but short jobs wait behind long ones (convoy effect). Shortest job first minimises average waiting time but needs burst estimates and can starve long jobs. Round robin gives each task a time slice, so response time is good and nothing starves, at the cost of context switches; the quantum trades responsiveness against overhead. Interactive systems favour round robin or multilevel feedback queues.",
+      "followups": [
+        "How does the choice of time quantum change behaviour?",
+        "What is a multilevel feedback queue trying to achieve?"
+      ],
+      "rubric_points": [
+        "convoy effect",
+        "starvation risk of SJF",
+        "quantum trade-off",
+        "match to interactive workloads"
+      ],
+      "tags": ["scheduling"]
+    },
+    {
+      "slug": "os-mutex-semaphore",
+      "topic": "os",
+      "difficulty": 3,
+      "text": "What is the difference between a mutex and a semaphore? Give a use for each.",
+      "reference_answer": "A mutex is a lock owned by the thread that holds it, used for mutual exclusion around a critical section; only the owner unlocks it. A semaphore is a counter with wait and signal operations that can be used for signalling between threads or to limit concurrent access to N resources, and it has no owner. A binary semaphore is not identical to a mutex because ownership and priority inheritance differ.",
+      "followups": [
+        "How would you use a semaphore to implement a bounded buffer?",
+        "What is priority inversion?"
+      ],
+      "rubric_points": [
+        "ownership",
+        "counting vs binary",
+        "signalling use",
+        "a concrete example for each"
+      ],
+      "tags": ["concurrency"]
+    },
+    {
+      "slug": "os-context-switch",
+      "topic": "os",
+      "difficulty": 2,
+      "text": "What happens during a context switch and why is it expensive?",
+      "reference_answer": "The kernel saves the running task's registers, program counter and stack pointer in its control block, picks the next task, restores that task's state and switches address space if it is a different process. The direct cost is the save and restore; the larger cost is indirect: caches and the TLB are cold for the new task, and a process switch flushes or invalidates translations.",
+      "followups": [
+        "Why is a thread switch cheaper than a process switch?",
+        "What triggers a context switch?"
+      ],
+      "rubric_points": [
+        "state saved and restored",
+        "address space change",
+        "cache and TLB effects",
+        "triggers"
+      ],
+      "tags": ["scheduling"]
+    },
+    {
+      "slug": "os-system-call",
+      "topic": "os",
+      "difficulty": 2,
+      "text": "What is a system call and how does it differ from a normal function call?",
+      "reference_answer": "A system call is a controlled entry into the kernel to request a privileged service such as file I/O or process creation. The program triggers a trap that switches from user mode to kernel mode, the kernel validates arguments and performs the work, then returns. It costs more than a function call because of the mode switch and checks, and libraries often batch or buffer to reduce the number of calls.",
+      "followups": [
+        "Why does the kernel need to validate user pointers?",
+        "Give an example of buffering that reduces system calls."
+      ],
+      "rubric_points": [
+        "user and kernel mode",
+        "trap mechanism",
+        "cost",
+        "buffering as mitigation"
+      ],
+      "tags": ["kernel"]
+    },
+    {
+      "slug": "os-fork-exec",
+      "topic": "os",
+      "difficulty": 3,
+      "text": "On a Unix system, what do fork and exec do, and why are they separate calls?",
+      "reference_answer": "fork creates a child process that is a copy of the caller, typically using copy-on-write pages; it returns the child's pid to the parent and zero to the child. exec replaces the current process image with a new program. Keeping them separate lets the child adjust file descriptors, environment and signal state between the two calls, which is how shells set up pipes and redirection.",
+      "followups": [
+        "What is copy-on-write and why does it matter here?",
+        "What is a zombie process?"
+      ],
+      "rubric_points": [
+        "fork duplicates, exec replaces",
+        "copy-on-write",
+        "why the split is useful",
+        "pipes or redirection example"
+      ],
+      "tags": ["processes"]
+    },
+    {
+      "slug": "dbms-acid",
+      "topic": "dbms",
+      "difficulty": 2,
+      "text": "What do the ACID properties mean? Give an example of what goes wrong without each.",
+      "reference_answer": "Atomicity: a transaction is all or nothing, otherwise a transfer could debit without crediting. Consistency: a transaction moves the database between valid states, respecting constraints. Isolation: concurrent transactions do not see each other's partial work, otherwise reads can be dirty or non-repeatable. Durability: once committed, data survives crashes, typically through a write-ahead log.",
+      "followups": [
+        "How does a write-ahead log provide durability and atomicity?",
+        "Which isolation anomalies exist and which level prevents which?"
+      ],
+      "rubric_points": [
+        "each property defined",
+        "a failure example for each",
+        "write-ahead logging",
+        "link to isolation levels"
+      ],
+      "tags": ["transactions"]
+    },
+    {
+      "slug": "dbms-index",
+      "topic": "dbms",
+      "difficulty": 2,
+      "text": "How does a database index speed up queries, and what does it cost?",
+      "reference_answer": "An index, usually a B-tree, keeps keys sorted with pointers to rows so lookups and range scans avoid reading the whole table, turning O(n) scans into O(log n) seeks. The costs are extra storage and slower writes, since every insert, update or delete must maintain the index. Indexes help most for selective predicates, joins and ordering; low-selectivity columns or functions on the column can make them useless.",
+      "followups": [
+        "What is a composite index and why does column order matter?",
+        "When would the planner ignore an index?"
+      ],
+      "rubric_points": [
+        "B-tree lookup and range scans",
+        "write and storage overhead",
+        "selectivity",
+        "composite index order"
+      ],
+      "tags": ["performance"]
+    },
+    {
+      "slug": "dbms-isolation-levels",
+      "topic": "dbms",
+      "difficulty": 4,
+      "text": "Describe the SQL isolation levels and the anomalies each one allows.",
+      "reference_answer": "Read uncommitted allows dirty reads. Read committed prevents dirty reads but allows non-repeatable reads. Repeatable read prevents those but allows phantoms in the standard (some engines prevent them with snapshots). Serializable makes the outcome equivalent to some serial order. Higher levels cost more concurrency, through locking or through aborts in optimistic and snapshot schemes.",
+      "followups": [
+        "What is write skew and which level prevents it?",
+        "How does MVCC change the picture?"
+      ],
+      "rubric_points": [
+        "four levels in order",
+        "dirty, non-repeatable and phantom reads defined",
+        "cost of stronger isolation",
+        "MVCC or snapshot mention"
+      ],
+      "tags": ["transactions"]
+    },
+    {
+      "slug": "dbms-normalization",
+      "topic": "dbms",
+      "difficulty": 2,
+      "text": "What is normalization? Explain 1NF, 2NF and 3NF, and when you might denormalize.",
+      "reference_answer": "Normalization organises tables to reduce redundancy and update anomalies. 1NF: atomic values, no repeating groups. 2NF: no partial dependency of non-key attributes on part of a composite key. 3NF: no transitive dependency of non-key attributes on other non-key attributes. Denormalization trades redundancy for read speed, for example precomputed aggregates or duplicated columns in read-heavy workloads, accepting the cost of keeping copies consistent.",
+      "followups": [
+        "Give a table that violates 3NF and fix it.",
+        "How do you keep denormalized data consistent?"
+      ],
+      "rubric_points": [
+        "anomalies motivation",
+        "each normal form defined correctly",
+        "an example",
+        "denormalization trade-off"
+      ],
+      "tags": ["design"]
+    },
+    {
+      "slug": "dbms-join-types",
+      "topic": "dbms",
+      "difficulty": 1,
+      "text": "Explain inner, left, right and full outer joins with a small example.",
+      "reference_answer": "An inner join returns only rows with matches in both tables. A left join returns all rows of the left table with matching right rows or NULLs; a right join mirrors it. A full outer join returns all rows from both with NULLs where there is no match. For customers and orders, a left join from customers lists customers with no orders too.",
+      "followups": [
+        "How would you find customers with no orders?",
+        "What happens to a join when the key contains NULL?"
+      ],
+      "rubric_points": ["each join's rows", "NULL filling", "an example", "anti-join pattern"],
+      "tags": ["sql"]
+    },
+    {
+      "slug": "dbms-transactions-locking",
+      "topic": "dbms",
+      "difficulty": 4,
+      "text": "Compare pessimistic and optimistic concurrency control. When would you pick each?",
+      "reference_answer": "Pessimistic control locks data before use, preventing conflicts at the price of waiting and possible deadlocks; it suits high-contention updates. Optimistic control lets transactions proceed on a snapshot or version and validates at commit, retrying on conflict; it suits low contention and read-heavy loads. Version columns or MVCC implement optimistic checks.",
+      "followups": [
+        "How would you implement optimistic locking with a version column?",
+        "What happens to throughput under heavy contention with optimistic control?"
+      ],
+      "rubric_points": [
+        "locks vs validation",
+        "contention as the deciding factor",
+        "retry cost",
+        "a concrete mechanism"
+      ],
+      "tags": ["transactions"]
+    },
+    {
+      "slug": "dbms-sql-vs-nosql",
+      "topic": "dbms",
+      "difficulty": 3,
+      "text": "When would you choose a relational database over a NoSQL store, and the other way round?",
+      "reference_answer": "Relational databases fit structured data with relationships, ad hoc queries and strong transactional guarantees. NoSQL stores fit when the access pattern is known and simple, the schema evolves, or scale and availability matter more than joins and multi-row transactions: key-value for caching, document for flexible aggregates, wide-column for write-heavy time series. The honest answer starts from access patterns and consistency needs, not fashion.",
+      "followups": [
+        "What consistency guarantees would you give up with a typical distributed NoSQL store?",
+        "Can a relational database store JSON, and when is that enough?"
+      ],
+      "rubric_points": [
+        "access pattern driven",
+        "consistency and transactions",
+        "scaling model",
+        "no dogma"
+      ],
+      "tags": ["design"]
+    },
+    {
+      "slug": "dbms-primary-foreign-key",
+      "topic": "dbms",
+      "difficulty": 1,
+      "text": "What is the difference between a primary key, a unique key and a foreign key?",
+      "reference_answer": "A primary key uniquely identifies each row, cannot be NULL and there is one per table. A unique key enforces uniqueness on other columns, allowing at most the engine's NULL behaviour, and a table can have several. A foreign key references a key in another table to enforce referential integrity, with actions such as cascade or restrict on delete.",
+      "followups": [
+        "What does ON DELETE CASCADE do and when is it dangerous?",
+        "Should you use natural or surrogate keys?"
+      ],
+      "rubric_points": [
+        "uniqueness and NULL rules",
+        "one primary key vs many unique keys",
+        "referential integrity",
+        "delete behaviour"
+      ],
+      "tags": ["design"]
+    },
+    {
+      "slug": "cn-tcp-vs-udp",
+      "topic": "cn",
+      "difficulty": 1,
+      "text": "Compare TCP and UDP. Which would you use for a video call and which for a file download?",
+      "reference_answer": "TCP is connection-oriented and gives reliable, ordered delivery with flow and congestion control, at the price of latency from handshakes and retransmission. UDP is connectionless, unordered and best effort with low overhead. File downloads need every byte, so TCP; real-time calls prefer timely data over perfect data, so UDP, usually with application-level handling of loss.",
+      "followups": [
+        "How does TCP detect and recover from packet loss?",
+        "Why might head-of-line blocking hurt real-time media over TCP?"
+      ],
+      "rubric_points": [
+        "reliability and ordering",
+        "overhead and latency",
+        "congestion control",
+        "matching to the use case"
+      ],
+      "tags": ["transport"]
+    },
+    {
+      "slug": "cn-tcp-handshake",
+      "topic": "cn",
+      "difficulty": 2,
+      "text": "Walk through the TCP three-way handshake and how a connection is closed.",
+      "reference_answer": "The client sends SYN with an initial sequence number, the server replies SYN-ACK with its own, and the client sends ACK; both sides now agree on sequence numbers. Closing uses FIN and ACK in each direction (four-way), because each side closes its half independently. The side that closes first enters TIME_WAIT to absorb stray packets and make sure the last ACK arrives.",
+      "followups": ["Why are sequence numbers chosen randomly?", "What is a SYN flood?"],
+      "rubric_points": [
+        "SYN, SYN-ACK, ACK",
+        "sequence number agreement",
+        "FIN handshake per direction",
+        "TIME_WAIT"
+      ],
+      "tags": ["transport"]
+    },
+    {
+      "slug": "cn-dns",
+      "topic": "cn",
+      "difficulty": 2,
+      "text": "What happens when you type a URL into a browser and press enter, up to the first byte of the response?",
+      "reference_answer": "The browser checks its caches, resolves the hostname via DNS (recursive resolver, root, TLD, authoritative servers, with caching), opens a TCP connection to the IP, performs a TLS handshake for HTTPS, sends the HTTP request, and the server (possibly behind a load balancer or CDN) processes it and returns the response. Each step can be cached or reused, for example keep-alive connections.",
+      "followups": [
+        "Where do CDNs and load balancers fit in?",
+        "What does TLS add and what does the certificate prove?"
+      ],
+      "rubric_points": [
+        "DNS resolution",
+        "TCP then TLS",
+        "HTTP request and response",
+        "caching at several layers"
+      ],
+      "tags": ["web"]
+    },
+    {
+      "slug": "cn-http-versions",
+      "topic": "cn",
+      "difficulty": 3,
+      "text": "How do HTTP/1.1, HTTP/2 and HTTP/3 differ?",
+      "reference_answer": "HTTP/1.1 uses text, one request at a time per connection (pipelining is rarely used) so browsers open several connections. HTTP/2 multiplexes many streams over one TCP connection with header compression, but TCP head-of-line blocking still affects all streams on packet loss. HTTP/3 runs over QUIC on UDP, with independent streams, built-in TLS and faster connection setup.",
+      "followups": [
+        "What problem does QUIC solve that HTTP/2 over TCP cannot?",
+        "What is server push and why is it rarely used?"
+      ],
+      "rubric_points": [
+        "multiplexing",
+        "header compression",
+        "head-of-line blocking at TCP",
+        "QUIC"
+      ],
+      "tags": ["web"]
+    },
+    {
+      "slug": "cn-https-tls",
+      "topic": "cn",
+      "difficulty": 3,
+      "text": "How does HTTPS protect a connection? Explain the role of certificates.",
+      "reference_answer": "TLS provides encryption, integrity and authentication. During the handshake the server presents a certificate signed by a certificate authority the client trusts, proving the server owns the domain; client and server then agree on session keys using key exchange, and data is encrypted with a symmetric cipher. This prevents eavesdropping and tampering and detects impersonation by a man in the middle.",
+      "followups": [
+        "Why use asymmetric crypto only for the handshake?",
+        "What does certificate pinning protect against?"
+      ],
+      "rubric_points": [
+        "confidentiality, integrity, authentication",
+        "certificate chain of trust",
+        "key exchange then symmetric encryption",
+        "man-in-the-middle"
+      ],
+      "tags": ["security"]
+    },
+    {
+      "slug": "cn-osi-tcpip",
+      "topic": "cn",
+      "difficulty": 1,
+      "text": "Describe the layers of the TCP/IP model and give a protocol for each.",
+      "reference_answer": "Link layer (Ethernet, Wi-Fi) moves frames on a local network; internet layer (IP, ICMP) routes packets between networks; transport layer (TCP, UDP) provides end-to-end delivery between processes using ports; application layer (HTTP, DNS, SMTP) is what programs speak. Each layer encapsulates the data from the one above with its own header.",
+      "followups": [
+        "What is the difference between a MAC address and an IP address?",
+        "Where does NAT operate?"
+      ],
+      "rubric_points": [
+        "four layers in order",
+        "a protocol for each",
+        "encapsulation",
+        "addressing at each layer"
+      ],
+      "tags": ["fundamentals"]
+    },
+    {
+      "slug": "cn-load-balancing",
+      "topic": "cn",
+      "difficulty": 3,
+      "text": "What does a load balancer do? Compare layer 4 and layer 7 load balancing.",
+      "reference_answer": "A load balancer spreads requests across servers for capacity and availability, using health checks to avoid failed nodes and algorithms such as round robin, least connections or consistent hashing. Layer 4 balancers route on IP and port without reading the payload, so they are fast and protocol agnostic. Layer 7 balancers understand HTTP, so they can route by path or header, terminate TLS and do sticky sessions, at higher cost.",
+      "followups": [
+        "How would you handle session state behind a load balancer?",
+        "What is consistent hashing used for?"
+      ],
+      "rubric_points": ["purpose", "algorithms", "L4 vs L7", "health checks"],
+      "tags": ["scaling"]
+    },
+    {
+      "slug": "cn-cors-cookies",
+      "topic": "cn",
+      "difficulty": 3,
+      "text": "What is the same-origin policy and what does CORS do?",
+      "reference_answer": "The same-origin policy stops a page from reading responses from a different origin (scheme, host, port). CORS is a way for a server to opt in: it answers with headers such as Access-Control-Allow-Origin saying which origins may read the response, and non-simple requests are preceded by a preflight OPTIONS request. It is enforced by browsers, not by servers, so it does not protect an API from other clients.",
+      "followups": [
+        "Why does a credentialed request need a specific origin and not a wildcard?",
+        "How is CORS different from CSRF protection?"
+      ],
+      "rubric_points": [
+        "origin definition",
+        "preflight",
+        "browser-enforced only",
+        "credentials rule"
+      ],
+      "tags": ["web", "security"]
+    },
+    {
+      "slug": "oop-pillars",
+      "topic": "oop",
+      "difficulty": 1,
+      "text": "Explain encapsulation, inheritance, polymorphism and abstraction with one example each.",
+      "reference_answer": "Encapsulation hides state behind methods so invariants hold, such as a bank account whose balance changes only through deposit and withdraw. Inheritance lets a type reuse and specialise another, such as Savings extending Account. Polymorphism lets code call one interface on different implementations, such as calling area() on any Shape. Abstraction exposes what something does and hides how, such as a Repository interface over a database.",
+      "followups": [
+        "When is composition better than inheritance?",
+        "How does polymorphism help testing?"
+      ],
+      "rubric_points": [
+        "each defined correctly",
+        "concrete example",
+        "composition vs inheritance",
+        "benefit"
+      ],
+      "tags": ["fundamentals"]
+    },
+    {
+      "slug": "oop-abstract-vs-interface",
+      "topic": "oop",
+      "difficulty": 2,
+      "text": "What is the difference between an abstract class and an interface? When do you use each?",
+      "reference_answer": "An interface declares a contract that unrelated classes can implement, and a class may implement many. An abstract class can hold state and shared implementation and models an is-a relationship in a hierarchy, usually with single inheritance. Use an interface for capabilities and decoupling, an abstract class when subclasses share real code and state. Modern languages blur the line with default methods.",
+      "followups": [
+        "How do default methods change the trade-off?",
+        "How would you use an interface to make code testable?"
+      ],
+      "rubric_points": [
+        "contract vs shared implementation",
+        "multiple implementation",
+        "state",
+        "choice criteria"
+      ],
+      "tags": ["design"]
+    },
+    {
+      "slug": "oop-solid",
+      "topic": "oop",
+      "difficulty": 3,
+      "text": "Explain the SOLID principles and show how violating one makes code harder to change.",
+      "reference_answer": "Single responsibility: a class has one reason to change. Open-closed: extend behaviour without editing existing code. Liskov substitution: subtypes must be usable wherever the base type is expected. Interface segregation: small focused interfaces rather than one fat one. Dependency inversion: depend on abstractions, not concrete classes. For example, a class that formats, stores and emails a report changes whenever any of the three does, which violates single responsibility.",
+      "followups": [
+        "Give an example that violates Liskov substitution.",
+        "How does dependency inversion relate to dependency injection?"
+      ],
+      "rubric_points": [
+        "all five stated correctly",
+        "a concrete violation",
+        "link to changeability",
+        "dependency inversion vs injection"
+      ],
+      "tags": ["design"]
+    },
+    {
+      "slug": "oop-overloading-overriding",
+      "topic": "oop",
+      "difficulty": 1,
+      "text": "What is the difference between method overloading and overriding?",
+      "reference_answer": "Overloading defines several methods with the same name but different parameter lists, resolved at compile time. Overriding redefines an inherited method in a subclass with the same signature, resolved at run time by the object's actual type, which is what enables polymorphism. Overriding must respect the base contract; overloading is only a naming convenience.",
+      "followups": ["What is dynamic dispatch?", "Can you override a static method?"],
+      "rubric_points": [
+        "compile-time vs run-time",
+        "same name different params vs same signature",
+        "polymorphism link",
+        "contract"
+      ],
+      "tags": ["fundamentals"]
+    },
+    {
+      "slug": "oop-design-patterns",
+      "topic": "oop",
+      "difficulty": 3,
+      "text": "Pick two design patterns you have used. What problem did each solve and what did it cost?",
+      "reference_answer": "A strong answer names real uses, such as a strategy pattern to swap pricing rules without conditionals, or an observer for event notifications, and explains the problem, the structure, the benefit (extensibility, decoupling) and the cost (more classes, indirection, harder tracing). It should also say when not to use a pattern, because a simple function is often enough.",
+      "followups": [
+        "How would you replace a strategy object in a language with first-class functions?",
+        "When did a pattern make your code worse?"
+      ],
+      "rubric_points": [
+        "a real example",
+        "the problem it solved",
+        "the cost",
+        "judgement about when not to"
+      ],
+      "tags": ["design"]
+    },
+    {
+      "slug": "oop-immutability",
+      "topic": "oop",
+      "difficulty": 3,
+      "text": "Why would you make a class immutable and how do you do it?",
+      "reference_answer": "Immutable objects are thread safe without locks, safe to share and cache, easy to reason about and good as map keys. Make fields final or read-only, set them in the constructor, avoid setters, make defensive copies of mutable inputs and outputs, and return new instances for changes. The cost is allocating new objects, usually acceptable and often optimised.",
+      "followups": [
+        "How do you make a class with a list field immutable?",
+        "What is a builder used for here?"
+      ],
+      "rubric_points": ["thread safety", "how to build one", "defensive copies", "cost"],
+      "tags": ["design", "concurrency"]
+    },
+    {
+      "slug": "oop-garbage-collection",
+      "topic": "oop",
+      "difficulty": 3,
+      "text": "How does garbage collection work, and what can still leak memory in a garbage-collected language?",
+      "reference_answer": "A collector frees objects no longer reachable from roots such as stacks, statics and registers. Generational collectors exploit that most objects die young, collecting a small young generation often. Leaks still happen when objects stay reachable by mistake: unbounded caches, listeners never unregistered, static collections, thread locals. Reference counting adds the cycle problem.",
+      "followups": [
+        "What causes stop-the-world pauses?",
+        "How would you find a leak in production?"
+      ],
+      "rubric_points": ["reachability", "generational idea", "logical leaks", "diagnosis"],
+      "tags": ["memory"]
+    },
+    {
+      "slug": "oop-exceptions",
+      "topic": "oop",
+      "difficulty": 2,
+      "text": "How should errors be handled in a well designed program? When do you throw, catch or return an error value?",
+      "reference_answer": "Throw (or return an error) where a function cannot fulfil its contract, catch only where you can do something useful such as recover, retry, translate to a domain error or report at a boundary. Do not swallow exceptions silently, keep the original cause, avoid using exceptions for normal control flow, and clean up resources reliably. Expected failures can be values; programmer errors should fail fast.",
+      "followups": [
+        "What is the difference between checked and unchecked exceptions?",
+        "Where is the right place to log an error?"
+      ],
+      "rubric_points": [
+        "throw when the contract cannot be met",
+        "catch where you can act",
+        "no swallowing",
+        "resource cleanup"
+      ],
+      "tags": ["design"]
+    }
+  ]
+}

@@ -235,3 +235,7 @@ pnpm llm:record                 # record LLM fixtures for tests
 - [ ] GitHub Actions workflows (ci, deploy, nightly)
 - [x] Commit lint + lint-staged (Husky)
 - [ ] Renovate config, gitleaks config
+
+## Phase 8 notes
+
+`pnpm content:import --publish` now also imports the question bank (72 questions) and the company packs (5). After changing `packages/content` or `packages/shared` exports, rebuild them (`pnpm --filter @prepquest/content build`, `pnpm --filter @prepquest/shared build`) before API tests: the API reads their `dist/`. Run Playwright one spec file at a time (`pnpm exec playwright test e2e/interview-rounds.spec.ts` in `apps/web`, after `pnpm build`).

@@ -8,6 +8,9 @@ export type LlmTask =
   | "annotations"
   | "summary"
   | "reaction"
+  | "ideal"
+  | "star"
+  | "pack"
   | "resume_parse"
   | "jd_analysis"
   | "qgen";

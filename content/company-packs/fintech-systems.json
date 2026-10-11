@@ -1,0 +1,64 @@
+{
+  "slug": "fintech-systems",
+  "title": "Fintech and trading systems",
+  "role": "Backend engineer",
+  "level": "sde2",
+  "version": 1,
+  "reviewed_at": "2026-10-01",
+  "disclaimer": "Practice style inspired by public patterns. Not an official process.",
+  "process": [
+    {
+      "round": "Screening",
+      "type": "dsa",
+      "minutes": 45
+    },
+    {
+      "round": "Systems",
+      "type": "hld",
+      "minutes": 60
+    },
+    {
+      "round": "Team fit",
+      "type": "behavioral",
+      "minutes": 30
+    }
+  ],
+  "topic_weights": {
+    "arrays": 0.7,
+    "hashing": 0.8,
+    "heap": 0.8,
+    "graphs": 0.6,
+    "dynamic-programming": 0.6,
+    "binary-search": 0.8,
+    "sliding-window": 0.7
+  },
+  "difficulty_band": {
+    "easy": 0.1,
+    "medium": 0.55,
+    "hard": 0.35
+  },
+  "interview_style": {
+    "bar": "high",
+    "follow_up_depth": 4,
+    "hint_policy": "sparse",
+    "behavioral_weight": 0.2,
+    "notes": "Probes correctness, concurrency and failure handling; expects precise reasoning about latency and consistency."
+  },
+  "rubric_weights": {
+    "problem_solving": 0.3,
+    "code_quality": 0.1,
+    "communication": 0.15,
+    "optimization": 0.2,
+    "edge_cases": 0.1,
+    "testing": 0.1,
+    "correctness": 0.05
+  },
+  "behavioral_competencies": ["ownership", "failure", "pressure", "bias_for_action"],
+  "cs_topics": ["os", "dbms", "cn"],
+  "checklist": [
+    "Solve 60 problems on hashing, heaps and intervals",
+    "Practise 4 system design prompts",
+    "Review concurrency and transactions"
+  ],
+  "pitfalls": ["Ignoring failure modes", "Vague consistency claims"]
+}

@@ -39,6 +39,10 @@ export interface PickOptions {
   weakTags?: ReadonlySet<string>;
   /** Random source in [0, 1); injected for determinism. */
   random: () => number;
+  /** Company pack topic weights 0-1: problems tagged with heavier topics are preferred. */
+  topicWeights?: Readonly<Record<string, number>>;
+  /** Company pack difficulty band (shares summing to 1): tiers with a bigger share are preferred. */
+  tierBand?: Readonly<Record<Tier, number>>;
   /** Share of picks that ignore the weak-topic preference. */
   exploration?: number;
 }
@@ -57,6 +61,11 @@ export function pickProblems(pool: readonly Candidate[], opts: PickOptions): Can
       let s = 0;
       const rank = wanted.indexOf(c.difficulty);
       s += rank === -1 ? 0 : 30 - rank * 10;
+      if (opts.tierBand) s += (opts.tierBand[c.difficulty] ?? 0) * 20;
+      if (opts.topicWeights) {
+        const w = c.tags.reduce((sum, t) => sum + (opts.topicWeights?.[t] ?? 0), 0);
+        s += Math.min(1.5, w) * 10;
+      }
       if (opts.recentSlugs?.has(c.slug)) s -= 100;
       if (opts.solvedCleanSlugs?.has(c.slug)) s -= 25;
       if (opts.weakTags && opts.random() >= exploration) {

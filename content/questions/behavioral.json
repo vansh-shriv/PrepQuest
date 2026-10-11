@@ -1,0 +1,341 @@
+{
+  "category": "behavioral",
+  "questions": [
+    {
+      "slug": "beh-ownership-1",
+      "topic": "ownership",
+      "competency": "ownership",
+      "difficulty": 2,
+      "text": "Tell me about a time you took responsibility for something that was not strictly your job.",
+      "reference_answer": "A strong answer sets a specific situation, says why it fell to nobody, what the candidate personally decided and did, how they followed through to the end, and the measurable result, without crediting the team for their own actions.",
+      "followups": [
+        "What would have happened if you had not stepped in?",
+        "What did you do when it got harder than you expected?"
+      ],
+      "rubric_points": [
+        "specific situation",
+        "personal actions with I",
+        "follow-through",
+        "a result"
+      ],
+      "tags": ["star"]
+    },
+    {
+      "slug": "beh-ownership-2",
+      "topic": "ownership",
+      "competency": "ownership",
+      "difficulty": 3,
+      "text": "Describe a project you owned end to end. What were the hardest decisions and how did you make them?",
+      "reference_answer": "Look for scope and stakes, decisions with alternatives and reasons, how risks were managed, what the candidate would change, and honesty about what the team contributed.",
+      "followups": ["Which decision would you reverse today?", "How did you know it was done?"],
+      "rubric_points": [
+        "scope and stakes",
+        "decisions with alternatives",
+        "risk handling",
+        "reflection"
+      ],
+      "tags": ["star"]
+    },
+    {
+      "slug": "beh-ownership-3",
+      "topic": "ownership",
+      "competency": "ownership",
+      "difficulty": 2,
+      "text": "Give an example of a time you noticed a problem nobody else had raised. What did you do?",
+      "reference_answer": "A strong answer shows how the issue was noticed, how it was verified before escalating, whom the candidate told and how, what they did to fix it, and what changed afterwards.",
+      "followups": [
+        "How did you make sure you were right before raising it?",
+        "How did people react?"
+      ],
+      "rubric_points": ["how it was noticed", "verification", "communication", "outcome"],
+      "tags": ["star"]
+    },
+    {
+      "slug": "beh-conflict-1",
+      "topic": "conflict",
+      "competency": "conflict",
+      "difficulty": 3,
+      "text": "Tell me about a disagreement with a teammate. How did you resolve it?",
+      "reference_answer": "Look for a real disagreement about substance, an attempt to understand the other view, the candidate's own part, a resolution based on evidence or a clear decision-maker, and a preserved relationship. Blaming the other person with no self-reflection is a weak sign.",
+      "followups": [
+        "What did you learn about how the other person works?",
+        "Would you handle it differently now?"
+      ],
+      "rubric_points": [
+        "real substance",
+        "understanding the other view",
+        "resolution",
+        "relationship afterwards"
+      ],
+      "tags": ["star"]
+    },
+    {
+      "slug": "beh-conflict-2",
+      "topic": "conflict",
+      "competency": "conflict",
+      "difficulty": 4,
+      "text": "Describe a time you disagreed with your manager or a senior person and what you did.",
+      "reference_answer": "A strong answer shows respectful, evidence-based pushback, a willingness to commit once a decision is made, and honesty about whether the candidate was right.",
+      "followups": ["What if they had still said no?", "How do you disagree and still commit?"],
+      "rubric_points": [
+        "evidence-based pushback",
+        "respect",
+        "disagree and commit",
+        "honest outcome"
+      ],
+      "tags": ["star"]
+    },
+    {
+      "slug": "beh-conflict-3",
+      "topic": "conflict",
+      "competency": "conflict",
+      "difficulty": 3,
+      "text": "Tell me about working with someone whose style was very different from yours.",
+      "reference_answer": "Look for specific behaviours rather than labels, adaptation by the candidate, a shared goal, and a concrete result.",
+      "followups": ["What did you change in how you worked?", "What did they teach you?"],
+      "rubric_points": ["specific differences", "adaptation", "shared goal", "result"],
+      "tags": ["star"]
+    },
+    {
+      "slug": "beh-failure-1",
+      "topic": "failure",
+      "competency": "failure",
+      "difficulty": 3,
+      "text": "Tell me about a time you failed. What happened and what did you change afterwards?",
+      "reference_answer": "A strong answer picks a real failure the candidate contributed to, explains the cause honestly without excuses, shows what they did to limit the damage, and names a concrete change in how they work, ideally with evidence it stuck.",
+      "followups": [
+        "How did you tell the people affected?",
+        "Where have you applied that lesson since?"
+      ],
+      "rubric_points": ["a real failure", "honest cause", "damage control", "a lasting change"],
+      "tags": ["star"]
+    },
+    {
+      "slug": "beh-failure-2",
+      "topic": "failure",
+      "competency": "failure",
+      "difficulty": 3,
+      "text": "Describe a deadline you missed or a commitment you could not keep.",
+      "reference_answer": "Look for early communication, the root cause (estimation, scope, dependency), what was done to recover, and the process change.",
+      "followups": [
+        "When did you first know you would miss it?",
+        "What would you tell a teammate in the same spot?"
+      ],
+      "rubric_points": ["early communication", "root cause", "recovery", "process change"],
+      "tags": ["star"]
+    },
+    {
+      "slug": "beh-failure-3",
+      "topic": "failure",
+      "competency": "failure",
+      "difficulty": 4,
+      "text": "Tell me about a decision you made that turned out to be wrong.",
+      "reference_answer": "A strong answer explains the information available at the time, why the decision was reasonable, how it was recognised as wrong, how the candidate reversed course, and what they would do to catch it earlier.",
+      "followups": ["How did you notice it was wrong?", "What signal would have told you sooner?"],
+      "rubric_points": [
+        "context at the time",
+        "recognising the mistake",
+        "reversing course",
+        "earlier signal"
+      ],
+      "tags": ["star"]
+    },
+    {
+      "slug": "beh-leadership-1",
+      "topic": "leadership",
+      "competency": "leadership",
+      "difficulty": 3,
+      "text": "Tell me about a time you led a group without formal authority.",
+      "reference_answer": "Look for how the candidate built agreement, set direction, shared credit, handled people who did not want to follow, and what was achieved.",
+      "followups": [
+        "How did you handle someone who did not agree?",
+        "How did you keep people motivated?"
+      ],
+      "rubric_points": ["direction", "influence without authority", "sharing credit", "result"],
+      "tags": ["star"]
+    },
+    {
+      "slug": "beh-leadership-2",
+      "topic": "leadership",
+      "competency": "leadership",
+      "difficulty": 3,
+      "text": "Describe a time you helped a teammate improve or grow.",
+      "reference_answer": "A strong answer shows noticing the need, a specific approach (feedback, pairing, delegation), respect for the other person, and a visible outcome for them.",
+      "followups": ["How did you give the feedback?", "How did you know it worked?"],
+      "rubric_points": ["noticing the need", "specific approach", "respect", "outcome for them"],
+      "tags": ["star"]
+    },
+    {
+      "slug": "beh-leadership-3",
+      "topic": "leadership",
+      "competency": "leadership",
+      "difficulty": 4,
+      "text": "Tell me about a time you had to make an unpopular decision.",
+      "reference_answer": "Look for the reasoning, how the candidate communicated it, how they handled pushback, and the result including costs.",
+      "followups": [
+        "Who was most upset and what did you do about it?",
+        "Would you make the same call again?"
+      ],
+      "rubric_points": ["reasoning", "communication", "handling pushback", "honest cost"],
+      "tags": ["star"]
+    },
+    {
+      "slug": "beh-customer-1",
+      "topic": "customer_focus",
+      "competency": "customer_focus",
+      "difficulty": 2,
+      "text": "Describe a time you went out of your way for a user or customer.",
+      "reference_answer": "A strong answer names the user need discovered, what the candidate did beyond the minimum, any trade-off with other work, and the effect on the user, ideally measured.",
+      "followups": [
+        "How did you learn what they really needed?",
+        "What did it cost you or the team?"
+      ],
+      "rubric_points": ["real user need", "beyond the minimum", "trade-off", "effect on the user"],
+      "tags": ["star"]
+    },
+    {
+      "slug": "beh-customer-2",
+      "topic": "customer_focus",
+      "competency": "customer_focus",
+      "difficulty": 3,
+      "text": "Tell me about a time user feedback changed what you built.",
+      "reference_answer": "Look for how feedback was collected, how it was weighed against the plan, what changed, and how success was measured afterwards.",
+      "followups": [
+        "How did you decide which feedback to ignore?",
+        "How did you check the change helped?"
+      ],
+      "rubric_points": ["feedback source", "prioritisation", "change made", "measurement"],
+      "tags": ["star"]
+    },
+    {
+      "slug": "beh-action-1",
+      "topic": "bias_for_action",
+      "competency": "bias_for_action",
+      "difficulty": 3,
+      "text": "Tell me about a time you had to act quickly with incomplete information.",
+      "reference_answer": "A strong answer shows what was known and unknown, how risk was bounded (reversible steps, monitoring), the decision, and the result with honest reflection.",
+      "followups": ["What would have made you wait?", "How did you limit the downside?"],
+      "rubric_points": ["known and unknown", "bounding the risk", "decision", "reflection"],
+      "tags": ["star"]
+    },
+    {
+      "slug": "beh-action-2",
+      "topic": "bias_for_action",
+      "competency": "bias_for_action",
+      "difficulty": 2,
+      "text": "Describe something you did to speed up a slow process or team.",
+      "reference_answer": "Look for how the bottleneck was found, the specific change, how it was measured, and whether it lasted.",
+      "followups": ["How did you find the bottleneck?", "Did the improvement last?"],
+      "rubric_points": ["finding the bottleneck", "the change", "measured effect", "durability"],
+      "tags": ["star"]
+    },
+    {
+      "slug": "beh-learning-1",
+      "topic": "learning",
+      "competency": "learning",
+      "difficulty": 2,
+      "text": "Tell me about something difficult you taught yourself quickly.",
+      "reference_answer": "A strong answer shows why it was needed, how the candidate structured the learning, how they checked their understanding, and how they applied it.",
+      "followups": ["How did you know when you understood it?", "What would you do differently?"],
+      "rubric_points": ["motivation", "method", "checking understanding", "application"],
+      "tags": ["star"]
+    },
+    {
+      "slug": "beh-learning-2",
+      "topic": "learning",
+      "competency": "learning",
+      "difficulty": 3,
+      "text": "Describe feedback you received that was hard to hear. What did you do with it?",
+      "reference_answer": "Look for the actual feedback, the candidate's first reaction honestly stated, what they changed, and evidence that it improved.",
+      "followups": ["Who gave it and how?", "What changed afterwards?"],
+      "rubric_points": ["specific feedback", "honest reaction", "change", "evidence"],
+      "tags": ["star"]
+    },
+    {
+      "slug": "beh-collab-1",
+      "topic": "collaboration",
+      "competency": "collaboration",
+      "difficulty": 2,
+      "text": "Tell me about a successful team project and your specific contribution.",
+      "reference_answer": "A strong answer separates what the team did from what the candidate did, shows how the work was coordinated, and gives a result. Constant 'we' with no 'I' is a weak sign.",
+      "followups": [
+        "What was the hardest part of coordinating?",
+        "What would the team say you contributed?"
+      ],
+      "rubric_points": ["own contribution", "coordination", "result", "credit shared fairly"],
+      "tags": ["star"]
+    },
+    {
+      "slug": "beh-collab-2",
+      "topic": "collaboration",
+      "competency": "collaboration",
+      "difficulty": 3,
+      "text": "Describe a time you had to depend on someone who was not delivering.",
+      "reference_answer": "Look for early, direct communication, an attempt to understand blockers, a fallback plan, and how the relationship and the outcome fared.",
+      "followups": [
+        "When did you escalate and why then?",
+        "What did you do to protect the deadline?"
+      ],
+      "rubric_points": ["early communication", "understanding blockers", "fallback", "outcome"],
+      "tags": ["star"]
+    },
+    {
+      "slug": "beh-pressure-1",
+      "topic": "pressure",
+      "competency": "pressure",
+      "difficulty": 3,
+      "text": "Tell me about a time you worked under intense pressure. How did you stay effective?",
+      "reference_answer": "A strong answer is specific about the pressure, how the candidate prioritised, how they communicated, what they cut, and the result, without glorifying overwork.",
+      "followups": [
+        "What did you decide not to do?",
+        "How did you look after yourself and the team?"
+      ],
+      "rubric_points": ["specific pressure", "prioritisation", "communication", "result"],
+      "tags": ["star"]
+    },
+    {
+      "slug": "beh-pressure-2",
+      "topic": "pressure",
+      "competency": "pressure",
+      "difficulty": 3,
+      "text": "Describe a time you had too many things to do. How did you decide what came first?",
+      "reference_answer": "Look for an explicit prioritisation method, negotiation with stakeholders, and what was dropped or delayed deliberately.",
+      "followups": [
+        "Who did you tell about what you dropped?",
+        "How did you judge importance versus urgency?"
+      ],
+      "rubric_points": ["method", "stakeholder negotiation", "deliberate trade-offs", "result"],
+      "tags": ["star"]
+    },
+    {
+      "slug": "beh-ambiguity-1",
+      "topic": "ambiguity",
+      "competency": "ambiguity",
+      "difficulty": 3,
+      "text": "Tell me about a time the goal was unclear. How did you figure out what to do?",
+      "reference_answer": "A strong answer shows questions asked, assumptions made explicit, a small first step to learn more, and alignment with the people who owned the goal.",
+      "followups": ["Which assumption turned out to be wrong?", "How did you get agreement?"],
+      "rubric_points": [
+        "asking questions",
+        "explicit assumptions",
+        "small first step",
+        "alignment"
+      ],
+      "tags": ["star"]
+    },
+    {
+      "slug": "beh-ambiguity-2",
+      "topic": "ambiguity",
+      "competency": "ambiguity",
+      "difficulty": 4,
+      "text": "Describe a time requirements changed in the middle of your work.",
+      "reference_answer": "Look for how the change was handled without panic, how impact was assessed and communicated, what was reused, and the outcome.",
+      "followups": [
+        "How did you assess the impact?",
+        "What did you tell stakeholders about the schedule?"
+      ],
+      "rubric_points": ["calm response", "impact assessment", "communication", "outcome"],
+      "tags": ["star"]
+    }
+  ]
+}

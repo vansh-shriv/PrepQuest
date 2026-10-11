@@ -34,6 +34,12 @@ export function PracticeSection() {
           checked={openEditorials}
           onChange={(e) => void run({ openEditorials: e.target.checked })}
         />
+        <Checkbox
+          label="Interviewers may refer to past practice"
+          helper='Lets a mock interviewer say things like "last time this was tricky". Turn off for fresh-start interviews.'
+          checked={user.settings.personalizedCallbacks ?? true}
+          onChange={(e) => void run({ personalizedCallbacks: e.target.checked })}
+        />
         <FormError message={error} />
       </div>
     </Window>

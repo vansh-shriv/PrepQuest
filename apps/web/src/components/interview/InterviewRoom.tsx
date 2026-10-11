@@ -37,6 +37,13 @@ const LIVE_STATES = new Set([
   "ENDING",
 ]);
 
+const VERBAL_LABEL: Record<string, string> = {
+  cs: "CS fundamentals",
+  behavioral: "Behavioural",
+  hld: "System design",
+  lld: "Low-level design",
+};
+
 function currentProblemSlug(s: InterviewSessionDto): string | null {
   const q = s.questions[s.questionIndex];
   return q && !q.hidden && q.kind === "problem" ? q.slug : null;
@@ -268,10 +275,20 @@ export function InterviewRoom({ id }: { id: string }) {
 /** Which resume item the current project question is about (shown for transparency, doc 03 I3). */
 function ProjectFocus({ session }: { session: InterviewSessionDto }) {
   const q = session.questions[session.questionIndex];
-  if (!q || q.hidden || q.kind !== "project") return null;
+  if (!q || q.hidden || q.kind === "problem") return null;
+  const total = session.questions.length;
   return (
     <p className="m-0 border-b-[3px] border-ink bg-surface px-3 py-1 text-sm text-ink-soft">
-      Topic from your resume: <code>{q.sourceRef}</code>
+      {q.kind === "verbal" ? (
+        <>
+          {VERBAL_LABEL[q.category] ?? "Question"}
+          {total > 1 ? `, question ${session.questionIndex + 1} of ${total}` : ""}: {q.title}
+        </>
+      ) : (
+        <>
+          Topic from your resume: <code>{q.sourceRef}</code>
+        </>
+      )}
     </p>
   );
 }
@@ -337,7 +354,13 @@ function Briefing({
           <li>
             {session.type === "dsa"
               ? `Hints: ${session.hintBudget} available. Each one is noted in your report. Problem hints and editorials are switched off for the duration.`
-              : "Questions come from your resume. Be ready to explain decisions, trade-offs and numbers."}
+              : session.type === "project" || session.type === "resume"
+                ? "Questions come from your resume. Be ready to explain decisions, trade-offs and numbers."
+                : session.type === "behavioral"
+                  ? "Tell real stories: what the situation was, what you did yourself, and the result."
+                  : session.type === "cs"
+                    ? "Short fundamentals questions. Explain simply, then give an example."
+                    : "A text-based design discussion. State requirements and trade-offs as you go."}
           </li>
           <li>
             {session.realistic

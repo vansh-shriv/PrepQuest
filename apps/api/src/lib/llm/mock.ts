@@ -52,10 +52,17 @@ function interviewerReply(req: LlmRequest): string {
   }
   if (event.startsWith("Present the current question")) {
     const block = questionBlock(req.context ?? "", q);
-    const project = /\(project,/.test(block);
-    if (project) {
+    const isProblem = /problem "/.test(block);
+    if (!isProblem) {
       const text = /\): ([^\n]*)/.exec(block)?.[1] ?? "Tell me about your project.";
-      return `Let's talk about your work. ${words(text, 60)}${control({ intent: "followup" })}`;
+      const lead = /^\d+ \(cs,/.test(block)
+        ? "Here's a fundamentals question."
+        : /^\d+ \(behavioral,/.test(block)
+          ? "I'd like to hear a story."
+          : /^\d+ \((hld|lld),/.test(block)
+            ? "Here's the design problem."
+            : "Let's talk about your work.";
+      return `${lead} ${words(text, 60)}${control({ intent: "followup" })}`;
     }
     const title = /problem "([^"]+)"/.exec(block)?.[1] ?? "the problem";
     const body = /<problem>\n([\s\S]*?)\n<\/problem>/.exec(block)?.[1] ?? "";
@@ -417,6 +424,102 @@ function annotations(req: LlmRequest) {
   };
 }
 
+/** Sentences of a text, in order. */
+const sentences = (t: string) =>
+  t
+    .split(/(?<=[.!?])\s+/)
+    .map((x) => x.trim())
+    .filter(Boolean);
+
+function ideal(req: LlmRequest) {
+  const user = firstUser(req);
+  const blocks = user.split(/\n(?=QUESTION \d+ \()/).filter((b) => b.startsWith("QUESTION"));
+  return {
+    answers: blocks.map((b) => {
+      const head = /^QUESTION (\d+) \((\w+)(, behavioural)?\): ([^\n]*)/.exec(b);
+      const index = Number(head?.[1] ?? 0);
+      const behavioral = Boolean(head?.[3]);
+      const said = [...b.matchAll(/^\[\d+\] \d\d:\d\d Candidate: (.*)$/gm)].map((m) => m[1] ?? "");
+      const parts = sentences(said.join(" "));
+      return {
+        question_index: index,
+        user_answer_summary: words(said.join(" "), 40) || "The candidate gave a short answer.",
+        ideal_md:
+          "Clarify the scope first, then state the approach and why it fits, give the complexity or trade-offs, cover the edge cases, and finish with a short summary.",
+        gaps: ["No explicit trade-offs", "Edge cases not enumerated"],
+        extras: said.length > 1 ? ["Gave a concrete example"] : [],
+        star_rewrite_md: behavioral
+          ? `Situation: ${parts[0] ?? ""} Action: ${parts[1] ?? parts[0] ?? ""} Result: [added suggestion: say what the measurable result was]`
+          : null,
+        added_suggestions: behavioral ? ["say what the measurable result was"] : [],
+      };
+    }),
+  };
+}
+
+function star(req: LlmRequest) {
+  const user = firstUser(req);
+  const blocks = [
+    ...user.matchAll(
+      /ANSWER turn_seq=(\d+)\nQUESTION: [^\n]*\n<candidate_message>\n([\s\S]*?)\n<\/candidate_message>/g,
+    ),
+  ];
+  return {
+    answers: blocks.map((m) => {
+      const text = m[2] ?? "";
+      const t = text.toLowerCase();
+      const sc = (re: RegExp) => (re.test(t) ? 2 : 1);
+      const parts = sentences(text);
+      return {
+        turn_seq: Number(m[1]),
+        s: /when|at my|during|last (year|summer)/.test(t) ? 2 : 1,
+        t: /needed|goal|had to|task|responsib/.test(t) ? 2 : 0,
+        a: sc(/\bi (built|wrote|decided|led|fixed|organi[sz]ed|created|talked|asked)/),
+        r: /\d|result|improved|reduced|saved|shipped/.test(t) ? 2 : 0,
+        specificity: (text.match(/\d/g) ?? []).length >= 2 ? 2 : 1,
+        impact: /\d+\s?%|\d+x|saved|reduced/.test(t) ? 2 : 0,
+        reflection: /learn|next time|would do differently|since then/.test(t) ? 2 : 0,
+        justification: "Scripted analysis of the answer text.",
+        rewrite_md: `Situation: ${parts[0] ?? ""} Action: ${parts[1] ?? parts[0] ?? ""} Result: [added suggestion: state the outcome with a number]`,
+      };
+    }),
+  };
+}
+
+function pack(req: LlmRequest) {
+  const user = firstUser(req);
+  const topics = (/coding topics only: ([^\n]*)/.exec(user)?.[1] ?? "arrays")
+    .split(", ")
+    .slice(0, 4);
+  const comps = (/competencies only from: ([^\n]*)/.exec(user)?.[1] ?? "ownership,failure")
+    .split(", ")
+    .slice(0, 3);
+  return {
+    topic_weights: Object.fromEntries(topics.map((t, i) => [t, 0.9 - i * 0.1])),
+    difficulty_band: { easy: 0.2, medium: 0.6, hard: 0.2 },
+    interview_style: {
+      bar: "medium",
+      follow_up_depth: 2,
+      hint_policy: "balanced",
+      behavioral_weight: 0.3,
+      notes: "Probes fundamentals and communication.",
+    },
+    rubric_weights: {
+      problem_solving: 0.3,
+      code_quality: 0.1,
+      communication: 0.2,
+      optimization: 0.15,
+      edge_cases: 0.1,
+      testing: 0.1,
+      correctness: 0.05,
+    },
+    behavioral_competencies: comps,
+    cs_topics: ["os", "dbms"],
+    checklist: ["Practise 40 problems", "Prepare 5 stories"],
+    pitfalls: ["Rambling answers"],
+  };
+}
+
 export class MockProvider implements LlmProvider {
   /** Test hook: replaces the reply for the next call(s) of a task. */
   readonly overrides = new Map<string, string[]>();
@@ -437,6 +540,9 @@ export class MockProvider implements LlmProvider {
         parseResume(/<resume_text>\n([\s\S]*?)\n<\/resume_text>/.exec(firstUser(req))?.[1] ?? ""),
       );
     else if (req.task === "reaction") text = JSON.stringify({ speak: true, reason: "mock" });
+    else if (req.task === "ideal") text = JSON.stringify(ideal(req));
+    else if (req.task === "star") text = JSON.stringify(star(req));
+    else if (req.task === "pack") text = JSON.stringify(pack(req));
     else if (req.task === "qgen") text = JSON.stringify(qgen(req));
     else if (req.task === "jd_analysis") text = JSON.stringify(jd(req));
     else if (req.task === "scorecard") text = JSON.stringify(scorecard(req));

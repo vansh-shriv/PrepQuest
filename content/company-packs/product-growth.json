@@ -1,0 +1,64 @@
+{
+  "slug": "product-growth",
+  "title": "Product company, growth stage",
+  "role": "SDE",
+  "level": "sde1",
+  "version": 1,
+  "reviewed_at": "2026-10-01",
+  "disclaimer": "Practice style inspired by public patterns. Not an official process.",
+  "process": [
+    {
+      "round": "Online assessment",
+      "format": "2 coding problems",
+      "minutes": 75
+    },
+    {
+      "round": "Technical",
+      "type": "dsa+project",
+      "minutes": 60
+    },
+    {
+      "round": "Culture and values",
+      "type": "behavioral",
+      "minutes": 30
+    }
+  ],
+  "topic_weights": {
+    "arrays": 0.8,
+    "strings": 0.7,
+    "hashing": 0.8,
+    "trees": 0.7,
+    "dynamic-programming": 0.5,
+    "graphs": 0.6,
+    "stack": 0.5
+  },
+  "difficulty_band": {
+    "easy": 0.2,
+    "medium": 0.7,
+    "hard": 0.1
+  },
+  "interview_style": {
+    "bar": "medium",
+    "follow_up_depth": 2,
+    "hint_policy": "balanced",
+    "behavioral_weight": 0.35,
+    "notes": "Cares about pragmatic engineering, ownership and how you use your projects."
+  },
+  "rubric_weights": {
+    "problem_solving": 0.25,
+    "code_quality": 0.15,
+    "communication": 0.2,
+    "optimization": 0.1,
+    "edge_cases": 0.1,
+    "testing": 0.15,
+    "correctness": 0.05
+  },
+  "behavioral_competencies": ["ownership", "collaboration", "ambiguity", "learning"],
+  "cs_topics": ["dbms", "cn", "oop"],
+  "checklist": [
+    "Solve 50 curated problems",
+    "Review your projects end to end",
+    "Prepare 5 STAR stories"
+  ],
+  "pitfalls": ["Over-engineering a simple solution", "Not testing before saying done"]
+}

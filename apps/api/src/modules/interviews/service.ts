@@ -5,14 +5,25 @@ import {
   interviewSessions,
   interviewTurns,
   newId,
+  userSettings,
   scorecardScores,
   transcriptAnnotations,
   type Database,
 } from "@prepquest/db";
-import { getRubric, getTemplate, TEMPLATES, type InterviewPlan } from "@prepquest/interview-core";
+import {
+  describePack,
+  getRubric,
+  getTemplate,
+  hintBudgetFor,
+  packWarnings,
+  TEMPLATES,
+  withWeights,
+  type InterviewPlan,
+} from "@prepquest/interview-core";
 import { PROMPT_VERSIONS, mmss } from "@prepquest/prompts";
 import { AppError, type CreateInterviewInput, type InterviewSessionDto } from "@prepquest/shared";
 import type { AiContext } from "../ai-context.js";
+import { callbacksFor } from "./bank.js";
 import { buildSessionPlan } from "./plan.js";
 import { elapsedMs, readPlan, readStateData, remainingMsOf, type SessionRow } from "./state.js";
 
@@ -37,13 +48,22 @@ export function toSessionDto(s: SessionRow, now: Date): InterviewSessionDto {
           title: q.title,
           difficulty: q.difficulty,
         }
-      : {
-          kind: "project" as const,
-          segment: q.segmentKey,
-          hidden: false as const,
-          sourceRef: q.sourceRef,
-          title: q.question,
-        };
+      : q.kind === "verbal"
+        ? {
+            kind: "verbal" as const,
+            segment: q.segmentKey,
+            hidden: false as const,
+            sourceRef: q.sourceRef,
+            title: q.question,
+            category: q.category,
+          }
+        : {
+            kind: "project" as const,
+            segment: q.segmentKey,
+            hidden: false as const,
+            sourceRef: q.sourceRef,
+            title: q.question,
+          };
   });
   return {
     id: s.id,
@@ -101,6 +121,17 @@ export function templatesDto() {
 
 // ---------------------------------------------------------------- plan and create
 
+/** The weights (percent) the scorecard will use, with the pack's emphasis applied. */
+function previewWeights(rubricId: string, weights: Record<string, number> | null) {
+  const rubric = getRubric(rubricId);
+  if (!rubric) return [];
+  return withWeights(rubric, weights).dimensions.map((d) => ({
+    key: d.key,
+    name: d.name,
+    weight: d.weight,
+  }));
+}
+
 export async function previewPlan(ctx: AiContext, userId: string, input: CreateInterviewInput) {
   const res = await buildSessionPlan(ctx, userId, input, { generate: false });
   return {
@@ -117,12 +148,28 @@ export async function previewPlan(ctx: AiContext, userId: string, input: CreateI
             difficulty: q.difficulty,
             tags: q.tags,
           }
-        : { kind: "project" as const, sourceRef: q.sourceRef, title: q.question },
+        : q.kind === "verbal"
+          ? {
+              kind: "verbal" as const,
+              sourceRef: q.sourceRef,
+              title: q.question,
+              category: q.category,
+              topic: q.topic,
+            }
+          : { kind: "project" as const, sourceRef: q.sourceRef, title: q.question },
     ),
     resumeId: res.resumeId,
     jdId: res.jdId,
-    warnings: res.warnings,
-    /** Company packs are Phase 8; custom text is kept as a label only. */
+    warnings: [...res.warnings, ...(res.packStyle ? packWarnings(res.packStyle) : [])],
+    pack: res.pack
+      ? { slug: res.pack.slug, title: res.pack.title, provisional: res.pack.provisional }
+      : null,
+    packEffects: res.packStyle
+      ? describePack(res.packStyle, res.template.type)
+      : res.packPending
+        ? ["A provisional profile for this target is inferred when you start (unverified)."]
+        : [],
+    rubricWeights: previewWeights(res.template.rubricId, res.plan.rubricWeights ?? null),
     note: input.company
       ? "Practice style inspired by public patterns; not an official process."
       : null,
@@ -190,6 +237,11 @@ export async function createSession(
         isNull(interviewSessions.startedAt),
       ),
     );
+  const [settings] = await ctx.db
+    .select({ on: userSettings.personalizedCallbacks })
+    .from(userSettings)
+    .where(eq(userSettings.userId, userId));
+  const callbacks = await callbacksFor(ctx.db, userId, settings?.on ?? true);
   const id = newId();
   const [row] = await ctx.db
     .insert(interviewSessions)
@@ -207,10 +259,10 @@ export async function createSession(
       mode: input.mode,
       difficulty: input.difficulty,
       adaptive: input.adaptive,
-      hintBudget: res.template.type === "dsa" ? input.hintBudget : 0,
+      hintBudget: res.template.hasHints ? hintBudgetFor(input.hintBudget, res.packStyle) : 0,
       interruptionLevel: input.interruptionLevel,
       realistic: input.realistic,
-      plan: res.plan satisfies InterviewPlan,
+      plan: { ...res.plan, callbacks } satisfies InterviewPlan,
       stateData: {},
       plannedSeconds: res.minutes * 60,
       promptVersion: `interviewer@${PROMPT_VERSIONS.interviewer},scorecard@${PROMPT_VERSIONS.scorecard}`,

@@ -1,0 +1,74 @@
+{
+  "slug": "product-high-bar",
+  "title": "Product company, high bar",
+  "role": "SDE",
+  "level": "sde1",
+  "version": 1,
+  "reviewed_at": "2026-10-01",
+  "disclaimer": "Practice style inspired by public patterns. Not an official process.",
+  "process": [
+    {
+      "round": "Online assessment",
+      "format": "2 coding problems",
+      "minutes": 90
+    },
+    {
+      "round": "Technical 1",
+      "type": "dsa",
+      "minutes": 45
+    },
+    {
+      "round": "Technical 2",
+      "type": "dsa",
+      "minutes": 45
+    },
+    {
+      "round": "Hiring manager",
+      "type": "behavioral",
+      "minutes": 30
+    }
+  ],
+  "topic_weights": {
+    "arrays": 0.8,
+    "hashing": 0.7,
+    "graphs": 0.9,
+    "dynamic-programming": 0.9,
+    "trees": 0.8,
+    "heap": 0.6,
+    "binary-search": 0.7,
+    "sliding-window": 0.6
+  },
+  "difficulty_band": {
+    "easy": 0.1,
+    "medium": 0.6,
+    "hard": 0.3
+  },
+  "interview_style": {
+    "bar": "high",
+    "follow_up_depth": 3,
+    "hint_policy": "sparse",
+    "behavioral_weight": 0.3,
+    "notes": "Expects the optimal approach, a precise complexity argument and systematic edge cases."
+  },
+  "rubric_weights": {
+    "problem_solving": 0.3,
+    "code_quality": 0.1,
+    "communication": 0.15,
+    "optimization": 0.2,
+    "edge_cases": 0.1,
+    "testing": 0.1,
+    "correctness": 0.05
+  },
+  "behavioral_competencies": ["ownership", "bias_for_action", "customer_focus", "leadership"],
+  "cs_topics": ["os", "dbms", "oop"],
+  "checklist": [
+    "Solve 80 curated problems with patterns",
+    "Do 3 full mock rounds",
+    "Prepare 6 STAR stories with numbers"
+  ],
+  "pitfalls": [
+    "Jumping into code without clarifying",
+    "Stopping at the brute force",
+    "Hand-waving complexity"
+  ]
+}

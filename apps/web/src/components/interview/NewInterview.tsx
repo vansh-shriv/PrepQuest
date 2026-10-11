@@ -14,10 +14,13 @@ import {
   Window,
   buttonClasses,
 } from "@prepquest/ui";
+import { INTERVIEW_TYPE_VALUES } from "@prepquest/shared";
 import type {
+  CompanyPackDto,
   InterviewPlanPreviewDto,
   InterviewSessionDto,
   InterviewTemplateDto,
+  InterviewTypeValue,
   JdDto,
   ProblemListResponse,
   ResumeDto,
@@ -29,7 +32,7 @@ import { useSubmit } from "@/lib/use-submit";
 import { FormError } from "../auth/AuthCard";
 
 interface Form {
-  type: "dsa" | "project";
+  type: InterviewTypeValue;
   persona: "friendly" | "neutral" | "strict" | "rapid";
   mode: "text" | "mixed" | "voice";
   difficulty: number;
@@ -44,6 +47,7 @@ interface Form {
   resumeId: string;
   jdId: string;
   problemSlugs: string[];
+  packSlug: string;
 }
 
 const DEFAULT_FORM: Form = {
@@ -62,7 +66,10 @@ const DEFAULT_FORM: Form = {
   resumeId: "",
   jdId: "",
   problemSlugs: [],
+  packSlug: "",
 };
+
+const needsResume = (t: InterviewTypeValue) => t === "project" || t === "resume";
 
 const bodyOf = (f: Form) => ({
   type: f.type,
@@ -71,13 +78,14 @@ const bodyOf = (f: Form) => ({
   difficulty: f.difficulty,
   ...(f.minutes ? { minutes: f.minutes } : {}),
   hintBudget: f.type === "dsa" ? f.hintBudget : 0,
+  ...(f.packSlug ? { packSlug: f.packSlug } : {}),
   interruptionLevel: f.interruptionLevel,
   realistic: f.realistic,
   adaptive: f.adaptive,
   level: f.level,
   role: f.role.trim() || null,
   company: f.company.trim() || null,
-  ...(f.type === "project" && f.resumeId ? { resumeId: f.resumeId } : {}),
+  ...((f.type === "project" || f.type === "resume") && f.resumeId ? { resumeId: f.resumeId } : {}),
   ...(f.jdId ? { jdId: f.jdId } : {}),
   ...(f.type === "dsa" && f.problemSlugs.length > 0 ? { problemSlugs: f.problemSlugs } : {}),
 });
@@ -93,12 +101,15 @@ export function NewInterview() {
   );
   const [form, setForm] = useState<Form>(() => ({
     ...DEFAULT_FORM,
-    type: params.get("type") === "project" ? "project" : "dsa",
+    type: (INTERVIEW_TYPE_VALUES as readonly string[]).includes(params.get("type") ?? "")
+      ? (params.get("type") as InterviewTypeValue)
+      : "dsa",
   }));
   const [preview, setPreview] = useState<InterviewPlanPreviewDto | null>(null);
   const [previewError, setPreviewError] = useState<{ code: string; message: string } | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const [reroll, setReroll] = useState(0);
+  const [packs, setPacks] = useState<CompanyPackDto[]>([]);
   const [jd, setJd] = useState<JdDto | null>(null);
   const [jdText, setJdText] = useState("");
   const [voiceAllowed, setVoiceAllowed] = useState(false);
@@ -119,6 +130,9 @@ export function NewInterview() {
         setVoiceAllowed(Boolean(r.features?.voice));
       })
       .catch(() => undefined);
+    api<{ items: CompanyPackDto[] }>("/interview/company-packs")
+      .then((r) => setPacks(r.items))
+      .catch(() => undefined);
     api<{ items: ResumeDto[] }>("/resumes")
       .then((r) => setResumes(r.items))
       .catch(() => setResumes([]));
@@ -137,7 +151,7 @@ export function NewInterview() {
   );
   // the default resume is preselected for project interviews
   useEffect(() => {
-    if (form.type === "project" && !form.resumeId && readyResumes.length > 0) {
+    if (needsResume(form.type) && !form.resumeId && readyResumes.length > 0) {
       set("resumeId", (readyResumes.find((r) => r.isDefault) ?? readyResumes[0])!.id);
     }
   }, [form.type, form.resumeId, readyResumes, set]);
@@ -146,12 +160,12 @@ export function NewInterview() {
 
   // the plan preview follows the form (debounced); it never calls the model
   useEffect(() => {
-    if (form.type === "project" && !form.resumeId) {
+    if (needsResume(form.type) && !form.resumeId) {
       setPreview(null);
       setPreviewError(
         resumes === null
           ? null
-          : { code: "RESUME_REQUIRED", message: "A project interview is built from your resume." },
+          : { code: "RESUME_REQUIRED", message: "This interview is built from your resume." },
       );
       return;
     }
@@ -200,7 +214,7 @@ export function NewInterview() {
     router.push(`/interview/${res.session.id}`);
   });
 
-  const noResume = form.type === "project" && readyResumes.length === 0 && resumes !== null;
+  const noResume = needsResume(form.type) && readyResumes.length === 0 && resumes !== null;
 
   return (
     <div className="grid max-w-5xl gap-6">
@@ -248,7 +262,7 @@ export function NewInterview() {
                 </div>
               </fieldset>
 
-              {form.type === "project" && (
+              {needsResume(form.type) && (
                 <div className="grid gap-2">
                   {noResume ? (
                     <p className="m-0">
@@ -345,6 +359,20 @@ export function NewInterview() {
                   maxLength={120}
                   onChange={(e) => set("role", e.target.value)}
                 />
+                <Select
+                  label="Company pack"
+                  value={form.packSlug}
+                  onChange={(e) => set("packSlug", e.target.value)}
+                  helper="A practice profile inspired by public patterns. Not an official or guaranteed process."
+                >
+                  <option value="">None (or inferred from the company below)</option>
+                  {packs.map((p) => (
+                    <option key={p.slug} value={p.slug}>
+                      {p.title}
+                      {p.provisional ? " (unverified)" : ""}
+                    </option>
+                  ))}
+                </Select>
                 <Input
                   label="Target company (optional)"
                   value={form.company}
@@ -412,9 +440,7 @@ export function NewInterview() {
                 <Button
                   size="sm"
                   loading={analyze.pending}
-                  disabled={
-                    jdText.trim().length < 40 || (form.type === "project" && !form.resumeId)
-                  }
+                  disabled={jdText.trim().length < 40 || (needsResume(form.type) && !form.resumeId)}
                   onClick={() => void analyze.run()}
                 >
                   Analyze
@@ -490,7 +516,7 @@ export function NewInterview() {
                       )}
                     </div>
                   ))}
-                  {preview.type === "project" && (
+                  {preview.type !== "dsa" && (
                     <p className="m-0 text-sm text-ink-soft">
                       The exact questions are written when you start, and stay hidden until they are
                       asked.
@@ -530,6 +556,34 @@ export function NewInterview() {
                       Pick again
                     </Button>
                   </div>
+                )}
+                {preview.pack && (
+                  <div className="grid gap-1" data-testid="pack-effects">
+                    <strong>
+                      {preview.pack.title}
+                      {preview.pack.provisional ? " (unverified)" : ""}
+                    </strong>
+                    <ul className="m-0 grid gap-1 pl-5 text-sm">
+                      {preview.packEffects.map((e) => (
+                        <li key={e}>{e}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {!preview.pack && preview.packEffects.length > 0 && (
+                  <p className="m-0 text-sm text-ink-soft">{preview.packEffects.join(" ")}</p>
+                )}
+                {preview.rubricWeights.length > 0 && (
+                  <details>
+                    <summary>How you are scored</summary>
+                    <ul className="m-0 grid gap-1 pl-5 text-sm">
+                      {preview.rubricWeights.map((w) => (
+                        <li key={w.key}>
+                          {w.name}: {w.weight}%
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
                 )}
                 {preview.warnings.map((w) => (
                   <p key={w} className="m-0 text-sm text-ink-soft">

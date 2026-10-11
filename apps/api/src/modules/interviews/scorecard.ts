@@ -18,6 +18,7 @@ import {
   scorecardDraftSchema,
   trimQuote,
   verifyDraft,
+  withWeights,
   type Evidence,
   type Rubric,
   type TranscriptTurn,
@@ -33,6 +34,7 @@ import {
 import type { AiContext } from "../ai-context.js";
 import type { InterviewBus } from "./bus.js";
 import { loadTurns } from "./context.js";
+import { generateExtras } from "./extras.js";
 import { elapsedMs, plannedMs, readPlan, readStateData } from "./state.js";
 
 const MAX_ATTEMPTS = 3;
@@ -110,8 +112,10 @@ export async function generateScorecard(
       .where(eq(interviewSessions.id, sessionId));
     if (!s) return;
     const template = getTemplate(s.templateKey);
-    const rubric: Rubric | undefined = getRubric(template?.rubricId ?? card.rubricId);
-    if (!template || !rubric) throw new Error("rubric not found");
+    const baseRubric: Rubric | undefined = getRubric(template?.rubricId ?? card.rubricId);
+    if (!template || !baseRubric) throw new Error("rubric not found");
+    // a company pack changes the weights, never the anchors (doc 03 I2)
+    const rubric = withWeights(baseRubric, readPlan(s).rubricWeights);
     const turns = await loadTurns(ctx.db, sessionId);
     const events = await ctx.db
       .select()
@@ -224,6 +228,9 @@ export async function generateScorecard(
       ctx.log.warn({ err, sessionId }, "annotations failed; the scorecard is still ready"),
     );
     bus.publish(sessionId, { type: "scorecard.ready" });
+    await generateExtras(ctx, bus, sessionId).catch((err: unknown) =>
+      ctx.log.warn({ err, sessionId }, "review extras failed"),
+    );
   } catch (err) {
     const attempts = card.attempts + 1;
     const message = err instanceof Error ? err.message.slice(0, 500) : "scorecard failed";

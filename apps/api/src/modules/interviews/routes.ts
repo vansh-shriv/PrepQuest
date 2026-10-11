@@ -13,6 +13,9 @@ import { parse } from "../../lib/validate.js";
 import type { Kv } from "../../lib/kv.js";
 import type { AiContext } from "../ai-context.js";
 import type { InterviewEngine } from "./engine.js";
+import { listPacks } from "./packs.js";
+import * as review from "./review-service.js";
+import { retryExtras } from "./extras.js";
 import * as svc from "./service.js";
 
 const idParams = z.object({ id: z.uuid() });
@@ -44,6 +47,10 @@ export const interviewRoutes: FastifyPluginAsync<{
   app.get("/interview/templates", async () => ({
     items: svc.templatesDto(),
     features: { voice: ctx.env.FF_VOICE },
+  }));
+
+  app.get("/interview/company-packs", async (req) => ({
+    items: await listPacks(ctx.db, uid(req)),
   }));
 
   app.post("/interviews/plan", async (req) =>
@@ -169,6 +176,62 @@ export const interviewRoutes: FastifyPluginAsync<{
     }
     return { transcript: await svc.getTurns(ctx.db, id) };
   });
+
+  app.get("/interviews/:id/ideal-answers", async (req, reply) => {
+    const { id } = parse(idParams, req.params);
+    await engine.getSession(id, uid(req));
+    const status = await review.extrasStatus(ctx.db, id);
+    const items = status === "ready" ? await review.getIdealAnswers(ctx.db, id) : [];
+    return reply
+      .status(status === "pending" || status === "running" ? 202 : 200)
+      .send({ status, items });
+  });
+
+  app.get("/interviews/:id/star", async (req) => {
+    const { id } = parse(idParams, req.params);
+    await engine.getSession(id, uid(req));
+    return { items: await review.getStarScores(ctx.db, id) };
+  });
+
+  app.get("/interviews/:id/speech", async (req) => {
+    const { id } = parse(idParams, req.params);
+    await engine.getSession(id, uid(req));
+    return { speech: await review.getSpeech(ctx.db, id) };
+  });
+
+  app.post("/interviews/:id/review/retry-extras", async (req, reply) => {
+    const { id } = parse(idParams, req.params);
+    await engine.getSession(id, uid(req));
+    await retryExtras(ctx.db, id);
+    ctx.jobs.run(`extras:${id}`, async () => engine.regenerateExtras(id));
+    return reply.status(202).send({ status: "pending" });
+  });
+
+  app.post("/interviews/:id/retry-question", async (req, reply) => {
+    const { id } = parse(idParams, req.params);
+    const { questionIndex } = parse(
+      z.object({ questionIndex: z.number().int().min(0).max(20) }),
+      req.body,
+    );
+    const source = await engine.getSession(id, uid(req));
+    if (!source.endedAt)
+      throw new AppError("INTERVIEW_NOT_ACTIVE", 409, "Finish this interview first.");
+    const row = await review.retryQuestion(ctx, uid(req), source, questionIndex);
+    const wsTicket = await issueWsTicket(kv, uid(req), row.id);
+    return reply.status(201).send({ session: svc.toSessionDto(row, ctx.now()), wsTicket });
+  });
+
+  app.get("/me/question-history", async (req) => ({
+    items: await review.listQuestionHistory(ctx.db, uid(req)),
+  }));
+  app.delete("/me/question-history/:id", async (req, reply) => {
+    const { id } = parse(idParams, req.params);
+    await review.deleteQuestionHistory(ctx.db, uid(req), id);
+    return reply.status(204).send();
+  });
+  app.delete("/me/question-history", async (req) => ({
+    deleted: await review.clearQuestionHistory(ctx.db, uid(req)),
+  }));
 
   app.post("/interviews/:id/annotations/:annId/note", async (req, reply) => {
     const { id, annId } = parse(idParams.extend({ annId: z.uuid() }), req.params);

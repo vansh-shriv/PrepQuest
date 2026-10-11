@@ -71,6 +71,8 @@ import {
   type ProblemContext,
 } from "./context.js";
 import { repickProblem } from "./plan.js";
+import { memoryValues } from "./bank.js";
+import { generateExtras } from "./extras.js";
 import { generateScorecard } from "./scorecard.js";
 import {
   elapsedMs,
@@ -675,7 +677,7 @@ export class InterviewEngine {
     const q = plan.questions[Math.min(sd.questionIndex, plan.questions.length - 1)] as
       PlannedQuestion | undefined;
     const chunks =
-      q?.kind === "project"
+      q && q.kind !== "problem" && s.resumeId
         ? await resumeContext(
             this.ctx.db,
             s.resumeId,
@@ -708,7 +710,7 @@ export class InterviewEngine {
         extra,
       },
       resumeChunks: chunks,
-      memory: [],
+      memory: plan.callbacks ?? [],
       summary: s.rollingSummary,
       code,
     });
@@ -732,6 +734,8 @@ export class InterviewEngine {
           hintBudget: s.hintBudget,
           interruptionLevel: s.interruptionLevel as "off" | "low" | "normal",
           voice: s.mode !== "text",
+          packNotes: plan.style?.notes ?? null,
+          followUpDepth: plan.style?.followUpDepth ?? 2,
         }),
         context: buildSessionFacts({
           questions: plan.questions,
@@ -1159,16 +1163,18 @@ export class InterviewEngine {
       for (const [i, q] of asked.entries()) {
         const log = sd.questions[i];
         if (!log || (i === sd.questionIndex && candidateTurns === 0)) continue;
-        await tx.insert(questionMemory).values({
-          id: newId(),
-          userId: s.userId,
-          sessionId: s.id,
-          kind: q.kind,
-          refKey: q.kind === "problem" ? q.slug : q.sourceRef,
-          questionText: q.kind === "problem" ? q.title : q.question,
-          outcome: log.solved ? 1 : 0,
-          weak: !log.solved || log.hints > 0,
-        });
+        // problems are judged now; spoken questions are marked weak later, by the review jobs
+        await tx
+          .insert(questionMemory)
+          .values(
+            memoryValues(
+              s.userId,
+              s.id,
+              q,
+              log.solved ? 1 : 0,
+              q.kind === "problem" ? !log.solved || log.hints > 0 : false,
+            ),
+          );
       }
     });
     this.problemCache.delete(s.id);
@@ -1216,6 +1222,23 @@ export class InterviewEngine {
       )
       .orderBy(desc(interviewScorecards.updatedAt))
       .limit(5);
+    const unfinished = await this.ctx.db
+      .select({ sessionId: interviewScorecards.sessionId })
+      .from(interviewScorecards)
+      .where(
+        and(
+          eq(interviewScorecards.status, "ready"),
+          sql`${interviewScorecards.extrasStatus} IN ('pending', 'running')`,
+          sql`${interviewScorecards.extrasAttempts} < 3`,
+          sql`${interviewScorecards.updatedAt} < ${new Date(now.getTime() - 120_000)}`,
+        ),
+      )
+      .limit(5);
+    for (const r of unfinished) {
+      this.ctx.jobs.run(`extras:${r.sessionId}`, () =>
+        generateExtras(this.ctx, this.bus, r.sessionId),
+      );
+    }
     for (const r of stuck) {
       this.ctx.jobs.run(`scorecard:${r.sessionId}`, () =>
         generateScorecard(this.ctx, this.bus, r.sessionId),
@@ -1400,6 +1423,10 @@ export class InterviewEngine {
         note: `The candidate has been silent for about ${Math.round(idleMs / 1000)} seconds. Gently prompt them, for example "Take your time, what are you thinking?"`,
       });
     });
+  }
+
+  async regenerateExtras(sessionId: string) {
+    await generateExtras(this.ctx, this.bus, sessionId);
   }
 
   async regenerateScorecard(sessionId: string) {

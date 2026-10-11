@@ -1,0 +1,63 @@
+{
+  "slug": "it-services",
+  "title": "IT services company",
+  "role": "Software engineer",
+  "level": "intern",
+  "version": 1,
+  "reviewed_at": "2026-10-01",
+  "disclaimer": "Practice style inspired by public patterns. Not an official process.",
+  "process": [
+    {
+      "round": "Aptitude and coding",
+      "format": "aptitude + 2 easy coding",
+      "minutes": 120
+    },
+    {
+      "round": "Technical",
+      "type": "cs_fundamentals+project",
+      "minutes": 30
+    },
+    {
+      "round": "HR",
+      "type": "behavioral",
+      "minutes": 20
+    }
+  ],
+  "topic_weights": {
+    "arrays": 0.7,
+    "strings": 0.8,
+    "sorting": 0.6,
+    "math": 0.6,
+    "linked-list": 0.5,
+    "recursion": 0.5
+  },
+  "difficulty_band": {
+    "easy": 0.6,
+    "medium": 0.35,
+    "hard": 0.05
+  },
+  "interview_style": {
+    "bar": "medium-low",
+    "follow_up_depth": 1,
+    "hint_policy": "generous",
+    "behavioral_weight": 0.4,
+    "notes": "Leans on CS fundamentals, output prediction and clear explanations of your own projects."
+  },
+  "rubric_weights": {
+    "problem_solving": 0.2,
+    "code_quality": 0.2,
+    "communication": 0.25,
+    "optimization": 0.05,
+    "edge_cases": 0.1,
+    "testing": 0.15,
+    "correctness": 0.05
+  },
+  "behavioral_competencies": ["collaboration", "learning", "pressure", "customer_focus"],
+  "cs_topics": ["os", "dbms", "cn", "oop"],
+  "checklist": [
+    "Revise OS, DBMS, networks and OOP",
+    "Practise 30 easy and medium problems",
+    "Be able to explain every project on your resume"
+  ],
+  "pitfalls": ["Weak fundamentals", "Cannot explain own project code", "Silent answers"]
+}

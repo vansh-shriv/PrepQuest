@@ -1,0 +1,321 @@
+{
+  "category": "design",
+  "questions": [
+    {
+      "slug": "hld-url-shortener",
+      "category": "hld",
+      "topic": "storage",
+      "difficulty": 2,
+      "text": "Design a URL shortening service like the ones used to share links.",
+      "reference_answer": "Clarify scale (say 100M new URLs a month, 100:1 read to write), custom aliases, expiry and analytics. API: create(longUrl) returns a short code, GET /code redirects. Generate codes with a counter encoded in base62 or a pre-allocated key service to avoid collisions; store code to URL in a key-value or sharded relational store; cache hot codes in memory. Redirect with 301 or 302 depending on whether analytics are needed. Scale reads with caching and a CDN, shard by code, replicate for availability, rate-limit creation, and handle abuse.",
+      "followups": [
+        "How do you generate unique codes across many servers?",
+        "How would you add click analytics without slowing redirects?"
+      ],
+      "rubric_points": [
+        "requirements and estimates",
+        "API and data model",
+        "code generation without collisions",
+        "caching and scaling reads",
+        "trade-offs such as 301 vs 302"
+      ],
+      "tags": ["hld"]
+    },
+    {
+      "slug": "hld-chat",
+      "category": "hld",
+      "topic": "realtime",
+      "difficulty": 3,
+      "text": "Design a one-to-one and group chat system with delivery status.",
+      "reference_answer": "Clarify scale, message size, history, group size and offline delivery. Clients keep a WebSocket to a gateway; a message service persists the message (for example in a wide-column store partitioned by conversation) and routes it to recipients' gateways through a pub-sub layer, or queues it for offline users with push notifications. Delivery and read receipts are acknowledgements stored per message. Ordering is per conversation using sequence numbers. Discuss group fan-out, presence, media via object storage, and reconnect with sync from the last sequence number.",
+      "followups": [
+        "How do you guarantee ordering inside a conversation?",
+        "How would you scale a group with 100k members?"
+      ],
+      "rubric_points": [
+        "connection model",
+        "persistence and ordering",
+        "offline delivery",
+        "fan-out for groups",
+        "scaling the gateway tier"
+      ],
+      "tags": ["hld"]
+    },
+    {
+      "slug": "hld-news-feed",
+      "category": "hld",
+      "topic": "feed",
+      "difficulty": 4,
+      "text": "Design a social news feed where users see posts from people they follow.",
+      "reference_answer": "Clarify scale and freshness. Two models: fan-out on read (merge followees' posts at request time, cheap writes, slow reads) and fan-out on write (push each post into followers' feed lists, fast reads, expensive for celebrities). A hybrid pushes for normal users and pulls for celebrities. Store posts and the social graph separately, keep per-user feed lists in a cache or sorted store, rank with simple signals, paginate with cursors, and use a queue for the fan-out workers.",
+      "followups": [
+        "How do you handle a user with 50 million followers?",
+        "How would you rank the feed beyond recency?"
+      ],
+      "rubric_points": [
+        "fan-out on read vs write",
+        "hybrid for celebrities",
+        "storage of posts, graph and feeds",
+        "pagination",
+        "ranking and freshness"
+      ],
+      "tags": ["hld"]
+    },
+    {
+      "slug": "hld-notifications",
+      "category": "hld",
+      "topic": "messaging",
+      "difficulty": 3,
+      "text": "Design a notification service that sends email, SMS and push messages for many products.",
+      "reference_answer": "Producers publish events to a queue; a service applies user preferences, rate limits and templates, then workers per channel call providers with retries, backoff and dead-letter queues. Make sends idempotent with a deduplication key, store status for auditing, support scheduling and batching, and isolate channels so one provider outage does not block the rest. Discuss provider failover, opt-out compliance and priority lanes for time-sensitive messages.",
+      "followups": [
+        "How do you avoid sending the same notification twice?",
+        "How do you prioritise a one-time password over a newsletter?"
+      ],
+      "rubric_points": [
+        "queue-based architecture",
+        "preferences and rate limiting",
+        "retries and idempotency",
+        "channel isolation",
+        "observability"
+      ],
+      "tags": ["hld"]
+    },
+    {
+      "slug": "hld-rate-limiter",
+      "category": "hld",
+      "topic": "infrastructure",
+      "difficulty": 3,
+      "text": "Design a distributed rate limiter for an API gateway.",
+      "reference_answer": "Choose an algorithm (token bucket or sliding window counter) and key by user, API key or IP. Keep counters in a shared fast store such as Redis with atomic scripts and expiry, return 429 with retry headers, and decide fail-open or fail-closed if the store is down. Scale with sharding by key, local caching of token buckets for hot keys with periodic sync, and per-route limits. Discuss clock skew, bursts and race conditions.",
+      "followups": [
+        "What are the trade-offs between a fixed window and a sliding window?",
+        "What do you do when the rate limit store is unavailable?"
+      ],
+      "rubric_points": [
+        "algorithm choice",
+        "shared atomic state",
+        "failure mode decision",
+        "scaling hot keys",
+        "response behaviour"
+      ],
+      "tags": ["hld"]
+    },
+    {
+      "slug": "hld-video-streaming",
+      "category": "hld",
+      "topic": "media",
+      "difficulty": 4,
+      "text": "Design a video-on-demand platform such as a video sharing site.",
+      "reference_answer": "Upload to object storage, then a pipeline transcodes into several resolutions and chunked streaming formats; metadata lives in a database and search index. Playback uses a CDN with adaptive bitrate so the client switches quality with bandwidth. Discuss storage cost and hot versus cold content, resumable uploads, thumbnails, view counting with an asynchronous aggregation pipeline, and recommendations as a separate system.",
+      "followups": [
+        "How does adaptive bitrate streaming work?",
+        "How would you count views accurately at scale?"
+      ],
+      "rubric_points": [
+        "upload and transcoding pipeline",
+        "CDN delivery",
+        "adaptive bitrate",
+        "metadata and search",
+        "cost and caching"
+      ],
+      "tags": ["hld"]
+    },
+    {
+      "slug": "hld-ride-hailing",
+      "category": "hld",
+      "topic": "geo",
+      "difficulty": 4,
+      "text": "Design the matching system of a ride-hailing app.",
+      "reference_answer": "Drivers send location updates every few seconds to a location service that stores positions in an in-memory geospatial index (geohash or quadtree cells). A rider request queries nearby available drivers, ranks by ETA and rating, and offers the trip to one at a time with a timeout. Keep trip state in a durable store with a state machine, ensure a driver cannot be double-booked with an atomic reservation, and scale by sharding by region.",
+      "followups": [
+        "How do you prevent two riders being matched to the same driver?",
+        "How would you choose a geospatial index?"
+      ],
+      "rubric_points": [
+        "location ingestion and index",
+        "matching and ranking",
+        "double booking prevention",
+        "trip state machine",
+        "regional sharding"
+      ],
+      "tags": ["hld"]
+    },
+    {
+      "slug": "hld-search-autocomplete",
+      "category": "hld",
+      "topic": "search",
+      "difficulty": 3,
+      "text": "Design a search autocomplete (typeahead) system.",
+      "reference_answer": "Requirements: very low latency (tens of milliseconds), suggestions ranked by popularity and personalisation. Build a trie or prefix index of popular queries offline from search logs, store top-k suggestions per prefix, serve from memory behind a cache, and update periodically with a streaming or batch pipeline. Discuss sharding by prefix, handling trending queries, filtering unsafe suggestions and the client debouncing requests.",
+      "followups": [
+        "How would you keep the index fresh for trending queries?",
+        "How would you shard the prefix index?"
+      ],
+      "rubric_points": [
+        "latency requirement",
+        "data structure",
+        "offline and online pipeline",
+        "ranking",
+        "sharding and caching"
+      ],
+      "tags": ["hld"]
+    },
+    {
+      "slug": "lld-parking-lot",
+      "category": "lld",
+      "topic": "oop-design",
+      "difficulty": 2,
+      "text": "Design the classes for a multi-level parking lot with different vehicle sizes and payment on exit.",
+      "reference_answer": "Clarify vehicle types, spot sizes, pricing and entry points. Core classes: ParkingLot (levels), Level (spots), Spot (size, state), Vehicle (type), Ticket (spot, entry time), PricingStrategy (by time or vehicle) and PaymentProcessor. Assign spots with a strategy (nearest, smallest fitting). Use enums for sizes, keep the pricing strategy pluggable (open-closed), make spot assignment thread safe, and handle full lot and lost ticket. Extensions: reservations, EV spots, multiple entrances.",
+      "followups": [
+        "How would you add a new vehicle type without editing existing classes?",
+        "How do you make concurrent entries safe?"
+      ],
+      "rubric_points": [
+        "entities and relationships",
+        "pluggable pricing and assignment",
+        "thread safety",
+        "edge cases",
+        "extensibility"
+      ],
+      "tags": ["lld"]
+    },
+    {
+      "slug": "lld-elevator",
+      "category": "lld",
+      "topic": "oop-design",
+      "difficulty": 3,
+      "text": "Design an elevator control system for a building with several elevators.",
+      "reference_answer": "Entities: Building, Elevator (state: idle, moving up, moving down, door open), Request (floor, direction), Controller and a scheduling strategy. Model the elevator as a state machine and keep pending stops in sorted sets per direction (SCAN style). The controller picks an elevator by a strategy such as nearest idle or same-direction pickup. Cover emergency stop, overload, maintenance mode and concurrency between requests and movement.",
+      "followups": [
+        "How would you change the dispatch algorithm for rush hour?",
+        "How do you test the state machine?"
+      ],
+      "rubric_points": [
+        "state machine",
+        "request scheduling",
+        "dispatch strategy",
+        "concurrency",
+        "failure and maintenance modes"
+      ],
+      "tags": ["lld"]
+    },
+    {
+      "slug": "lld-library",
+      "category": "lld",
+      "topic": "oop-design",
+      "difficulty": 2,
+      "text": "Design a library management system with members, books, loans and fines.",
+      "reference_answer": "Entities: Book (title, ISBN), BookCopy (status), Member, Loan (copy, member, due date), Fine and a Catalog with search. Separate Book from BookCopy since many copies share one title. Rules: loan limits, due dates, renewals, reservations when no copy is available and fines computed by a policy object. Keep search behind an interface, notifications as observers, and persistence behind repositories. Cover returning late, lost copies and concurrent checkouts of the last copy.",
+      "followups": [
+        "How would you implement reservations fairly?",
+        "Where does fine calculation belong?"
+      ],
+      "rubric_points": [
+        "Book vs BookCopy",
+        "loan lifecycle and rules",
+        "policy objects",
+        "concurrency on the last copy",
+        "extension points"
+      ],
+      "tags": ["lld"]
+    },
+    {
+      "slug": "lld-rate-limiter",
+      "category": "lld",
+      "topic": "oop-design",
+      "difficulty": 3,
+      "text": "Design the classes and code skeleton for an in-process rate limiter library.",
+      "reference_answer": "Define a RateLimiter interface with allow(key) and implementations for token bucket and sliding window, created by a factory from configuration. Keep per-key state in a thread-safe map with expiry, inject a clock for testing, and make limits configurable per route. Discuss memory growth for many keys, atomic updates, and testing with a fake clock.",
+      "followups": [
+        "How would you test time-dependent behaviour?",
+        "How would you bound memory for millions of keys?"
+      ],
+      "rubric_points": [
+        "interface and implementations",
+        "thread safety",
+        "injectable clock",
+        "memory management",
+        "configuration"
+      ],
+      "tags": ["lld"]
+    },
+    {
+      "slug": "lld-tic-tac-toe",
+      "category": "lld",
+      "topic": "oop-design",
+      "difficulty": 1,
+      "text": "Design a tic-tac-toe game that could be extended to an N by N board and other games.",
+      "reference_answer": "Classes: Game (state, turn), Board (grid, place, winner check), Player and Move. Check winners in O(1) per move with row, column and diagonal counters. Keep game rules behind an interface so a new game can reuse the turn loop, validate moves, detect draws, and separate UI from logic. Mention undo with a move stack and a computer player strategy.",
+      "followups": ["How do you check a win in constant time?", "How would you add an AI player?"],
+      "rubric_points": [
+        "separation of board, game and player",
+        "move validation",
+        "efficient win check",
+        "extensibility",
+        "UI independence"
+      ],
+      "tags": ["lld"]
+    },
+    {
+      "slug": "lld-vending-machine",
+      "category": "lld",
+      "topic": "oop-design",
+      "difficulty": 2,
+      "text": "Design a vending machine that accepts coins, dispenses products and returns change.",
+      "reference_answer": "Model the machine as a state machine (idle, has money, dispensing, out of service) using the state pattern. Entities: Inventory (slots, counts), Product, CoinChangeStrategy (greedy for standard denominations), and a Machine that coordinates. Handle insufficient funds, sold out items, no change available and cancel with refund. Keep money handling testable and consider concurrent maintenance access.",
+      "followups": [
+        "What if the machine cannot make exact change?",
+        "How would you add card payment?"
+      ],
+      "rubric_points": [
+        "state pattern",
+        "inventory and change handling",
+        "edge cases",
+        "extensibility to new payments"
+      ],
+      "tags": ["lld"]
+    },
+    {
+      "slug": "lld-cache",
+      "category": "lld",
+      "topic": "oop-design",
+      "difficulty": 3,
+      "text": "Design an LRU cache library with pluggable eviction policies and a thread-safe API.",
+      "reference_answer": "A hash map to nodes plus a doubly linked list gives O(1) get and put for LRU. Define a Cache interface and an EvictionPolicy interface so LRU, LFU or FIFO are interchangeable. Guard with a lock or use striped locks, support TTL with lazy expiry, expose hit and miss metrics, and discuss write-through versus write-back and loading functions that avoid thundering herds.",
+      "followups": [
+        "How do you make get and put O(1)?",
+        "How would you prevent many threads loading the same missing key?"
+      ],
+      "rubric_points": [
+        "data structures for O(1)",
+        "pluggable policy",
+        "thread safety",
+        "TTL and metrics",
+        "stampede handling"
+      ],
+      "tags": ["lld"]
+    },
+    {
+      "slug": "lld-splitwise",
+      "category": "lld",
+      "topic": "oop-design",
+      "difficulty": 3,
+      "text": "Design an expense sharing application where friends add shared expenses and see who owes whom.",
+      "reference_answer": "Entities: User, Group, Expense (payer, amount, splits) and Balance. Split strategies (equal, exact, percentage) implement one interface. Maintain a balance sheet per pair or net balance per user, and provide a debt simplification routine that minimises transactions by matching creditors and debtors. Handle rounding so splits sum exactly, currency, deleting or editing an expense (recompute) and settlement records.",
+      "followups": [
+        "How do you handle rounding in an equal split of 100 among 3?",
+        "How would you simplify debts across a group?"
+      ],
+      "rubric_points": [
+        "entities and split strategies",
+        "balance tracking",
+        "debt simplification",
+        "rounding and edits",
+        "extensibility"
+      ],
+      "tags": ["lld"]
+    }
+  ]
+}

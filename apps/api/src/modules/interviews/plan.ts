@@ -1,13 +1,21 @@
 import { and, desc, eq, gte, sql } from "drizzle-orm";
+import type { companyPacks } from "@prepquest/db";
 import { questionMemory, resumes, type Database } from "@prepquest/db";
 import {
   buildPlan,
   getTemplate,
   pickProblems,
+  pickVerbal,
+  planLevel,
+  questionCountFor,
+  segmentKeyForQuestion,
   toProblemQuestion,
+  toVerbalQuestion,
+  type BankCandidate,
   type Candidate,
   type InterviewPlan,
   type InterviewTemplate,
+  type PackStyle,
   type PlannedQuestion,
 } from "@prepquest/interview-core";
 import { PROMPT_VERSIONS, QGEN_SYSTEM, buildQgenPrompt } from "@prepquest/prompts";
@@ -16,6 +24,8 @@ import { z } from "zod";
 import { getJd, getOwnedResume } from "../resumes/service.js";
 import { interviewSignals } from "../progress/service.js";
 import type { AiContext } from "../ai-context.js";
+import { loadBankBySlugs, loadBankCandidates, memorySignals } from "./bank.js";
+import { findPack, provisionalPackFor, provisionalSlug, toPackStyle } from "./packs.js";
 
 const RECENT_DAYS = 60;
 
@@ -80,11 +90,11 @@ export interface PlanResult {
   resumeId: string | null;
   jdId: string | null;
   warnings: string[];
-}
-
-function questionCountFor(template: InterviewTemplate, minutes: number): number {
-  const secondThreshold = template.type === "dsa" ? 40 : 25;
-  return minutes >= secondThreshold ? 2 : 1;
+  /** The pack that shaped the plan (curated, or provisional and flagged). */
+  pack: typeof companyPacks.$inferSelect | null;
+  packStyle: PackStyle | null;
+  /** A free-text target was given but its provisional pack does not exist yet (preview only). */
+  packPending: boolean;
 }
 
 const qgenSchema = z.object({
@@ -125,8 +135,9 @@ export async function buildSessionPlan(
   }
   const warnings: string[] = [];
   const count = questionCountFor(template, minutes);
-  const questionSegments = template.segments.filter((s) => s.kind === "question");
-  const segKey = (i: number) => questionSegments[Math.min(i, questionSegments.length - 1)]!.key;
+  const segKey = (i: number) => segmentKeyForQuestion(template, i, count);
+  const resolved = await resolvePack(ctx, userId, input, opts.generate, warnings);
+  const packStyle = resolved.style;
 
   let resumeId: string | null = null;
   let jdId: string | null = null;
@@ -160,7 +171,13 @@ export async function buildSessionPlan(
       ]);
       picks = pickProblems(pool, {
         count,
-        level: input.difficulty,
+        level: planLevel(input.difficulty, packStyle),
+        ...(packStyle
+          ? {
+              topicWeights: packStyle.topic_weights,
+              tierBand: packStyle.difficulty_band,
+            }
+          : {}),
         recentSlugs: recent,
         solvedCleanSlugs: new Set(signals.solvedClean),
         weakTags: new Set(signals.weakTopics),
@@ -170,6 +187,61 @@ export async function buildSessionPlan(
     questions = picks.map((c, i) => toProblemQuestion(c, segKey(i)));
     if (questions.length < count && !input.problemSlugs) {
       warnings.push("Only one suitable problem was available.");
+    }
+  } else if (template.source === "bank") {
+    const category = template.bankCategory!;
+    const pool = await loadBankCandidates(ctx.db, category);
+    if (pool.length === 0) {
+      throw new AppError("UNSUPPORTED", 422, "There are no questions of this kind yet.");
+    }
+    let picks: BankCandidate[];
+    if (input.questionSlugs && input.questionSlugs.length > 0) {
+      picks = await loadBankBySlugs(
+        ctx.db,
+        input.questionSlugs.map((q) => q.replace(/^bank:/, "")),
+      );
+      if (
+        picks.length !== input.questionSlugs.length ||
+        picks.some((p) => p.category !== category)
+      ) {
+        throw new AppError(
+          "VALIDATION_FAILED",
+          422,
+          "One of the questions can't be used in this round",
+        );
+      }
+    } else {
+      const mem = await memorySignals(ctx.db, userId);
+      const allowed =
+        category === "behavioral"
+          ? (packStyle?.behavioral_competencies ?? [])
+          : category === "cs"
+            ? (packStyle?.cs_topics ?? [])
+            : [];
+      const base = {
+        level: planLevel(input.difficulty, packStyle),
+        recentSlugs: mem.recentSlugs,
+        weakSlugs: mem.weakSlugs,
+        recentCompetencies: mem.recentTopics,
+        isSemanticDuplicate: mem.isSemanticDuplicate,
+        random: Math.random,
+      };
+      picks = pickVerbal(pool, { ...base, count, allowedTopics: allowed });
+      if (picks.length < count) {
+        // the pack's topics ran out: fill with anything else, never a repeat
+        const have = new Set(picks.map((p) => p.slug));
+        picks = [
+          ...picks,
+          ...pickVerbal(
+            pool.filter((c) => !have.has(c.slug)),
+            { ...base, count: count - picks.length },
+          ),
+        ];
+      }
+    }
+    questions = picks.map((c, i) => toVerbalQuestion(c, segKey(i)));
+    if (questions.length < count && !input.questionSlugs) {
+      warnings.push(`Only ${questions.length} suitable question(s) were available.`);
     }
   } else {
     const resume = await resolveResume(ctx.db, userId, input.resumeId);
@@ -215,14 +287,73 @@ export async function buildSessionPlan(
     }
   }
 
+  const rubricWeights =
+    template.type === "dsa" && packStyle
+      ? Object.fromEntries(
+          Object.entries(packStyle.rubric_weights).map(([k, v]) => [k, Math.round(v * 1000) / 10]),
+        )
+      : null;
   return {
     template,
     minutes,
-    plan: buildPlan(template, minutes, questions),
+    plan: buildPlan(template, minutes, questions, {
+      packSlug: resolved.pack?.slug ?? null,
+      rubricWeights,
+      style: packStyle
+        ? {
+            notes: packStyle.interview_style.notes,
+            followUpDepth: packStyle.interview_style.follow_up_depth,
+          }
+        : null,
+    }),
     resumeId,
     jdId,
     warnings,
+    pack: resolved.pack,
+    packStyle,
+    packPending: resolved.pending,
   };
+}
+
+/**
+ * The company pack for a plan: a curated one chosen by slug, or the user's provisional pack for a
+ * free-text target (inferred once by the model, then reused). The preview never calls the model.
+ */
+async function resolvePack(
+  ctx: AiContext,
+  userId: string,
+  input: CreateInterviewInput,
+  generate: boolean,
+  warnings: string[],
+): Promise<{
+  pack: typeof companyPacks.$inferSelect | null;
+  style: PackStyle | null;
+  pending: boolean;
+}> {
+  if (input.packSlug) {
+    const row = await findPack(ctx.db, userId, input.packSlug);
+    if (!row)
+      throw new AppError("VALIDATION_FAILED", 422, `Unknown company pack "${input.packSlug}"`);
+    return { pack: row, style: toPackStyle(row), pending: false };
+  }
+  const company = input.company?.trim();
+  if (!company) return { pack: null, style: null, pending: false };
+  const slug = provisionalSlug(userId, company, input.role ?? null, input.level);
+  const existing = await findPack(ctx.db, userId, slug);
+  if (existing) return { pack: existing, style: toPackStyle(existing), pending: false };
+  if (!generate) return { pack: null, style: null, pending: true };
+  try {
+    const row = await provisionalPackFor(ctx, userId, {
+      company,
+      role: input.role ?? null,
+      level: input.level,
+    });
+    return { pack: row, style: toPackStyle(row), pending: false };
+  } catch (err) {
+    ctx.log.warn({ err }, "provisional pack failed");
+    warnings.push("We couldn't infer a profile for that company, so the standard style is used.");
+    return { pack: null, style: null, pending: false };
+  }
 }
 
 export async function resolveResume(
@@ -290,7 +421,7 @@ async function generateProjectQuestions(
           content: buildQgenPrompt({
             resume: slim,
             jd,
-            type: "project",
+            type: input.type === "resume" ? "resume" : "project",
             count: want,
             level: input.level,
             company: input.company ?? null,

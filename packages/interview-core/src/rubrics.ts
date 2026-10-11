@@ -172,7 +172,332 @@ export const PROJECT_RUBRIC: Rubric = {
   ],
 };
 
-export const RUBRICS: Record<string, Rubric> = { coding: CODING_RUBRIC, project: PROJECT_RUBRIC };
+const dim = (
+  key: string,
+  name: string,
+  weight: number,
+  one: string,
+  three: string,
+  five: string,
+): RubricDimension => ({ key, name, weight, anchors: { 1: one, 3: three, 5: five } });
+
+export const RESUME_RUBRIC: Rubric = {
+  id: "resume",
+  version: "1.0.0",
+  dimensions: [
+    dim(
+      "honesty",
+      "Honesty (claims hold under probing)",
+      30,
+      "Claims collapse when probed",
+      "Mostly consistent, some vagueness",
+      "Every claim is specific, consistent and admitted where limited",
+    ),
+    dim(
+      "technical_depth",
+      "Technical depth",
+      25,
+      "Surface-level buzzwords",
+      "Understands the main parts",
+      "Explains internals and why they matter",
+    ),
+    dim(
+      "ownership",
+      "Ownership",
+      20,
+      "Cannot separate own work from the team's",
+      "Clear about their part, vague on the rest",
+      "Precise about their contribution and the team's",
+    ),
+    dim(
+      "impact",
+      "Impact and metrics",
+      15,
+      "No outcomes",
+      "Outcomes stated, not substantiated",
+      "Metrics defined, measured and consistent under probing",
+    ),
+    dim(
+      "communication",
+      "Communication",
+      10,
+      "Rambling or silent",
+      "Clear when asked",
+      "Structured and concise throughout",
+    ),
+  ],
+};
+
+export const CS_RUBRIC: Rubric = {
+  id: "cs",
+  version: "1.0.0",
+  dimensions: [
+    dim(
+      "accuracy",
+      "Accuracy",
+      30,
+      "Significantly wrong",
+      "Correct with some gaps",
+      "Correct and precise, including edge details",
+    ),
+    dim(
+      "depth",
+      "Depth",
+      20,
+      "Definitions only",
+      "Explains how it works",
+      "Explains why, with trade-offs and internals",
+    ),
+    dim("clarity", "Clarity", 20, "Hard to follow", "Understandable", "Structured, with examples"),
+    dim(
+      "practice",
+      "Linking theory to practice",
+      15,
+      "No real-world link",
+      "A generic example",
+      "A concrete example from experience or a real system",
+    ),
+    dim(
+      "followups",
+      "Handling follow-ups",
+      15,
+      "Cannot extend the answer",
+      "Handles some",
+      "Extends the answer confidently and says when unsure",
+    ),
+  ],
+};
+
+export const BEHAVIORAL_RUBRIC: Rubric = {
+  id: "behavioral",
+  version: "1.0.0",
+  dimensions: [
+    dim(
+      "structure",
+      "Structure (situation, task, action, result)",
+      20,
+      "No clear story",
+      "Story with missing parts",
+      "Clear situation, task, action and result",
+    ),
+    dim(
+      "specificity",
+      "Specificity",
+      20,
+      "Generalities",
+      "Some concrete details",
+      "Names, numbers, timelines and decisions",
+    ),
+    dim(
+      "ownership",
+      "Ownership",
+      15,
+      "Only we, no personal actions",
+      "Own role mentioned",
+      "Clear personal actions and accountability",
+    ),
+    dim(
+      "impact",
+      "Impact and results",
+      15,
+      "No result",
+      "A result without evidence",
+      "A measured result and its significance",
+    ),
+    dim(
+      "reflection",
+      "Self-awareness and reflection",
+      15,
+      "No reflection",
+      "Names a lesson",
+      "A lesson that changed behaviour, with evidence",
+    ),
+    dim(
+      "communication",
+      "Communication",
+      10,
+      "Rambling",
+      "Clear when asked",
+      "Concise and engaging",
+    ),
+    dim(
+      "alignment",
+      "Alignment with the competency",
+      5,
+      "Answers a different question",
+      "Partly relevant",
+      "Directly shows the competency asked",
+    ),
+  ],
+};
+
+export const LLD_RUBRIC: Rubric = {
+  id: "lld",
+  version: "1.0.0",
+  dimensions: [
+    dim(
+      "requirements",
+      "Requirements and use cases",
+      15,
+      "Starts designing at once",
+      "Some clarification",
+      "Clarifies scope, actors and use cases first",
+    ),
+    dim(
+      "modeling",
+      "Class and entity modeling",
+      20,
+      "God classes or no model",
+      "Reasonable classes, some blur",
+      "Clean entities with clear responsibilities",
+    ),
+    dim(
+      "solid_patterns",
+      "SOLID and patterns",
+      15,
+      "Ignores principles",
+      "Names patterns, applies loosely",
+      "Applies principles and patterns where they earn their place",
+    ),
+    dim(
+      "extensibility",
+      "Extensibility",
+      15,
+      "Rigid",
+      "Some extension points",
+      "New requirements fit without edits to existing classes",
+    ),
+    dim(
+      "code_skeleton",
+      "Code skeleton quality",
+      15,
+      "Unclear signatures",
+      "Readable skeleton",
+      "Precise interfaces and method contracts",
+    ),
+    dim(
+      "edge_cases",
+      "Edge cases and concurrency",
+      10,
+      "Not considered",
+      "A few considered",
+      "Systematic, including concurrency and failures",
+    ),
+    dim(
+      "communication",
+      "Communication",
+      10,
+      "Silent or scattered",
+      "Explains when asked",
+      "Structured, checks understanding",
+    ),
+  ],
+};
+
+export const HLD_RUBRIC: Rubric = {
+  id: "hld",
+  version: "1.0.0",
+  dimensions: [
+    dim(
+      "requirements",
+      "Requirements gathering",
+      15,
+      "Skips requirements",
+      "Some functional requirements",
+      "Functional and non-functional requirements, scope agreed",
+    ),
+    dim(
+      "estimation",
+      "Estimation",
+      10,
+      "None",
+      "Rough numbers",
+      "Back-of-envelope numbers that drive decisions",
+    ),
+    dim(
+      "api_data",
+      "API and data modeling",
+      15,
+      "None",
+      "Basic endpoints or tables",
+      "APIs and a data model that fit the access patterns",
+    ),
+    dim(
+      "architecture",
+      "Architecture",
+      20,
+      "A box with no flow",
+      "Reasonable components",
+      "Components, data flow and responsibilities clear",
+    ),
+    dim(
+      "scalability",
+      "Scalability and reliability",
+      15,
+      "Single server",
+      "Names caching and sharding",
+      "Bottlenecks identified, failure modes handled",
+    ),
+    dim(
+      "tradeoffs",
+      "Trade-offs and depth",
+      15,
+      "No alternatives",
+      "Names alternatives",
+      "Compares options against the requirements and goes deep on one",
+    ),
+    dim(
+      "communication",
+      "Communication",
+      10,
+      "Silent or scattered",
+      "Explains when asked",
+      "Structured, drives the conversation",
+    ),
+  ],
+};
+
+export const RUBRICS: Record<string, Rubric> = {
+  coding: CODING_RUBRIC,
+  project: PROJECT_RUBRIC,
+  resume: RESUME_RUBRIC,
+  cs: CS_RUBRIC,
+  behavioral: BEHAVIORAL_RUBRIC,
+  lld: LLD_RUBRIC,
+  hld: HLD_RUBRIC,
+};
+
+/**
+ * The rubric with a company pack's emphasis (weights summing to 1 or 100). Dimensions the pack does
+ * not name share what is left in proportion, so the weights still total 100.
+ */
+export function withWeights(
+  rubric: Rubric,
+  weights: Record<string, number> | null | undefined,
+): Rubric {
+  if (!weights) return rubric;
+  const scale = Object.values(weights).reduce((a, b) => a + b, 0) <= 1.5 ? 100 : 1;
+  const named = rubric.dimensions.filter((d) => weights[d.key] !== undefined);
+  if (named.length === 0) return rubric;
+  const namedTotal = named.reduce((sum, d) => sum + (weights[d.key] as number) * scale, 0);
+  const restTotal = rubric.dimensions
+    .filter((d) => weights[d.key] === undefined)
+    .reduce((sum, d) => sum + d.weight, 0);
+  const left = Math.max(0, 100 - namedTotal);
+  const round = (n: number) => Math.round(n * 10) / 10;
+  return {
+    ...rubric,
+    dimensions: rubric.dimensions.map((d) => ({
+      ...d,
+      weight:
+        weights[d.key] !== undefined
+          ? round((weights[d.key] as number) * scale)
+          : restTotal > 0
+            ? round((d.weight / restTotal) * left)
+            : d.weight,
+    })),
+  };
+}
 
 export function getRubric(id: string): Rubric | undefined {
   return RUBRICS[id];

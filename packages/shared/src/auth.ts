@@ -114,6 +114,8 @@ export const settingsUpdateSchema = z
     reducedMotion: z.boolean(),
     hintMode: z.enum(["strict", "relaxed"]),
     openEditorials: z.boolean(),
+    /** The interviewer may refer back to earlier sessions (X5). */
+    personalizedCallbacks: z.boolean(),
     defaultLanguage: z.enum(["cpp", "java", "python"]),
   })
   .partial()
@@ -163,6 +165,7 @@ export interface MeResponse {
     reducedMotion: boolean;
     hintMode: "strict" | "relaxed";
     openEditorials: boolean;
+    personalizedCallbacks: boolean;
     defaultLanguage: string;
   };
 }

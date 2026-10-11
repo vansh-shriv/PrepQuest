@@ -132,6 +132,8 @@ export function toFacts(s: SessionRow, now: Date, sd: StateData): MachineFacts {
     questionIndex: sd.questionIndex,
     questionCount: plan.questions.length,
     warmupMs: warmup ? warmup.endMs - warmup.startMs : 5 * 60_000,
+    followupCap: getTemplate(s.templateKey)?.followupCap ?? 0,
+    minMsForNext: getTemplate(s.templateKey)?.minMsForNext ?? 8 * 60_000,
   };
 }
 

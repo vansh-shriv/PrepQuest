@@ -284,6 +284,7 @@ export async function getMe(db: Db, userId: string): Promise<MeResponse | undefi
       reducedMotion: settings.reducedMotion,
       hintMode: settings.hintMode as "strict" | "relaxed",
       openEditorials: settings.openEditorials,
+      personalizedCallbacks: settings.personalizedCallbacks,
       defaultLanguage: settings.defaultLanguage,
     },
   };

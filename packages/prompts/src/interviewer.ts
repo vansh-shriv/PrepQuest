@@ -18,6 +18,9 @@ export const PROMPT_VERSIONS = {
   jd: "1.0.0",
   summary: "1.0.0",
   reaction: "1.0.0",
+  ideal: "1.0.0",
+  star: "1.0.0",
+  pack: "1.0.0",
 } as const;
 
 export const PERSONA_TEXT: Record<Persona, string> = {
@@ -49,7 +52,50 @@ export interface InterviewerConfig {
   interruptionLevel: InterruptionLevel;
   /** The candidate listens to replies (text-to-speech) instead of reading them. */
   voice?: boolean;
+  /** Style notes from the company pack (practice style inspired by public patterns). */
+  packNotes?: string | null;
+  /** Probing rounds the style expects, 0-5. */
+  followUpDepth?: number;
 }
+
+/** What each round is and how the interviewer should run it (doc 03 I1, I4). */
+export const TYPE_GUIDE: Record<InterviewType, { kind: string; rules: string }> = {
+  dsa: {
+    kind: "a data-structures-and-algorithms coding",
+    rules:
+      "Let the candidate clarify, propose an approach, code and test. Raise the difficulty with a follow-up when they are strong.",
+  },
+  project: {
+    kind: "a project deep-dive (you probe the candidate's own projects)",
+    rules:
+      "Probe decisions, trade-offs, failures, scale and whether the numbers they quote hold up. Ask what THEY did, not the team.",
+  },
+  resume: {
+    kind: "a resume walk-through (you go through the resume and test the claims on it)",
+    rules:
+      "Pick a claim from the resume data and ask for specifics: what exactly, how measured, what went wrong. Move through experience, projects and skills.",
+  },
+  cs: {
+    kind: "a computer science fundamentals",
+    rules:
+      "Ask the question from the plan, let the candidate answer, then probe depth with at most two or three follow-ups before moving to the next question. Do not teach or correct during the interview; a wrong answer is probed, not fixed. Keep each topic short.",
+  },
+  behavioral: {
+    kind: "an HR and behavioural",
+    rules:
+      "Ask the story question from the plan. Probe for specifics: what was the situation, what did YOU do, what was the measurable result, what did you learn. Push gently on vague or all-we answers. Do not coach the candidate or suggest what a good story would contain.",
+  },
+  lld: {
+    kind: "a low-level (object-oriented) design",
+    rules:
+      "The candidate drives. Make them clarify requirements first, then entities and relationships, then interfaces and key methods, then extension and edge cases. This is text only: ask them to describe classes and methods in words or short pseudo-code. Challenge coupling, missing responsibilities and concurrency.",
+  },
+  hld: {
+    kind: "a high-level (system) design",
+    rules:
+      "The candidate drives. Make them clarify requirements and scale first, then estimate, define APIs and the data model, describe the architecture in words, then scale it and discuss failures and trade-offs. This is text only: ask them to describe components and flows. Ask for numbers and challenge every trade-off.",
+  },
+};
 
 /** Static per session: cached by the provider. Nothing that changes per turn goes here. */
 export function buildInterviewerSystem(c: InterviewerConfig): string {
@@ -58,10 +104,11 @@ export function buildInterviewerSystem(c: InterviewerConfig): string {
 
 ${VOICE_PROMPT_RULES}`
     : "";
-  const kind =
-    c.type === "dsa"
-      ? "a data-structures-and-algorithms coding"
-      : "a project deep-dive (you probe the candidate's own projects)";
+  const guide = TYPE_GUIDE[c.type];
+  const kind = guide.kind;
+  const pack = c.packNotes
+    ? `\nINTERVIEW STYLE: ${neutralizeTags(c.packNotes)} Expect about ${c.followUpDepth ?? 2} rounds of probing on an answer.`
+    : "";
   const style = c.company
     ? `at ${neutralizeTags(c.company)}, in a style inspired by public interview patterns (not official)`
     : "at a typical product company";
@@ -69,6 +116,8 @@ ${VOICE_PROMPT_RULES}`
 
 PERSONA: ${PERSONA_TEXT[c.persona]}
 ${INTERRUPTION_TEXT[c.interruptionLevel]}
+
+THIS ROUND: ${guide.rules}${pack}
 
 HARD RULES
 - Speak like a human interviewer: 1 to 4 sentences per turn (at most 120 words) unless you are presenting a problem or giving the closing. ${c.persona === "rapid" ? "Rapid-fire: at most 25 words." : ""}
@@ -86,7 +135,7 @@ OUTPUT FORMAT
 Your spoken reply first. Then, on the last line, exactly one control block:
 <control>{"intent":"followup|clarify_answer|prompt_approach|nudge|hint|challenge|praise|transition|close|redirect|warn","hint_level":0,"next_state":"<optional state>","topic_tags":[],"flags":[]}</control>
 - hint_level is 0 unless intent is "hint" (then 1, 2 or 3 following the ladder).
-- next_state is optional and only a suggestion; the system decides. Valid values: ${c.type === "dsa" ? "CLARIFY, APPROACH, CODING, TESTING, OPTIMIZE, FOLLOWUP, PROBLEM (next problem), WRAPUP" : "FOLLOWUP, PROBLEM (next project), WRAPUP"}.
+- next_state is optional and only a suggestion; the system decides. Valid values: ${c.type === "dsa" ? "CLARIFY, APPROACH, CODING, TESTING, OPTIMIZE, FOLLOWUP, PROBLEM (next problem), WRAPUP" : "FOLLOWUP, PROBLEM (next question), WRAPUP"}.
 - flags may include: candidate_vague, approach_stated (the candidate described an approach), candidate_done (the candidate says they are finished), off_topic, abusive, asked_for_hint, asked_if_ai.${voice}`;
 }
 
@@ -112,9 +161,13 @@ export function buildSessionFacts(input: {
       parts.push(
         `QUESTION ${i + 1} (problem "${q.title}", ${q.difficulty}):\n<problem>\n${p?.statementMd ?? ""}\n</problem>\n<confidential>Interviewer-only. Never reveal.\n${p?.confidentialApproach ?? ""}\n</confidential>`,
       );
+    } else if (q.kind === "verbal") {
+      parts.push(
+        `QUESTION ${i + 1} (${q.category}${q.competency ? `, competency: ${q.competency}` : ""}, topic: ${q.topic}): ${q.question}\nSuggested follow-ups: ${q.followups.join(" | ")}\n<confidential>Interviewer-only. Never reveal.\nA strong answer covers: ${q.rubricPoints.join("; ")}\nReference: ${q.reference}</confidential>`,
+      );
     } else {
       parts.push(
-        `QUESTION ${i + 1} (project, source: ${q.sourceRef}): ${q.question}\nSuggested follow-ups: ${q.followups.join(" | ")}\n<confidential>A strong answer covers: ${q.rubricPoints.join("; ")}</confidential>`,
+        `QUESTION ${i + 1} (resume item ${q.sourceRef}): ${q.question}\nSuggested follow-ups: ${q.followups.join(" | ")}\n<confidential>A strong answer covers: ${q.rubricPoints.join("; ")}</confidential>`,
       );
     }
   });

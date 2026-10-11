@@ -1,7 +1,13 @@
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { importFolder, importSheet, findContentRoot } from "@prepquest/content";
+import {
+  importBank,
+  importFolder,
+  importSheet,
+  findContentRoot,
+  loadBank,
+} from "@prepquest/content";
 import { seedReferenceData } from "@prepquest/db";
 import { FsObjectStore } from "@prepquest/storage";
 import type { TestApp } from "./helpers.js";
@@ -39,4 +45,10 @@ export async function seedContent(t: TestApp, slugs: readonly string[] = FIXTURE
     });
   }
   return { store, root };
+}
+
+/** Imports the real question bank and company packs (72 questions, 5 packs) into the test database. */
+export async function seedBank(t: TestApp) {
+  const bank = await loadBank(findContentRoot());
+  return importBank(t.db, bank);
 }

@@ -8,6 +8,7 @@ import { PDF_MIME, SAMPLE_RESUME_LINES, makePdf, multipartFile } from "./documen
 export interface SessionDto {
   id: string;
   state: string;
+  hintBudget: number;
   hintsLeft: number;
   hintsGiven: number;
   remainingMs: number;

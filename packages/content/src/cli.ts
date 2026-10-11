@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { createDatabase } from "@prepquest/db";
 import { serverEnvSchema } from "@prepquest/shared";
 import { createObjectStore } from "@prepquest/storage";
+import { importBank, loadBank, validateBank } from "./bank.js";
 import { buildTests, verifyTests } from "./build-tests.js";
 import { importProblem, importSheet, linkRelatedEditorials } from "./import.js";
 import { listProblemSlugs, loadProblem } from "./loader.js";
@@ -18,6 +19,9 @@ const USAGE = `Usage: content <command> [options] [slug...]
   import [--publish] [slug...]
                           upsert problems and sheets into the database (needs DATABASE_URL, tags seeded)
   new <slug>              scaffold a problem folder
+
+The question bank (content/questions) and company packs (content/company-packs) are validated by 'validate'
+and imported by 'import'.
 `;
 
 function print(issues: Issue[]) {
@@ -180,11 +184,14 @@ async function main() {
   for (const [s, n] of slugCounts)
     if (n > 1) issues.push({ level: "error", problem: s, message: "duplicate slug" });
 
+  const bank = await loadBank(root);
+  issues.push(...bank.issues, ...validateBank(bank, taxonomy));
+
   print(issues);
   const errors = issues.filter((i) => i.level === "error").length;
   const warnings = issues.length - errors;
   console.log(
-    `${bundles.length} problem(s), ${sheets.length} sheet(s): ${errors} error(s), ${warnings} warning(s)`,
+    `${bundles.length} problem(s), ${sheets.length} sheet(s), ${bank.questions.length} question(s), ${bank.packs.length} pack(s): ${errors} error(s), ${warnings} warning(s)`,
   );
   if (errors) {
     process.exitCode = 1;
@@ -220,6 +227,8 @@ async function main() {
       bundles.map((b) => b.slug),
     );
     if (args.length === 0) {
+      const b = await importBank(db, bank);
+      console.log(`bank      ${b.questions} question(s), ${b.packs} pack(s)`);
       for (const sheet of sheets) {
         const r = await importSheet(db, sheet);
         console.log(`sheet     ${r.slug} (${r.problems} problems)`);

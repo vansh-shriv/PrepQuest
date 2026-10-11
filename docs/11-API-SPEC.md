@@ -492,7 +492,7 @@ All routes need a verified email (`403 EMAIL_NOT_VERIFIED`). Deviations from sec
 | Conversation | WebSocket (Socket.IO namespace `/interview`, path `/ws`, `auth: {ticket}`); tickets are single use and live 60 s. REST equivalent: `POST /interviews/:id/messages` (`clientMsgId` makes a retry idempotent, and a retry after a model outage answers once). Events: `candidate.message`, `interviewer.token`, `interviewer.retract` (a streamed reply that failed a check is withdrawn), `interviewer.message`, `interviewer.typing`, `session.state`, `timer.tick` (with `warning` at 10, 5, 1 minutes), `system.notice`, `session.ended`, `scorecard.ready`, `error`. `sync {lastSeq}` returns the turns the client missed; replay comes from Postgres, not a Redis stream. |
 | Code | `POST /interviews/:id/events` with `snapshot`, `run`, `submit`, `paste`, `focus_lost`. For `run`/`submit` the browser sends only the submission id: the verdict is read from the judge's own record. Submissions accept `mode: "interview"` + `interviewSessionId`. While a problem is part of a live interview, its hints and editorial are `403 HINT_LOCKED`. |
 | Review | `GET /interviews/:id/review` (`202` while generating, `409` while running), `POST .../review/retry` after a failure, `GET .../transcript?format=json\|md`, `POST .../annotations/:id/note`, `POST .../feedback`, `GET .../events` (replay data). `GET /interviews` is the history with score and band. |
-| Not built yet | company packs, voice, live proactive reactions beyond the "accepted" reaction, ideal answers, STAR and speech analytics, PDF export, audio upload, `retry-question`, `GET /me/question-history`. |
+| Not built yet | PDF export, audio upload. (Company packs, ideal answers, STAR, speech analytics, `retry-question` and question history arrived in Phase 8.) |
 
 Errors added: `INTERVIEW_IN_PROGRESS` (409), `INTERVIEW_PAUSED` (409), `RESUME_REQUIRED` (422), `QUOTA_EXCEEDED` (429, daily or per-session token budget), `UPSTREAM_AI_UNAVAILABLE` (503).
 
@@ -505,3 +505,15 @@ Errors added: `INTERVIEW_IN_PROGRESS` (409), `INTERVIEW_PAUSED` (409), `RESUME_R
 | Barge-in | `POST /interviews/:id/barge-in {turnId, charIndex}` (or socket `user.barge_in`): marks the interviewer turn `meta.interrupted` with `meta.heard` (the part spoken), logs a `barge_in` event, and the next turn's history shows the reply as cut short. The transcript keeps the full text. |
 | Reactions | Proactive interviewer messages are ordinary interviewer turns with `meta.proactive` = `ac_reached`, `run_failed`, `no_approach_before_code`, `complexity_smell` or `idle_coding`. Nothing new on the wire. |
 | Replay | `GET /interviews/:id/events` now also carries `barge_in` and `paste` markers used by the replay tab. |
+
+### Evaluation depth (Phase 8, as built)
+
+| Area | As built |
+| ---- | -------- |
+| Types | `type` is one of `dsa, project, resume, cs, behavioral, lld, hld`. `GET /interview/templates` lists all seven. `resume` needs a ready resume (`422 RESUME_REQUIRED`). `questionSlugs` (bank questions of that type) overrides the pick. |
+| Packs | `GET /interview/company-packs` returns curated packs plus the caller's provisional ones (`provisional: true`, unverified). `POST /interviews/plan` and `POST /interviews` take `packSlug` or a free-text `company`; the plan preview adds `pack`, `packEffects` and `rubricWeights` and never calls the model; a provisional pack is created only on `POST /interviews`. Unknown or foreign slug: `422`. |
+| Ideal answers | `GET /interviews/:id/ideal-answers` returns `{status, items}`; `202` while `pending` or `running`. `POST /interviews/:id/review/retry-extras` (202) reruns the extras job. |
+| STAR | `GET /interviews/:id/star` returns `{items}` with s/t/a/r, specificity, impact, reflection, completeness, ownership ratio and a justification, plus a STAR rewrite. |
+| Speech | `GET /interviews/:id/speech` returns `{speech}` (words, wpm, fillers, hedging, pauses, flags and a "not a diagnosis" note) or `null`. |
+| Practise again | `POST /interviews/:id/retry-question {questionIndex}` (finished interviews only) creates a one-question interview and returns `{session, wsTicket}`; missed points are added as hidden rubric points. |
+| Memory | `GET /me/question-history`, `DELETE /me/question-history/:id` (404 if not yours), `DELETE /me/question-history` (`{deleted}`). `PATCH /me/settings {personalizedCallbacks}` turns off references to past practice. |

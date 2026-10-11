@@ -29,7 +29,15 @@ const PROJECT_EDGES: Edges = {
   ENDING: ["COMPLETED"],
 };
 
-export const EDGES: Record<InterviewType, Edges> = { dsa: DSA_EDGES, project: PROJECT_EDGES };
+export const EDGES: Record<InterviewType, Edges> = {
+  dsa: DSA_EDGES,
+  project: PROJECT_EDGES,
+  resume: PROJECT_EDGES,
+  cs: PROJECT_EDGES,
+  behavioral: PROJECT_EDGES,
+  lld: PROJECT_EDGES,
+  hld: PROJECT_EDGES,
+};
 
 export function isEdgeAllowed(type: InterviewType, from: InterviewState, to: InterviewState) {
   return EDGES[type][from]?.includes(to) ?? false;
@@ -62,6 +70,10 @@ export interface MachineFacts {
   questionCount: number;
   /** Length of the warm-up segment. */
   warmupMs: number;
+  /** Candidate turns on one question before the interviewer moves on (0: no cap). */
+  followupCap?: number;
+  /** Time a further question needs (default 8 minutes). */
+  minMsForNext?: number;
 }
 
 export interface Decision {
@@ -146,6 +158,22 @@ export function decideNext(
         };
       }
       break;
+    case "FOLLOWUP":
+      if (facts.followupCap && facts.turnsInState >= facts.followupCap) {
+        // enough on this question: the next one if there is time, otherwise wrap up
+        const hasNext = facts.questionIndex + 1 < facts.questionCount;
+        const room =
+          facts.plannedMs - facts.elapsedMs >= (facts.minMsForNext ?? MIN_MS_FOR_NEXT_QUESTION);
+        return hasNext && room
+          ? { state: "PROBLEM", reason: "followup cap", forced: true, nextQuestion: true }
+          : {
+              state: "WRAPUP",
+              reason: "followup cap, last question",
+              forced: true,
+              nextQuestion: false,
+            };
+      }
+      break;
     case "CODING":
       if (facts.hasRun || facts.candidateDone) {
         return { state: "TESTING", reason: "first run", forced: true, nextQuestion: false };
@@ -175,7 +203,7 @@ export function decideNext(
   if (proposed === "PROBLEM") {
     const hasNext = facts.questionIndex + 1 < facts.questionCount;
     const timeLeft = facts.plannedMs - facts.elapsedMs;
-    if (!hasNext || timeLeft < MIN_MS_FOR_NEXT_QUESTION) {
+    if (!hasNext || timeLeft < (facts.minMsForNext ?? MIN_MS_FOR_NEXT_QUESTION)) {
       return stay(current, "no time or question for another problem");
     }
     return { state: "PROBLEM", reason: "next question", forced: false, nextQuestion: true };

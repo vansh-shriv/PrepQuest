@@ -13,7 +13,8 @@ Phase-by-phase build log. Plan source: `docs/18-ROADMAP-AND-SPRINTS.md`. Each ph
 | 5     | Hints, editorials, XP/streaks, dashboard, sheets                                                                                            | M3        | Done (pending commit) |
 | 6     | AI interview MVP, resume parse, scorecards                                                                                                  | M4        | Done (pending commit) |
 | 7     | Voice, live-coding awareness, AI eval harness                                                                                               | M5        | Done (pending commit) |
-| 8+    | Evaluation depth, analytics, planning, SRS, contests, peer, hardening                                                                       | M6-M12    | Planned               |
+| 8     | Evaluation depth: more interview types, company packs, ideal answers, STAR, speech analytics, question memory                               | M6        | Done (pending commit) |
+| 9+    | Analytics, planning, SRS, contests, peer, hardening                                                                                         | M7-M12    | Planned               |
 
 ## Phase 0 - Foundation
 
@@ -269,3 +270,28 @@ Deferred:
 - Server-side STT/TTS (streaming, word-level timestamps, neural voices), voice-activity detection beyond the silence timer, audio retention (opt-in), speech analytics (E4), latency measurement against the 2.5 s target.
 - Live runs of the eval harness and real golden sessions (the five transcripts here are hand-written); persona identifiability panel.
 - Reconnect robustness beyond ticket renewal and sync (event replay from a stream), `interrupted` shown in the chat UI, the timer's "mid-answer" pause for long voice answers.
+
+## Phase 8 - Evaluation depth (milestone M6)
+
+Done:
+
+- **Interview types (I1, I2):** seven templates (dsa, project, resume, cs, behavioral, lld, hld) sharing the project-style state edges. Template fields (`followupCap`, `minMsForNext`, `hasHints`, `source`) drive behaviour: CS rounds ask 4 short questions and move on after the follow-up cap, behavioural rounds ask stories by competency, HLD and LLD are one long text-only question, the resume round walks resume items. New question kind `verbal` (bank question) beside `problem` and `project`; new rubrics for each type; per-type interviewer guidance.
+- **Question bank (`content/questions`, 72 questions):** CS (os, dbms, cn, oop x 8), behavioural (24, by competency), design (8 HLD, 8 LLD) with reference answers, follow-ups and rubric points. `packages/content/src/bank.ts` loads, validates (unique slugs, known topics, review date warning) and imports it (`pnpm content:validate`, `content:import`).
+- **Company packs v1 (I2):** five curated packs in `content/company-packs` (topic weights, difficulty band, rubric weights, hint policy, style notes, competencies, checklist, pitfalls, always with a "not an official process" disclaimer). Packs change the DSA pick, the rubric weights (DSA), the hint budget cap, the planned level (only upward) and the interviewer's style notes, and the plan preview lists these effects. A free-text company produces a provisional pack (LLM `pack` task at session creation, never in the preview), cached as `custom-<hash>`, flagged unverified and visible only to its creator.
+- **Ideal answers (E3), STAR (E4), speech analytics (E4):** a review "extras" job runs after the scorecard (status in `interview_scorecards.extras_status`, three attempts, retried by the sweep and by `POST /interviews/:id/review/retry-extras`). Ideal answers come from the model with a fact check on STAR rewrites (invented numbers or names trigger a repair); STAR scores per behavioural answer with ownership ratio; speech metrics (words per minute, fillers, hedges, thinking vs dead-air pauses) are computed in code from the transcript, always shown with a "not a diagnosis" note. "Practise this question again" (`POST /interviews/:id/retry-question`) starts a one-question interview with the missed points as hidden rubric points.
+- **Question memory (X5):** every asked question is stored with a topic and a 1024-dimension embedding; selection avoids recent questions and semantic duplicates (cosine 0.8), brings back weak ones, and the interviewer may refer to past practice (`personalizedCallbacks` setting, on by default). `/interview/history` lists, deletes and clears the memory.
+- **Web:** type picker for 7 types, company pack picker with effects and scoring weights in the plan preview, verbal question banner in the room, review tabs Ideal answers, STAR and Speech, history page, callbacks setting.
+- **Tests:** interview-core 84, content 35, API 409 (23 new for Phase 8), web 33, a new e2e spec `interview-rounds.spec.ts` (5 tests); `interview.spec.ts` and `voice.spec.ts` still green.
+
+Decisions / gotchas:
+
+- Build the `content` and `shared` packages before running API tests: the API resolves them through `dist/`.
+- The mock interviewer cannot tell a project question from a resume-walkthrough one (same prompt label), so both use the same lead line.
+- Pack rubric weights apply to DSA only; other types keep their own rubrics.
+- Embeddings are still the local hashing embedder; a real model can replace it without changing the column.
+
+Deferred:
+
+- Real company data beyond the five practice profiles; more bank questions.
+- Live (`--live`) eval cases for the new types and a golden set for STAR scoring.
+- Audio-based speech analytics (needs server-side STT with word timings).

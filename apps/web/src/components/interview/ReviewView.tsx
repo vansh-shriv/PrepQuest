@@ -23,6 +23,7 @@ import {
 } from "@/features/interview/format";
 import { api, apiDownload, ApiError } from "@/lib/api";
 import { CodeReplay } from "./CodeReplay";
+import { IdealAnswers, SpeechPanel, StarScores } from "./ReviewExtras";
 import { useSubmit } from "@/lib/use-submit";
 
 const KIND_LABEL: Record<AnnotationDto["kind"], string> = {
@@ -192,6 +193,19 @@ function Loaded({
           ...(scorecard
             ? [
                 { id: "evidence", label: "Evidence", content: <Evidence review={review} /> },
+                {
+                  id: "ideal",
+                  label: "Ideal answers",
+                  content: <IdealAnswers sessionId={session.id} />,
+                },
+                ...(session.type === "behavioral"
+                  ? [{ id: "star", label: "STAR", content: <StarScores sessionId={session.id} /> }]
+                  : []),
+                {
+                  id: "speech",
+                  label: "Speech",
+                  content: <SpeechPanel sessionId={session.id} />,
+                },
                 {
                   id: "feedback",
                   label: "Feedback",

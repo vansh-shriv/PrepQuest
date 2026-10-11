@@ -39,7 +39,15 @@ describe("plan and create", () => {
   it("lists the templates", async () => {
     const res = await ada.call("GET", "/interview/templates");
     const items = res.json<{ items: { type: string; defaultMinutes: number }[] }>().items;
-    expect(items.map((i) => i.type).sort()).toEqual(["dsa", "project"]);
+    expect(items.map((i) => i.type).sort()).toEqual([
+      "behavioral",
+      "cs",
+      "dsa",
+      "hld",
+      "lld",
+      "project",
+      "resume",
+    ]);
   });
 
   it("previews a DSA plan without creating anything", async () => {

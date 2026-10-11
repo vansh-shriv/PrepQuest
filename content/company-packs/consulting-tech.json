@@ -1,0 +1,62 @@
+{
+  "slug": "consulting-tech",
+  "title": "Consulting and digital transformation",
+  "role": "Technology analyst",
+  "level": "sde1",
+  "version": 1,
+  "reviewed_at": "2026-10-01",
+  "disclaimer": "Practice style inspired by public patterns. Not an official process.",
+  "process": [
+    {
+      "round": "Case and aptitude",
+      "format": "online",
+      "minutes": 60
+    },
+    {
+      "round": "Technical",
+      "type": "cs_fundamentals+dsa",
+      "minutes": 40
+    },
+    {
+      "round": "Managerial",
+      "type": "behavioral",
+      "minutes": 30
+    }
+  ],
+  "topic_weights": {
+    "arrays": 0.6,
+    "strings": 0.6,
+    "hashing": 0.5,
+    "sorting": 0.5,
+    "math": 0.5
+  },
+  "difficulty_band": {
+    "easy": 0.5,
+    "medium": 0.45,
+    "hard": 0.05
+  },
+  "interview_style": {
+    "bar": "medium",
+    "follow_up_depth": 2,
+    "hint_policy": "balanced",
+    "behavioral_weight": 0.5,
+    "notes": "Weights communication, structured thinking and client-facing behaviour heavily."
+  },
+  "rubric_weights": {
+    "problem_solving": 0.2,
+    "code_quality": 0.1,
+    "communication": 0.3,
+    "optimization": 0.1,
+    "edge_cases": 0.1,
+    "testing": 0.15,
+    "correctness": 0.05
+  },
+  "behavioral_competencies": ["customer_focus", "leadership", "ambiguity", "conflict"],
+  "cs_topics": ["dbms", "cn", "oop"],
+  "checklist": [
+    "Practise structured answers aloud",
+    "Prepare 8 STAR stories",
+    "Brush up SQL and web basics"
+  ],
+  "pitfalls": ["Rambling answers", "No structure in explanations"]
+}

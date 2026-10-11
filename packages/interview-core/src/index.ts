@@ -11,3 +11,7 @@ export * from "./selection.js";
 export * from "./moderation.js";
 export * from "./reactions.js";
 export * from "./speech.js";
+export * from "./packs.js";
+export * from "./verbal.js";
+export * from "./star.js";
+export * from "./speech-analytics.js";

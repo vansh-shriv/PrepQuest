@@ -99,6 +99,9 @@ export function InterviewHub() {
                         New interview
                       </Link>
                     )}
+                    <Link href="/interview/history" className={buttonClasses({ variant: "ghost" })}>
+                      Question history
+                    </Link>
                     <Link href="/resumes" className={buttonClasses({ variant: "ghost" })}>
                       Resumes
                       {resumes ? ` (${resumes.filter((r) => r.status === "ready").length})` : ""}

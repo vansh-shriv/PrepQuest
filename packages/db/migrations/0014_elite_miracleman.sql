@@ -1,0 +1,2 @@
+ALTER TABLE "interview_scorecards" ADD COLUMN "extras_status" text DEFAULT 'pending' NOT NULL;--> statement-breakpoint
+ALTER TABLE "interview_scorecards" ADD COLUMN "extras_attempts" smallint DEFAULT 0 NOT NULL;
