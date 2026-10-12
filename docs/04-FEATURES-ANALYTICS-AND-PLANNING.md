@@ -260,3 +260,12 @@ Placement/interview date, hours per day (per weekday), current level (diagnostic
 - **Built:** XP and level, streak sunflower with a grace day, activity heatmap (26 weeks), problems solved by difficulty with a 30-day series, accuracy, skill plants per topic, weak areas with a diagnosis, three recommended problems, recent activity, sheet progress, badges, placement countdown, range filter. See doc 11 for the rules and formulas.
 - **Mastery v1** uses the two signals that exist: solve success (first-try 1.0, later 0.6, unsolved 0) and independence (solved without hints), weighted 2:1 and recency-decayed (30-day half-life). Confidence is evidence / 8. `weakness = (1 - mastery) * importance * (0.5 + 0.5 * confidence)` with importance 1 until company packs exist. Quiz, interview, speed and SRS signals join the same formula later.
 - **Not built yet:** today's quest board and daily goals, due reviews (D6), readiness (A4), upcoming contests, per-target importance, nightly consistency job, precomputed aggregates and cache invalidation (the dashboard is computed per request), XP for quizzes and interviews, a user-visible XP ledger page, public-profile skill plants.
+
+## As built (Phase 9): A2 to A5, P1, P2
+
+- **A2 mastery v2:** solve 0.30, speed 0.20, independence 0.15, interview 0.10, renormalised over available signals; confidence = evidence / 8 (interview sessions count as evidence); importance 0.5 to 1.5 from the target pack. Quiz (0.15) and SRS (0.10) are not built.
+- **A3 trends:** as specified, minus the target-bar line and segment timing trends. Habits use red-flag categories.
+- **A4 readiness:** weights as in the table (30/10/20/10/10/8/5/5/2). CS fundamentals come from CS mock rounds for now, project from project and resume rounds, design from HLD and LLD rounds, aptitude is not built. Evidence below full confidence is shrunk towards 0.3; coverage under 5% withholds the score. ETA target is 75.
+- **A5 time:** estimated from open, run and submit events (not keystrokes); idle threshold is the 20-minute break cap; read versus debug split instead of four phases.
+- **P1 plan:** problems, mock interviews and reviews only (quizzes, aptitude and SRS reviews have no content yet). Mix is capacity-driven rather than the 60/15/10/10/5 split. Phases are laid out by share of the horizon (20/35/20/15/10).
+- **P2 goals:** problems, XP, mock interviews this week, finish today's plan. Reminders and push are not built.

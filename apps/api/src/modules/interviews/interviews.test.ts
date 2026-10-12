@@ -134,7 +134,7 @@ describe("plan and create", () => {
       { difficulty: 9 },
       { hintBudget: 7 },
       { persona: "pirate" },
-      { type: "hld" },
+      { type: "bogus" },
     ]) {
       expect((await ada.create(bad)).res.statusCode, JSON.stringify(bad)).toBe(422);
     }

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Button, Chip, LoadingBar, ScoreBar, Window } from "@prepquest/ui";
+import { Button, Chip, LoadingBar, Window } from "@prepquest/ui";
 import type { IdealAnswerDto, SpeechMetricsDto, StarScoreDto } from "@prepquest/shared";
 import { api, ApiError } from "@/lib/api";
 import { useSubmit } from "@/lib/use-submit";
@@ -168,13 +168,21 @@ export function StarScores({ sessionId }: { sessionId: string }) {
               )}
             </div>
             <div className="grid gap-2">
-              <ScoreBar label="Situation" score={s.s * 50} />
-              <ScoreBar label="Task" score={s.t * 50} />
-              <ScoreBar label="Action" score={s.a * 50} />
-              <ScoreBar label="Result" score={s.r * 50} />
-              <ScoreBar label="Specificity" score={s.specificity * 50} />
-              <ScoreBar label="Impact" score={s.impact * 50} />
-              <ScoreBar label="Reflection" score={s.reflection * 50} />
+              <LoadingBar value={s.s * 50} size="sm" label={`Situation: ${s.s} of 2`} />
+              <LoadingBar value={s.t * 50} size="sm" label={`Task: ${s.t} of 2`} />
+              <LoadingBar value={s.a * 50} size="sm" label={`Action: ${s.a} of 2`} />
+              <LoadingBar value={s.r * 50} size="sm" label={`Result: ${s.r} of 2`} />
+              <LoadingBar
+                value={s.specificity * 50}
+                size="sm"
+                label={`Specificity: ${s.specificity} of 2`}
+              />
+              <LoadingBar value={s.impact * 50} size="sm" label={`Impact: ${s.impact} of 2`} />
+              <LoadingBar
+                value={s.reflection * 50}
+                size="sm"
+                label={`Reflection: ${s.reflection} of 2`}
+              />
             </div>
             {s.justification && <p className="m-0 text-sm text-ink-soft">{s.justification}</p>}
           </div>

@@ -642,3 +642,7 @@ Tags (topics, patterns), 150+ problems with tests, 3 sheets, 10 company packs, 6
 ## Phase 8 additions (as built)
 
 New tables: `question_bank` (slug, category cs/behavioral/hld/lld, topic, competency, difficulty, text, reference_answer, followups, rubric_points, tags, status), `company_packs` (slug, title, role, level, version, `data` jsonb, status, `provisional`, created_by), `ideal_answers`, `star_scores`, `speech_metrics` (all keyed by session, with `updated_at` triggers in migration 0013). `question_memory` gains `topic` and `embedding vector(1024)` (hnsw index); `interview_scorecards` gains `extras_status` and `extras_attempts`; user settings gain `personalized_callbacks`.
+
+## Phase 9 additions (as built)
+
+`study_plans` (one active per user, `version`, `inputs`, `phases`, `warnings`, `narrative_md`, `replanned_on`), `plan_tasks` (stable `key` unique per plan, `status` todo/done/skipped/moved, `locked`, `custom`, `why`, `phase`, `topic`), `plan_diffs` (per version change with a reason), `goal_templates`, `daily_goals` (`items`, `completed`, `rewarded`), `readiness_snapshots` (user, target, local day), `diagnostics` (the five problem slugs). `topic_mastery` is not stored: it is computed per request. Triggers in migration 0016.

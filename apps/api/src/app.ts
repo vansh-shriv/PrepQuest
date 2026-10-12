@@ -28,6 +28,8 @@ import { libraryRoutes } from "./modules/library/routes.js";
 import { practiceRoutes } from "./modules/practice/routes.js";
 import { problemRoutes } from "./modules/problems/routes.js";
 import { ensureBadgeCatalog } from "./modules/progress/award.js";
+import { analyticsRoutes } from "./modules/analytics/routes.js";
+import { planningRoutes } from "./modules/planning/routes.js";
 import { progressRoutes } from "./modules/progress/routes.js";
 import type { JudgeQueue } from "./modules/submissions/queue.js";
 import { submissionRoutes } from "./modules/submissions/routes.js";
@@ -221,6 +223,8 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   const engine = new InterviewEngine(ai, new MemoryBus());
   app.decorate("interviews", engine);
   await app.register(interviewRoutes, { prefix: "/v1", ctx: ai, engine, kv });
+  await app.register(analyticsRoutes, { prefix: "/v1", db });
+  await app.register(planningRoutes, { prefix: "/v1", ctx: ai });
   attachInterviewGateway(app, { ctx: ai, engine, kv, origins: env.CORS_ORIGINS.split(",") });
   await app.register(adminRoutes, {
     prefix: "/v1",

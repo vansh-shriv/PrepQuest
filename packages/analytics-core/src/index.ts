@@ -3,3 +3,8 @@ export * from "./streak.js";
 export * from "./unlock.js";
 export * from "./mastery.js";
 export * from "./badges.js";
+export * from "./timing.js";
+export * from "./readiness.js";
+export * from "./trends.js";
+export * from "./goals.js";
+export * from "./plan.js";

@@ -1,3 +1,4 @@
+import { nightlyPlanning } from "./modules/planning/plan-service.js";
 import { sql } from "drizzle-orm";
 import { Redis } from "ioredis";
 import { createDatabase } from "@prepquest/db";
@@ -50,8 +51,16 @@ const sweeper = setInterval(() => {
   app.interviews.sweep().catch((err: unknown) => app.log.error({ err }, "interview sweep failed"));
 }, 5000);
 
+// nightly re-plan: once per local day per user with a plan (adapts efficiency, rolls missed tasks, snapshots readiness)
+const planner = setInterval(() => {
+  nightlyPlanning(app.ai).catch((err: unknown) =>
+    app.log.error({ err }, "nightly planning failed"),
+  );
+}, 10 * 60_000);
+
 const shutdown = async () => {
   clearInterval(sweeper);
+  clearInterval(planner);
   await ingester?.stop();
   await judge.close();
   await app.close();

@@ -70,7 +70,7 @@ export async function getBadges(db: Database, userId: string): Promise<BadgeDto[
     .sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
 }
 
-interface EvidenceRow {
+export interface EvidenceRow {
   problem_id: string;
   slug: string;
   title: string;
@@ -88,7 +88,7 @@ interface EvidenceRow {
 }
 
 /** One row per published problem with the user's history on it (problems never touched have attempted = false). */
-async function loadEvidence(db: Database, userId: string) {
+export async function loadEvidence(db: Database, userId: string) {
   const rows = (
     await db.execute(sql`
       SELECT p.id AS problem_id, p.slug, p.title, p.difficulty,

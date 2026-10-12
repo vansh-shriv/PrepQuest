@@ -1,6 +1,9 @@
-// Weak-area detection v1 (doc 04 A2). Only the signals that exist today are used (solve success and hint
-// independence); quiz, interview, speed and SRS signals join the same formula when those features land.
+// Weak-area detection (doc 04 A2). The signals that exist are used: solve success, speed, hint
+// independence and interview scores. Each signal carries its doc weight and the weights are renormalised
+// over the signals that have evidence, so a topic with only solves scores exactly as it did in v1.
+// Quiz and SRS signals join the same formula when those features land.
 
+import { speedScore } from "./timing.js";
 import type { DifficultyName } from "./xp.js";
 
 export interface ProblemEvidence {
@@ -16,6 +19,8 @@ export interface ProblemEvidence {
   /** Hints were viewed before solving (or the user gave up). */
   hinted: boolean;
   lastAt: Date | null;
+  /** Estimated active seconds to the first accept (A5); null when unknown. */
+  solveSeconds?: number | null;
   verdicts: { WA: number; TLE: number; RE: number; MLE: number; CE: number };
 }
 
@@ -32,7 +37,19 @@ export interface TopicMastery {
   attempted: number;
   solved: number;
   diagnosis: string | null;
+  /** Which signals fed `mastery` (for the breakdown view). */
+  signals?: { solve: number; speed: number | null; independence: number; interview: number | null };
 }
+
+/** Interview evidence for a topic: mean score 0 to 1 over `n` sessions (recency weighted by the caller). */
+export type InterviewSignal = Record<string, { score: number; n: number }>;
+
+export const SIGNAL_WEIGHTS = {
+  solve: 0.3,
+  speed: 0.2,
+  independence: 0.15,
+  interview: 0.1,
+} as const;
 
 const HALF_LIFE_DAYS = 30;
 const FULL_CONFIDENCE = 8;
@@ -80,6 +97,7 @@ export function topicMastery(
   topics: readonly string[],
   now: Date,
   importance: (topic: string) => number = () => 1,
+  interview: InterviewSignal = {},
 ): TopicMastery[] {
   return topics.map((topic) => {
     const rows = evidence.filter((e) => e.attempted && e.topics.includes(topic));
@@ -98,15 +116,38 @@ export function topicMastery(
     let wSum = 0;
     let success = 0;
     let independent = 0;
+    let speedW = 0;
+    let speed = 0;
     for (const r of rows) {
       const w = weightOf(r.lastAt, now);
       wSum += w;
       success += w * (r.solved ? (r.firstTry ? 1 : 0.6) : 0);
       independent += w * (r.solved && !r.hinted ? 1 : 0); // credit only solves made without help
+      if (r.solved && r.solveSeconds != null) {
+        speedW += w;
+        speed += w * speedScore(r.difficulty, r.solveSeconds);
+      }
     }
-    // weights 0.30 and 0.15 renormalised over the two signals available today
-    const mastery = (2 * (success / wSum) + independent / wSum) / 3;
-    const confidence = Math.min(1, rows.length / FULL_CONFIDENCE);
+    const signals = {
+      solve: success / wSum,
+      speed: speedW > 0 ? speed / speedW : null,
+      independence: independent / wSum,
+      interview: interview[topic] && interview[topic]!.n > 0 ? interview[topic]!.score : null,
+    };
+    let num =
+      SIGNAL_WEIGHTS.solve * signals.solve + SIGNAL_WEIGHTS.independence * signals.independence;
+    let den = SIGNAL_WEIGHTS.solve + SIGNAL_WEIGHTS.independence;
+    if (signals.speed !== null) {
+      num += SIGNAL_WEIGHTS.speed * signals.speed;
+      den += SIGNAL_WEIGHTS.speed;
+    }
+    if (signals.interview !== null) {
+      num += SIGNAL_WEIGHTS.interview * signals.interview;
+      den += SIGNAL_WEIGHTS.interview;
+    }
+    const mastery = num / den;
+    const evidenceCount = rows.length + (interview[topic]?.n ?? 0);
+    const confidence = Math.min(1, evidenceCount / FULL_CONFIDENCE);
     return {
       topic,
       mastery,
@@ -116,6 +157,7 @@ export function topicMastery(
       attempted: rows.length,
       solved: rows.filter((r) => r.solved).length,
       diagnosis: mastery < WEAK_BELOW ? diagnose(topic, rows) : null,
+      signals,
     };
   });
 }

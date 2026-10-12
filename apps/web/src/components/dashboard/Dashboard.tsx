@@ -13,6 +13,7 @@ import {
 } from "@prepquest/ui";
 import { DASHBOARD_RANGES, type DashboardDto, type DashboardRange } from "@prepquest/shared";
 import { api } from "@/lib/api";
+import { QuestBoard } from "../planning/QuestBoard";
 
 const PLANT: Record<DashboardDto["skills"][number]["stage"], SpriteName> = {
   seed: "plantSeed",
@@ -177,6 +178,8 @@ export function Dashboard() {
           </div>
         </Window>
       </div>
+
+      <QuestBoard />
 
       {empty ? (
         <Window title="Your first quest" tone="sky">

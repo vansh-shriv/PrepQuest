@@ -517,3 +517,23 @@ Errors added: `INTERVIEW_IN_PROGRESS` (409), `INTERVIEW_PAUSED` (409), `RESUME_R
 | Speech | `GET /interviews/:id/speech` returns `{speech}` (words, wpm, fillers, hedging, pauses, flags and a "not a diagnosis" note) or `null`. |
 | Practise again | `POST /interviews/:id/retry-question {questionIndex}` (finished interviews only) creates a one-question interview and returns `{session, wsTicket}`; missed points are added as hidden rubric points. |
 | Memory | `GET /me/question-history`, `DELETE /me/question-history/:id` (404 if not yours), `DELETE /me/question-history` (`{deleted}`). `PATCH /me/settings {personalizedCallbacks}` turns off references to past practice. |
+
+### Analytics and planning (Phase 9, as built)
+
+| Method | Path | As built |
+| ------ | ---- | -------- |
+| GET | `/me/analytics/topics?target=` | Mastery, confidence, weakness, signals and diagnosis per topic, plus next actions with a "why" |
+| GET | `/me/analytics/interviews?type=&company=&persona=&includeAbandoned=` | Trends, deltas, habits, speech series |
+| GET | `/me/analytics/time?difficulty=` | Medians, histograms, read versus debug split, slowest solves, coaching |
+| GET | `/me/readiness?target=` | Score or null, band, components, limiting factors, levers, ETA; records today's snapshot |
+| GET | `/me/readiness/history?target=` | Snapshots |
+| POST / GET | `/me/diagnostic`, `/me/diagnostic/:id` | Five-problem calibration; reuses the open one |
+| GET / POST | `/me/plan` | Active plan (or `{plan: null}`); POST generates or re-plans with `{placementDate, hoursPerDay, defaultHours, restDays, mockPerWeek, mockTypes, packSlug}` |
+| POST | `/me/plan/replan` | Re-plan now; the response carries `lastDiff` |
+| GET | `/me/plan/diff?from=&to=` | One version's change |
+| PATCH / POST | `/me/plan/tasks/:id`, `/me/plan/tasks` | Done, skipped, locked, moved (422 when the day has no room or is in the past); custom tasks are locked |
+| GET / PUT | `/me/goals/template` | Presets and items |
+| GET / PATCH | `/me/goals/today` | Live progress; PATCH is refused (409) once the day's bonus is paid |
+| GET | `/me/quest-board` | Goals, today's tasks, readiness headline, next action |
+
+Not built: `/me/xp` ledger changes, `/roadmaps`, `/tracks`, `/me/reviews`.

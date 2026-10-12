@@ -14,8 +14,8 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/problems", label: "Practice", icon: "code", phase: 3 },
   { href: "/interview", label: "Interview", icon: "chat" },
   { href: "/quizzes", label: "Quizzes", icon: "quiz", phase: 8 },
-  { href: "/plan", label: "Plan", icon: "plan", phase: 8 },
-  { href: "/analytics", label: "Analytics", icon: "chart", phase: 8 },
+  { href: "/plan", label: "Plan", icon: "plan" },
+  { href: "/analytics", label: "Analytics", icon: "chart" },
   { href: "/contests", label: "Contests", icon: "trophy", phase: 9 },
 ];
 

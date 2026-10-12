@@ -14,7 +14,8 @@ Phase-by-phase build log. Plan source: `docs/18-ROADMAP-AND-SPRINTS.md`. Each ph
 | 6     | AI interview MVP, resume parse, scorecards                                                                                                  | M4        | Done (pending commit) |
 | 7     | Voice, live-coding awareness, AI eval harness                                                                                               | M5        | Done (pending commit) |
 | 8     | Evaluation depth: more interview types, company packs, ideal answers, STAR, speech analytics, question memory                               | M6        | Done (pending commit) |
-| 9+    | Analytics, planning, SRS, contests, peer, hardening                                                                                         | M7-M12    | Planned               |
+| 9     | Analytics and planning: readiness, topic mastery v2, interview trends, time analysis, study plan, daily goals, diagnostic                   | M7        | Done (pending commit) |
+| 10+   | SRS, quizzes, contests, peer, hardening                                                                                                     | M8-M12    | Planned               |
 
 ## Phase 0 - Foundation
 
@@ -295,3 +296,31 @@ Deferred:
 - Real company data beyond the five practice profiles; more bank questions.
 - Live (`--live`) eval cases for the new types and a golden set for STAR scoring.
 - Audio-based speech analytics (needs server-side STT with word timings).
+
+## Phase 9 - Analytics and planning (milestone M7)
+
+Done:
+
+- **Mastery v2 (A2):** `analytics-core/mastery.ts` now blends solve success (0.30), speed (0.20), hint independence (0.15) and interview scores (0.10); weights are renormalised over the signals that have evidence, so a topic with only solves scores exactly as in v1. Topic importance comes from the target pack (0.5 to 1.5). Quiz and SRS signals join when those features exist.
+- **Time analysis (A5):** `analytics-core/timing.ts`. Active time is estimated from when a problem was opened, run and submitted (a gap over 20 minutes counts as a break). Per difficulty: median against the expected time, histogram, outliers; read-versus-debug split; slowest solves; a coaching line. Labelled as an estimate (the platform has no keystroke events yet).
+- **Interview trends (A3):** `analytics-core/trends.ts`: overall score with moving average, best and worst, markers where persona or difficulty changed, deltas over the last five interviews per dimension, recurring red-flag categories as habits, filler-rate trend. Interviews under 30% completion are left out unless asked.
+- **Readiness (A4):** `analytics-core/readiness.ts`, nine weighted components (DSA breadth, speed and independence, interviews, communication, CS, project, aptitude, design, consistency). Components without evidence say "not enough data" and drop out; thin evidence is pulled towards a low prior (0.3) in proportion to its confidence, so three clean solves never read as "Ready". The band is +/- 3 with solid evidence and widens to +/- 18. Highest-leverage actions estimate the points gained per action; the ETA fits a line through the daily snapshots and compares it with the placement date. The score is withheld below 5% evidence coverage. One snapshot per user per local day (`readiness_snapshots`). Targets are `general` or a company pack.
+- **Diagnostic:** `POST /me/diagnostic` picks five unsolved problems across topics and difficulties; the results are ordinary submissions, so they feed everything above. It completes when each has been tried.
+- **Study plan (P1):** `analytics-core/plan.ts`, deterministic. Backward phases from the placement date (Foundations, Pattern Mastery, Company Focus, Mock Intensive, Final Polish; shorter plans get fewer), capacity = hours x efficiency (starts 0.8, adapts nightly from planned versus done), topics ranked by weakness and importance and interleaved so no topic fills a day, weekly mock interviews from the second phase, reviews of shaky solves after 3 days, missed problems roll forward first, locked and custom tasks never move, completed and skipped tasks are history, and a warning names what was dropped when it does not all fit. Every task has a "why". Re-plans record a diff (`plan_diffs`); the plan page shows "2 moved, 1 added". The narrative is a deterministic summary.
+- **Nightly job:** `nightlyPlanning` runs every 10 minutes from `main.ts` and handles each user once per local day: adapt efficiency, re-plan, snapshot readiness.
+- **Daily goals (P2):** presets (light, standard, intense, weekend sprint) and custom items (problems, XP, interviews this week, finish today's plan). Progress is computed live from the server; finishing every goal pays 15 XP once (atomic claim). After a fortnight of mostly missed or always met goals the page suggests lowering or raising them.
+- **Quest board:** `GET /me/quest-board` feeds the dashboard card (goals, today's tasks, readiness, one next action). A new learner is sent to the diagnostic.
+- **Web:** `/plan` (setup, phases, today and coming up, lock, skip, move, add your own task, what changed, goal presets), `/analytics` (readiness with component breakdown and history chart, topics with diagnoses, interview trends, time analysis), the dashboard quest board.
+- **Tests:** analytics-core 83, API 26 planning + 15 analytics new, web helpers 7, 6 e2e tests in `planning.spec.ts`.
+
+Decisions / gotchas:
+
+- Zod 4 `z.record(z.enum(...))` requires every key; use `z.partialRecord` (an e2e run caught it, API tests had not sent the field).
+- A plan is one row per user that is versioned, not a new row per generation; tasks are matched across re-plans by a stable key (`problem:<slug>`), and missed tasks stay behind as `moved` history so planned-versus-done stays honest.
+- Plan settings precedence: this request, then the saved plan, then the profile.
+- `first_ac_at` is written by the database clock: tests that depend on "solved today" cannot pin the clock.
+- A bank-dependent API test (`validates the input` with `type: hld`) was order-dependent after Phase 8; fixed.
+
+Deferred:
+
+- Quiz, aptitude and SRS signals and plan tasks (Sprints 8), roadmaps and company tracks (P3, P4), reminders and notifications, ICS export, an LLM-written plan narrative, keystroke-level time events, readiness weights per company pack, per-target plans beyond a pack choice.
