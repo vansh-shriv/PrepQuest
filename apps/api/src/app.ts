@@ -30,6 +30,10 @@ import { problemRoutes } from "./modules/problems/routes.js";
 import { ensureBadgeCatalog } from "./modules/progress/award.js";
 import { analyticsRoutes } from "./modules/analytics/routes.js";
 import { planningRoutes } from "./modules/planning/routes.js";
+import { quizRoutes } from "./modules/quizzes/routes.js";
+import { roadmapRoutes } from "./modules/roadmaps/routes.js";
+import { trackRoutes } from "./modules/tracks/routes.js";
+import { reviewRoutes } from "./modules/reviews/routes.js";
 import { progressRoutes } from "./modules/progress/routes.js";
 import type { JudgeQueue } from "./modules/submissions/queue.js";
 import { submissionRoutes } from "./modules/submissions/routes.js";
@@ -225,6 +229,10 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(interviewRoutes, { prefix: "/v1", ctx: ai, engine, kv });
   await app.register(analyticsRoutes, { prefix: "/v1", db });
   await app.register(planningRoutes, { prefix: "/v1", ctx: ai });
+  await app.register(reviewRoutes, { prefix: "/v1", ctx: ai });
+  await app.register(quizRoutes, { prefix: "/v1", ctx: ai });
+  await app.register(roadmapRoutes, { prefix: "/v1", ctx: ai });
+  await app.register(trackRoutes, { prefix: "/v1", ctx: ai });
   attachInterviewGateway(app, { ctx: ai, engine, kv, origins: env.CORS_ORIGINS.split(",") });
   await app.register(adminRoutes, {
     prefix: "/v1",

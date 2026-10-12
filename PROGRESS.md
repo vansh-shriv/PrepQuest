@@ -15,7 +15,8 @@ Phase-by-phase build log. Plan source: `docs/18-ROADMAP-AND-SPRINTS.md`. Each ph
 | 7     | Voice, live-coding awareness, AI eval harness                                                                                               | M5        | Done (pending commit) |
 | 8     | Evaluation depth: more interview types, company packs, ideal answers, STAR, speech analytics, question memory                               | M6        | Done (pending commit) |
 | 9     | Analytics and planning: readiness, topic mastery v2, interview trends, time analysis, study plan, daily goals, diagnostic                   | M7        | Done (pending commit) |
-| 10+   | SRS, quizzes, contests, peer, hardening                                                                                                     | M8-M12    | Planned               |
+| 10    | Learning suite: spaced repetition, CS quizzes, roadmaps, company tracks                                                                     | M8 (part) | Done (pending commit) |
+| 11+   | SQL runner, aptitude and OA simulator, contests, peer, hardening                                                                            | M8-M12    | Planned               |
 
 ## Phase 0 - Foundation
 
@@ -324,3 +325,32 @@ Decisions / gotchas:
 Deferred:
 
 - Quiz, aptitude and SRS signals and plan tasks (Sprints 8), roadmaps and company tracks (P3, P4), reminders and notifications, ICS export, an LLM-written plan narrative, keystroke-level time events, readiness weights per company pack, per-target plans beyond a pack choice.
+
+## Phase 10 - Learning suite (milestone M8, first part)
+
+Sprint 8 is large, so it is split. This phase builds spaced repetition, quizzes, roadmaps and company tracks. The SQL practice runner and the aptitude and OA simulator (C2) move to the next phase.
+
+Done:
+
+- **Spaced repetition (D6):** `analytics-core/srs.ts`, a modified SM-2. A first accepted practice solve creates a card (due the next local day, with the ease the solve earned). Steps are 1 day, 3 days, then interval x ease; a failed review goes back to 1 day, ease -0.2 (floor 1.3) and counts a lapse. Quality (0 to 5) is derived from the solve (failed attempts, hints, time, the self-rating) or chosen with Again/Hard/Good/Easy. Solving a due problem again is its review, graded automatically in the judge-result transaction; the self-rating refines a card that has not been reviewed yet. The queue is capped per day (default 5, setting 1 to 30), counts reviews already done today, and puts the most overdue first, then the weakest. Snooze, pause ("never show again") and a seven-day outlook. Due dates are local calendar days (`due_on date`), so "due today" follows the profile time zone. Solves from before this phase get a card on the first visit.
+- **Retention signal (A2):** review quality per topic joins mastery at weight 0.10 (renormalised, like the other signals).
+- **Quizzes (C1):** `analytics-core/quiz.ts` grades single, multiple choice, true/false, fill-in and output-prediction questions. 48 questions in `content/quizzes` (OS, DBMS, networks, OOP). Modes: practice (feedback per answer), timed (clock on the server, answers hidden until the end, answers editable until time is up), topic drill, weak-area quiz (questions whose latest answer was wrong). The answer key never reaches the browser while a quiz runs. XP: 2 per question answered correctly for the first time ever, 30 per attempt at most, paid once on finish. Quiz accuracy feeds readiness "CS fundamentals" together with CS mock interviews (blended by confidence), and a quiz counts as activity for the day.
+- **Roadmaps (P3):** `analytics-core/roadmap.ts` (DAG validation, layers, node states, next node). Two roadmaps in `content/roadmaps` (`sde-dsa-core` with 11 topics mapped to the problem bank, `cs-fundamentals` measured by quiz accuracy). A node is locked until its prerequisites are cleared (default 60%), cleared at its unlock threshold and mastered at its master threshold (default 80%). The map is layered; each node shows its problem ladder (last one is the checkpoint), quiz link and why it is locked.
+- **Company tracks (P4):** `analytics-core/tracks.ts`. A track is a company pack seen as a track: process, topic heatmap, a curated problem list derived from the pack's topic weights and difficulty band (deterministic), checklist, pitfalls, readiness for that company (A4 with the pack as target), and a ready interview setup (`/interview/new?pack=`). Starting a track records it and builds the study plan around the company. Overlap analysis of two tracks is a plain set intersection, with what to add for the second one.
+- **Content pipeline:** `packages/content/src/learning.ts` validates and imports quizzes and roadmaps (`pnpm content:validate` checks answers against types and options, unique slugs, DAGs, known topics and problems, and thresholds; `content:import` upserts by slug).
+- **Dashboard:** the quest board shows reviews due and puts "Review N problems" first in "Do this next".
+- **Web:** `/reviews`, `/quizzes` and `/quizzes/[id]`, `/roadmaps` and `/roadmaps/[slug]`, `/tracks` and `/tracks/[slug]`; new navigation entries; `?pack=` pre-selects the company on `/interview/new` and `/plan`.
+- **Tests:** analytics-core 22 new (105), API 35 new (13 reviews, 11 quizzes, 5 roadmaps, 6 tracks; 485 total), content 5 new (40), web helpers 9 new (49), 8 e2e tests in `learning.spec.ts`.
+
+Decisions / gotchas:
+
+- Roadmaps are stored as one `roadmaps` row with the graph in `data` (nodes carry their prerequisites) instead of separate node and edge tables; the DAG is validated on import. Quiz sets, flashcards, `oa_*`, `sql_*` tables and `quiz_sets` are not built.
+- `srs_cards.due_on` is a local `date` rather than a timestamp, and `user_settings.review_cap` holds the daily cap.
+- "Latest answer" queries order by `answered_at` then `created_at`: tests pin the clock, so timestamps can tie.
+- In API tests the judge-result transaction uses the real clock (`new Date()`), so SRS tests use the real day for first solves and move the card's due date with SQL.
+- The 20 problems in the bank are all there is, so a roadmap ladder shows only problems that exist; the checkpoint is the last one present.
+- The Windows shell breaks on heredocs with quotes: write files with the editor tool.
+
+Deferred:
+
+- SQL practice runner, aptitude items and the OA simulator (C2), quiz sets and AI-graded short answers, flashcards (X6) and "wrong answer to flashcard", roadmaps and SRS feeding the study plan generator (plan reviews are still based on shaky solves), checkpoint quizzes and skip-assessment for roadmap nodes, role roadmaps beyond SDE and CS fundamentals, pattern-level reviews, XP for reviews, reminders and notifications, community-extendable track editing in the admin UI, 400 quiz questions (48 so far).

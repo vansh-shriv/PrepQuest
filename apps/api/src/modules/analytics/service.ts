@@ -140,6 +140,7 @@ export async function getTopics(
           speed: m.signals?.speed == null ? null : round2(m.signals.speed),
           independence: round2(m.signals?.independence ?? 0),
           interview: m.signals?.interview == null ? null : round2(m.signals.interview),
+          retention: m.signals?.retention == null ? null : round2(m.signals.retention),
         },
       }))
       .sort((a, b) => b.weakness - a.weakness || a.topic.localeCompare(b.topic)),
@@ -231,6 +232,23 @@ function sessionScore(l: Learner, types: string[], last = 5) {
   return { score: sum / w, confidence: clamp01(items.length / 3) };
 }
 
+/** Two pieces of evidence for one component, each trusted in proportion to its confidence. */
+function blend(
+  a: { score: number | null; confidence: number },
+  b: { score: number | null; confidence: number },
+): { score: number | null; confidence: number } {
+  if (a.score === null) return b;
+  if (b.score === null) return a;
+  const w = a.confidence + b.confidence;
+  if (w === 0) return { score: (a.score + b.score) / 2, confidence: 0 };
+  return {
+    score: (a.score * a.confidence + b.score * b.confidence) / w,
+    confidence: clamp01(
+      Math.max(a.confidence, b.confidence) + 0.25 * Math.min(a.confidence, b.confidence),
+    ),
+  };
+}
+
 export function readinessInputs(
   l: Learner,
   masteries: TopicMastery[],
@@ -294,7 +312,7 @@ export function readinessInputs(
     dsa_speed: speed,
     interview: sessionScore(l, ["dsa"]),
     communication,
-    cs: sessionScore(l, ["cs"]),
+    cs: blend(sessionScore(l, ["cs"]), l.quizSkill),
     project: sessionScore(l, ["project", "resume"]),
     aptitude: { score: null, confidence: 0 },
     design: sessionScore(l, ["hld", "lld"]),

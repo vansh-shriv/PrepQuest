@@ -1,0 +1,98 @@
+{
+  "slug": "sde-dsa-core",
+  "title": "Data structures and algorithms core",
+  "track": "sde",
+  "description": "The patterns behind most coding interviews, in an order where each step builds on the last.",
+  "version": 1,
+  "nodes": [
+    {
+      "id": "arrays",
+      "title": "Arrays",
+      "summary": "Index arithmetic, in-place edits, prefix sums and reading a problem for its real constraint. Almost everything else builds on these.",
+      "topic": "arrays",
+      "problems": ["move-zeroes", "merge-sorted-arrays", "product-except-self"],
+      "requires": []
+    },
+    {
+      "id": "strings",
+      "title": "Strings",
+      "summary": "Strings are arrays of characters with extra traps: immutability, encodings, case and punctuation. Practise scanning and comparing.",
+      "topic": "strings",
+      "problems": ["longest-common-prefix", "is-palindrome-alnum"],
+      "requires": []
+    },
+    {
+      "id": "hashing",
+      "title": "Hashing",
+      "summary": "Trade memory for time: remember what you have seen in a map or set to turn nested loops into one pass.",
+      "topic": "hashing",
+      "problems": ["contains-duplicate", "two-sum", "top-k-frequent"],
+      "requires": ["arrays"]
+    },
+    {
+      "id": "two-pointers",
+      "title": "Two pointers",
+      "summary": "Walk two indexes through a sequence, usually from both ends or at different speeds, to avoid checking every pair.",
+      "topic": "two-pointers",
+      "problems": ["move-zeroes", "three-sum", "trapping-rain-water"],
+      "requires": ["arrays"]
+    },
+    {
+      "id": "sorting",
+      "title": "Sorting and intervals",
+      "summary": "Sorting first often makes the rest of the problem easy. Learn what to sort by and what the order lets you assume.",
+      "topic": "sorting",
+      "problems": ["merge-sorted-arrays", "merge-intervals"],
+      "requires": ["arrays"]
+    },
+    {
+      "id": "binary-search",
+      "title": "Binary search",
+      "summary": "Halve the search space whenever you can answer a yes or no question about the middle. Mind the boundaries.",
+      "topic": "binary-search",
+      "problems": ["binary-search-position"],
+      "requires": ["sorting"]
+    },
+    {
+      "id": "stack",
+      "title": "Stacks",
+      "summary": "Last in, first out: matching brackets, undoing work and keeping a monotonic list of candidates.",
+      "topic": "stack",
+      "problems": ["valid-parentheses", "trapping-rain-water"],
+      "requires": ["arrays"]
+    },
+    {
+      "id": "sliding-window",
+      "title": "Sliding window",
+      "summary": "Keep a window over a sequence and grow or shrink it while maintaining a summary, so each element is handled once.",
+      "topic": "sliding-window",
+      "problems": ["longest-substring-no-repeat"],
+      "requires": ["hashing", "two-pointers", "strings"]
+    },
+    {
+      "id": "greedy",
+      "title": "Greedy choices",
+      "summary": "Take the locally best step and prove it is safe. Practise spotting when it works and when it does not.",
+      "topic": "greedy",
+      "problems": ["max-profit-single-trade", "max-subarray-sum"],
+      "requires": ["sorting"]
+    },
+    {
+      "id": "dynamic-programming",
+      "title": "Dynamic programming",
+      "summary": "Define the state, write the recurrence, then store sub-answers. Start top-down with memoisation, then tighten to a table.",
+      "topic": "dynamic-programming",
+      "problems": ["climbing-stairs", "coin-change-min", "edit-distance"],
+      "requires": ["greedy"],
+      "unlock_threshold": 0.55
+    },
+    {
+      "id": "graphs",
+      "title": "Graphs",
+      "summary": "Model the problem as nodes and edges, then explore with depth-first or breadth-first search while tracking what you have visited.",
+      "topic": "graphs",
+      "problems": ["number-of-islands"],
+      "requires": ["stack"]
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "slug": "cs-fundamentals",
+  "title": "Core CS fundamentals",
+  "track": "fundamentals",
+  "description": "The theory interviewers ask about after the coding round: operating systems, networks, databases and object-oriented design.",
+  "version": 1,
+  "nodes": [
+    {
+      "id": "oop",
+      "title": "Object-oriented design",
+      "summary": "Encapsulation, polymorphism, SOLID and the handful of design patterns that come up again and again.",
+      "quiz_subject": "oop",
+      "requires": []
+    },
+    {
+      "id": "os",
+      "title": "Operating systems",
+      "summary": "Processes and threads, scheduling, memory and paging, synchronisation and deadlocks.",
+      "quiz_subject": "os",
+      "requires": []
+    },
+    {
+      "id": "cn",
+      "title": "Computer networks",
+      "summary": "TCP and UDP, HTTP, DNS, TLS and how a request travels from browser to server. Builds on how the OS handles connections.",
+      "quiz_subject": "cn",
+      "requires": ["os"]
+    },
+    {
+      "id": "dbms",
+      "title": "Databases",
+      "summary": "Transactions and isolation, normalisation, indexing and the SQL concepts behind joins and grouping.",
+      "quiz_subject": "dbms",
+      "requires": []
+    }
+  ]
+}

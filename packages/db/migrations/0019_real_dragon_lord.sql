@@ -1,0 +1,1 @@
+ALTER TABLE "user_settings" ADD COLUMN "review_cap" smallint DEFAULT 5 NOT NULL;

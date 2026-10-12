@@ -3,6 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   importBank,
+  importLearning,
+  loadLearning,
   importFolder,
   importSheet,
   findContentRoot,
@@ -51,4 +53,10 @@ export async function seedContent(t: TestApp, slugs: readonly string[] = FIXTURE
 export async function seedBank(t: TestApp) {
   const bank = await loadBank(findContentRoot());
   return importBank(t.db, bank);
+}
+
+/** Imports the real quiz questions and roadmaps (48 questions, 2 roadmaps). Needs the problems for ladders. */
+export async function seedLearning(t: TestApp) {
+  const learning = await loadLearning(findContentRoot());
+  return importLearning(t.db, learning);
 }

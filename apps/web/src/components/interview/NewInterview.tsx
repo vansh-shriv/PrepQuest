@@ -104,6 +104,7 @@ export function NewInterview() {
     type: (INTERVIEW_TYPE_VALUES as readonly string[]).includes(params.get("type") ?? "")
       ? (params.get("type") as InterviewTypeValue)
       : "dsa",
+    packSlug: params.get("pack") ?? "",
   }));
   const [preview, setPreview] = useState<InterviewPlanPreviewDto | null>(null);
   const [previewError, setPreviewError] = useState<{ code: string; message: string } | null>(null);

@@ -120,6 +120,27 @@
       "when": 1791715224834,
       "tag": "0016_triggers_phase9",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1791841256985,
+      "tag": "0017_mature_risque",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791841263340,
+      "tag": "0018_triggers_phase10",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1791841525649,
+      "tag": "0019_real_dragon_lord",
+      "breakpoints": true
     }
   ]
 }

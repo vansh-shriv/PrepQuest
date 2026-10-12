@@ -60,6 +60,23 @@ export function QuestBoard() {
               </Link>
             </p>
           )}
+          <p className="m-0" data-testid="reviews-line">
+            {q.reviews.due > 0 ? (
+              <>
+                <strong>{q.reviews.due}</strong> review{q.reviews.due === 1 ? "" : "s"} due.{" "}
+                <Link href="/reviews" className="underline">
+                  Review now
+                </Link>
+              </>
+            ) : (
+              <>
+                No reviews due.{" "}
+                <Link href="/reviews" className="underline">
+                  See the week ahead
+                </Link>
+              </>
+            )}
+          </p>
           {q.hasPlan ? (
             <div className="grid gap-2">
               <strong>On today&apos;s plan</strong>

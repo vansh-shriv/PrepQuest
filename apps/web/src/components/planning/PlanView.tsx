@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import {
   Button,
@@ -467,8 +468,9 @@ function PlanSetup({
   const [hours, setHours] = useState(inputs ? inputs.defaultHours || 2 : 2);
   const [rest, setRest] = useState<string[]>(inputs?.restDays ?? []);
   const [mocks, setMocks] = useState(inputs?.mockPerWeek ?? 1);
+  const queryPack = useSearchParams().get("pack");
   const [packSlug, setPackSlug] = useState(
-    existing && existing.target !== "general" ? existing.target : "",
+    queryPack ?? (existing && existing.target !== "general" ? existing.target : ""),
   );
   const [packs, setPacks] = useState<CompanyPackDto[]>([]);
   useEffect(() => {

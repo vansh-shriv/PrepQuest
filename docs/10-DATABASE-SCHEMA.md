@@ -646,3 +646,7 @@ New tables: `question_bank` (slug, category cs/behavioral/hld/lld, topic, compet
 ## Phase 9 additions (as built)
 
 `study_plans` (one active per user, `version`, `inputs`, `phases`, `warnings`, `narrative_md`, `replanned_on`), `plan_tasks` (stable `key` unique per plan, `status` todo/done/skipped/moved, `locked`, `custom`, `why`, `phase`, `topic`), `plan_diffs` (per version change with a reason), `goal_templates`, `daily_goals` (`items`, `completed`, `rewarded`), `readiness_snapshots` (user, target, local day), `diagnostics` (the five problem slugs). `topic_mastery` is not stored: it is computed per request. Triggers in migration 0016.
+
+## Phase 10 additions (as built)
+
+`srs_cards` (`due_on date` in the learner's local day, `ease`, `interval_days`, `repetitions`, `lapses`, `suspended`, unique per user and problem), `srs_reviews` (`quality`, `source` auto or manual, `reviewed_on` for the daily cap), `quiz_questions` (slug from content, `type`, `options`, `answer`, `explanation_md`, `interview_line`), `quiz_attempts` (`mode`, ordered `question_ids`, `deadline_at`, `xp_awarded`), `quiz_attempt_answers`, `roadmaps` (graph in `data`), `user_tracks`, and `user_settings.review_cap`. Not built: `quiz_sets`, `aptitude_items`, `oa_*`, `sql_*`, `roadmap_nodes` and `roadmap_edges` (the graph is a JSON column). Triggers in migration 0018.

@@ -4,6 +4,7 @@ import { createDatabase } from "@prepquest/db";
 import { serverEnvSchema } from "@prepquest/shared";
 import { createObjectStore } from "@prepquest/storage";
 import { importBank, loadBank, validateBank } from "./bank.js";
+import { importLearning, loadLearning, validateLearning } from "./learning.js";
 import { buildTests, verifyTests } from "./build-tests.js";
 import { importProblem, importSheet, linkRelatedEditorials } from "./import.js";
 import { listProblemSlugs, loadProblem } from "./loader.js";
@@ -186,12 +187,17 @@ async function main() {
 
   const bank = await loadBank(root);
   issues.push(...bank.issues, ...validateBank(bank, taxonomy));
+  const learning = await loadLearning(root);
+  issues.push(
+    ...learning.issues,
+    ...validateLearning(learning, taxonomy, new Set(bundles.map((b) => b.bundle.meta.slug))),
+  );
 
   print(issues);
   const errors = issues.filter((i) => i.level === "error").length;
   const warnings = issues.length - errors;
   console.log(
-    `${bundles.length} problem(s), ${sheets.length} sheet(s), ${bank.questions.length} question(s), ${bank.packs.length} pack(s): ${errors} error(s), ${warnings} warning(s)`,
+    `${bundles.length} problem(s), ${sheets.length} sheet(s), ${bank.questions.length} question(s), ${bank.packs.length} pack(s), ${learning.quizzes.length} quiz question(s), ${learning.roadmaps.length} roadmap(s): ${errors} error(s), ${warnings} warning(s)`,
   );
   if (errors) {
     process.exitCode = 1;
@@ -229,6 +235,8 @@ async function main() {
     if (args.length === 0) {
       const b = await importBank(db, bank);
       console.log(`bank      ${b.questions} question(s), ${b.packs} pack(s)`);
+      const l = await importLearning(db, learning);
+      console.log(`learning  ${l.quizzes} quiz question(s), ${l.roadmaps} roadmap(s)`);
       for (const sheet of sheets) {
         const r = await importSheet(db, sheet);
         console.log(`sheet     ${r.slug} (${r.problems} problems)`);

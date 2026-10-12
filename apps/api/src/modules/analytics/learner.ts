@@ -5,8 +5,10 @@ import {
   localDay,
   solveTiming,
   topicMastery,
+  overallQuizSkill,
   type InterviewSignal,
   type ProblemEvidence,
+  type RetentionSignal,
   type SolveTiming,
   type TimedEvent,
   type TopicMastery,
@@ -14,6 +16,7 @@ import {
 } from "@prepquest/analytics-core";
 import type { PackStyle } from "@prepquest/interview-core";
 import { loadEvidence, type EvidenceRow } from "../progress/service.js";
+import { quizSkills } from "../quizzes/service.js";
 
 // Everything the analytics, readiness and planning features need to know about one learner, loaded once.
 
@@ -42,6 +45,10 @@ export interface Learner {
   evidence: ProblemEvidence[];
   interviews: InterviewFact[];
   interviewSignal: InterviewSignal;
+  /** How well each topic's solved problems are remembered in spaced-repetition reviews. */
+  retentionSignal: RetentionSignal;
+  /** Quiz accuracy across subjects (0 to 1), or null before any quiz was finished. */
+  quizSkill: { score: number | null; confidence: number };
   /** Days with any practice in the last 14, ending today. */
   activeDays14: number;
   firstActivityDay: string | null;
@@ -194,6 +201,33 @@ export async function loadLearner(db: Database, userId: string, now: Date): Prom
   const interviewSignal: InterviewSignal = {};
   for (const [t, a] of acc) interviewSignal[t] = { score: a.w > 0 ? a.s / a.w : 0, n: a.n };
 
+  // ---- spaced-repetition reviews: remembered topics (recency weighted)
+  const reviewRows = (
+    await db.execute(sql`
+      SELECT t.slug AS topic, r.quality, r.reviewed_at
+      FROM srs_reviews r
+      JOIN srs_cards c ON c.id = r.card_id
+      JOIN problem_tags pt ON pt.problem_id = c.problem_id
+      JOIN tags t ON t.id = pt.tag_id AND t.kind = 'topic'
+      WHERE r.user_id = ${userId}`)
+  ).rows as unknown as Array<{ topic: string; quality: number; reviewed_at: Date }>;
+  const retAcc = new Map<string, { w: number; s: number; n: number }>();
+  for (const r of reviewRows) {
+    const w = Math.pow(
+      0.5,
+      Math.max(0, now.getTime() - new Date(r.reviewed_at).getTime()) / 86_400_000 / 30,
+    );
+    const a = retAcc.get(r.topic) ?? { w: 0, s: 0, n: 0 };
+    a.w += w;
+    a.s += w * (Number(r.quality) / 5);
+    a.n += 1;
+    retAcc.set(r.topic, a);
+  }
+  const retentionSignal: RetentionSignal = {};
+  for (const [t, a] of retAcc) retentionSignal[t] = { score: a.w > 0 ? a.s / a.w : 0, n: a.n };
+
+  const quizSkill = overallQuizSkill(await quizSkills(db, userId, now));
+
   // ---- consistency
   const from = addDays(today, -13);
   const act = (
@@ -219,13 +253,22 @@ export async function loadLearner(db: Database, userId: string, now: Date): Prom
     evidence,
     interviews,
     interviewSignal,
+    retentionSignal,
+    quizSkill,
     activeDays14: act.active,
     firstActivityDay: act.first_day,
   };
 }
 
 export function masteriesFor(l: Learner, importance: (topic: string) => number): TopicMastery[] {
-  return topicMastery(l.evidence, l.topicList, l.now, importance, l.interviewSignal);
+  return topicMastery(
+    l.evidence,
+    l.topicList,
+    l.now,
+    importance,
+    l.interviewSignal,
+    l.retentionSignal,
+  );
 }
 
 export const topicName = (l: Learner) => (topic: string) => l.names.get(topic) ?? titleCase(topic);

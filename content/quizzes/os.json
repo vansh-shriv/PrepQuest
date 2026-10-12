@@ -1,0 +1,182 @@
+{
+  "subject": "os",
+  "questions": [
+    {
+      "slug": "os-process-thread-memory",
+      "topic": "processes",
+      "difficulty": 1,
+      "type": "single",
+      "body": "Which resource is shared by all threads of one process?",
+      "options": [
+        { "id": "a", "text": "The stack" },
+        { "id": "b", "text": "The heap and global data" },
+        { "id": "c", "text": "The CPU registers" },
+        { "id": "d", "text": "The program counter" }
+      ],
+      "answer": "b",
+      "explanation": "Threads of a process share its address space, so the heap, globals, code and open files are common. Each thread keeps its own stack, registers and program counter.",
+      "interview_line": "Threads share memory, so they are cheap to coordinate but a bug in one can corrupt the others.",
+      "tags": ["concurrency"]
+    },
+    {
+      "slug": "os-context-switch-cost",
+      "topic": "processes",
+      "difficulty": 2,
+      "type": "multi",
+      "body": "Which of these are part of the cost of a process context switch? Select all that apply.",
+      "options": [
+        { "id": "a", "text": "Saving and restoring registers" },
+        { "id": "b", "text": "Switching the address space (page tables, TLB effects)" },
+        { "id": "c", "text": "Recompiling the program" },
+        { "id": "d", "text": "Cold CPU caches after the switch" }
+      ],
+      "answer": ["a", "b", "d"],
+      "explanation": "A switch saves and restores CPU state, changes the address space and usually leaves the caches and TLB cold for the new process. Nothing is recompiled.",
+      "interview_line": "A context switch is pure overhead, so schedulers try not to switch more than they need to.",
+      "tags": ["scheduling"]
+    },
+    {
+      "slug": "os-deadlock-conditions",
+      "topic": "deadlocks",
+      "difficulty": 2,
+      "type": "single",
+      "body": "Which of these is NOT one of the four necessary conditions for a deadlock?",
+      "options": [
+        { "id": "a", "text": "Mutual exclusion" },
+        { "id": "b", "text": "Hold and wait" },
+        { "id": "c", "text": "Preemption" },
+        { "id": "d", "text": "Circular wait" }
+      ],
+      "answer": "c",
+      "explanation": "The conditions are mutual exclusion, hold and wait, no preemption and circular wait. Allowing preemption of resources breaks one of them, which is why it is a prevention strategy.",
+      "interview_line": "To prevent deadlock, break any one of the four conditions, most often circular wait by ordering locks.",
+      "tags": ["concurrency"]
+    },
+    {
+      "slug": "os-lock-ordering",
+      "topic": "deadlocks",
+      "difficulty": 2,
+      "type": "tf",
+      "body": "Always acquiring locks in one fixed global order prevents circular wait, and so prevents deadlock between those locks.",
+      "answer": true,
+      "explanation": "If every thread takes locks in the same order, a cycle of threads each waiting for a lock held by the next cannot form.",
+      "interview_line": "A global lock order is the simplest deadlock prevention in real code.",
+      "tags": ["concurrency"]
+    },
+    {
+      "slug": "os-round-robin-quantum",
+      "topic": "scheduling",
+      "difficulty": 2,
+      "type": "single",
+      "body": "In round-robin scheduling, what happens as the time quantum grows very large?",
+      "options": [
+        { "id": "a", "text": "It behaves like first-come, first-served" },
+        { "id": "b", "text": "It behaves like shortest job first" },
+        { "id": "c", "text": "Every process starves" },
+        { "id": "d", "text": "Context switches increase" }
+      ],
+      "answer": "a",
+      "explanation": "With a quantum longer than any burst, a process runs to completion before the next gets the CPU, which is first-come, first-served. A tiny quantum instead drowns the system in context switches.",
+      "interview_line": "Quantum size trades responsiveness against switching overhead.",
+      "tags": ["scheduling"]
+    },
+    {
+      "slug": "os-sjf-starvation",
+      "topic": "scheduling",
+      "difficulty": 3,
+      "type": "blank",
+      "body": "Shortest-job-first scheduling can leave long jobs waiting forever. This problem is called ____.",
+      "answer": ["starvation", "indefinite blocking", "indefinite postponement"],
+      "explanation": "If short jobs keep arriving, a long job may never be picked. Aging, which raises a waiting job's priority over time, is the usual fix.",
+      "interview_line": "Any priority scheme needs aging, otherwise low priority work can starve.",
+      "tags": ["scheduling"]
+    },
+    {
+      "slug": "os-paging-fragmentation",
+      "topic": "memory",
+      "difficulty": 2,
+      "type": "single",
+      "body": "Which kind of fragmentation does paging with fixed-size pages avoid, and which can it still suffer from?",
+      "options": [
+        { "id": "a", "text": "Avoids internal, suffers external" },
+        { "id": "b", "text": "Avoids external, suffers internal" },
+        { "id": "c", "text": "Avoids both" },
+        { "id": "d", "text": "Suffers from both" }
+      ],
+      "answer": "b",
+      "explanation": "Any free frame fits any page, so there is no external fragmentation. The last page of a process is usually only partly used, which is internal fragmentation.",
+      "interview_line": "Paging trades a little wasted space inside the last page for no external fragmentation.",
+      "tags": ["paging"]
+    },
+    {
+      "slug": "os-page-fault",
+      "topic": "memory",
+      "difficulty": 2,
+      "type": "single",
+      "body": "A process touches a page that is valid but not currently in RAM. What happens?",
+      "options": [
+        { "id": "a", "text": "The process is killed with a segmentation fault" },
+        { "id": "b", "text": "A page fault occurs and the OS loads the page from disk" },
+        { "id": "c", "text": "The CPU silently returns zeros" },
+        { "id": "d", "text": "The TLB loads it with no OS involvement" }
+      ],
+      "answer": "b",
+      "explanation": "The MMU raises a page fault, the kernel finds the page on disk, brings it into a free frame, updates the page table and restarts the instruction. An invalid access is what causes a segmentation fault.",
+      "interview_line": "A page fault is a normal event for a valid page, and an exception for an invalid one.",
+      "tags": ["paging"]
+    },
+    {
+      "slug": "os-lru-output",
+      "topic": "memory",
+      "difficulty": 3,
+      "type": "blank",
+      "body": "With 3 frames and LRU replacement, how many page faults occur for the reference string 1 2 3 1 4 2? (Give a number.)",
+      "answer": ["5"],
+      "explanation": "1, 2 and 3 fault (3). The second 1 hits. 4 faults and evicts 2 (the least recently used). Then 2 faults again. That is 5 faults in total.",
+      "interview_line": "LRU keeps recently used pages, so it approximates the optimal choice well.",
+      "tags": ["paging"]
+    },
+    {
+      "slug": "os-semaphore-mutex",
+      "topic": "synchronization",
+      "difficulty": 2,
+      "type": "single",
+      "body": "What is the key difference between a mutex and a binary semaphore?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A mutex has an owner that must release it; a semaphore has no owner"
+        },
+        { "id": "b", "text": "A mutex counts, a semaphore does not" },
+        { "id": "c", "text": "A semaphore only works across machines" },
+        { "id": "d", "text": "There is no difference at all" }
+      ],
+      "answer": "a",
+      "explanation": "A mutex is owned by the thread that locked it and only that thread may unlock it. A semaphore is a signalling counter that any thread can post, so it suits signalling between threads.",
+      "interview_line": "Use a mutex to protect data and a semaphore to signal events or count resources.",
+      "tags": ["concurrency"]
+    },
+    {
+      "slug": "os-race-condition",
+      "topic": "synchronization",
+      "difficulty": 1,
+      "type": "tf",
+      "body": "A race condition happens when the result of a program depends on the unpredictable timing of threads that access shared data without proper synchronization.",
+      "answer": true,
+      "explanation": "That is the definition: unsynchronised access to shared state, where the outcome depends on scheduling order.",
+      "interview_line": "A race is a missing happens-before relationship between accesses to shared data.",
+      "tags": ["concurrency"]
+    },
+    {
+      "slug": "os-fork-output",
+      "topic": "processes",
+      "difficulty": 3,
+      "type": "output",
+      "body": "How many lines does this print, in total?\n\n```c\nfork();\nfork();\nprintf(\"x\\n\");\n```\nGive the total number of lines.",
+      "answer": ["4"],
+      "explanation": "The first fork makes two processes, and each runs the second fork, giving four processes. Each prints one line, so 4 lines.",
+      "interview_line": "n successive forks produce 2 to the power n processes.",
+      "tags": ["processes"]
+    }
+  ]
+}

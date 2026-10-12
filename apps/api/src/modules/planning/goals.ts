@@ -20,11 +20,13 @@ import {
   type GoalsTodayResponse,
   type GoalTemplateInput,
   type GoalTemplateResponse,
+  type NextActionDto,
   type QuestBoardResponse,
 } from "@prepquest/shared";
 import type { AiContext } from "../ai-context.js";
 import { getReadiness, nextActions } from "../analytics/service.js";
 import { importanceFor, loadLearner, masteriesFor } from "../analytics/learner.js";
+import { getReviews } from "../reviews/service.js";
 import { todaysTasks } from "./plan-service.js";
 
 const DEFAULT_PRESET: GoalPreset = "standard";
@@ -224,14 +226,23 @@ export async function questBoard(ai: AiContext, userId: string): Promise<QuestBo
   const l = await loadLearner(ai.db, userId, ai.now());
   const masteries = masteriesFor(l, importanceFor(null));
   const open = plan.tasks.find((t) => t.status === "todo");
-  const next = open
-    ? {
-        kind: (open.kind === "mock" ? "interview" : "problem") as "interview" | "problem",
-        title: open.title,
-        href: open.href ?? "/plan",
-        why: open.why,
-      }
-    : (nextActions(l, masteries, 1)[0] ?? null);
+  const rev = await getReviews(ai.db, userId, ai.now());
+  const next: NextActionDto | null =
+    rev.due.length > 0
+      ? {
+          kind: "review",
+          title: `Review ${rev.due.length} problem${rev.due.length === 1 ? "" : "s"}`,
+          href: "/reviews",
+          why: "Spaced reviews keep what you solved from fading. It takes a few minutes.",
+        }
+      : open
+        ? {
+            kind: (open.kind === "mock" ? "interview" : "problem") as "interview" | "problem",
+            title: open.title,
+            href: open.href ?? "/plan",
+            why: open.why,
+          }
+        : (nextActions(l, masteries, 1)[0] ?? null);
   return {
     goals,
     tasks: plan.tasks,
@@ -242,6 +253,7 @@ export async function questBoard(ai: AiContext, userId: string): Promise<QuestBo
       label: readiness.label,
       needsDiagnostic: readiness.needsDiagnostic,
     },
+    reviews: { due: rev.due.length, waiting: rev.waiting, cap: rev.cap, doneToday: rev.doneToday },
     next,
   };
 }

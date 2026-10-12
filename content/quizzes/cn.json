@@ -1,0 +1,200 @@
+{
+  "subject": "cn",
+  "questions": [
+    {
+      "slug": "cn-tcp-vs-udp",
+      "topic": "transport",
+      "difficulty": 1,
+      "type": "single",
+      "body": "Which statement correctly contrasts TCP with UDP?",
+      "options": [
+        {
+          "id": "a",
+          "text": "TCP is connection-oriented and reliable; UDP is connectionless with no delivery guarantee"
+        },
+        { "id": "b", "text": "TCP is faster because it skips acknowledgements" },
+        { "id": "c", "text": "UDP guarantees ordered delivery" },
+        { "id": "d", "text": "Both retransmit lost packets" }
+      ],
+      "answer": "a",
+      "explanation": "TCP provides ordered, reliable delivery with flow and congestion control. UDP just sends datagrams, which is why it suits low-latency uses like DNS, games and streaming.",
+      "interview_line": "Pick TCP when you need correctness and UDP when you need low latency and can tolerate loss.",
+      "tags": ["tcp", "udp"]
+    },
+    {
+      "slug": "cn-three-way-handshake",
+      "topic": "transport",
+      "difficulty": 1,
+      "type": "single",
+      "body": "What is the correct order of the TCP three-way handshake?",
+      "options": [
+        { "id": "a", "text": "SYN, SYN-ACK, ACK" },
+        { "id": "b", "text": "SYN, ACK, SYN-ACK" },
+        { "id": "c", "text": "ACK, SYN, SYN-ACK" },
+        { "id": "d", "text": "SYN-ACK, SYN, ACK" }
+      ],
+      "answer": "a",
+      "explanation": "The client sends SYN, the server answers SYN-ACK and the client confirms with ACK. Both sides have then agreed initial sequence numbers.",
+      "interview_line": "The handshake costs one round trip before data can flow, which is why connection reuse matters.",
+      "tags": ["tcp"]
+    },
+    {
+      "slug": "cn-osi-layers",
+      "topic": "models",
+      "difficulty": 1,
+      "type": "single",
+      "body": "At which OSI layer does a router make its forwarding decisions?",
+      "options": [
+        { "id": "a", "text": "Layer 2, data link" },
+        { "id": "b", "text": "Layer 3, network" },
+        { "id": "c", "text": "Layer 4, transport" },
+        { "id": "d", "text": "Layer 7, application" }
+      ],
+      "answer": "b",
+      "explanation": "Routers forward IP packets based on destination IP addresses, which is the network layer. Switches work with MAC addresses at the data link layer.",
+      "interview_line": "Switches forward frames by MAC address, routers forward packets by IP address.",
+      "tags": ["osi"]
+    },
+    {
+      "slug": "cn-http-methods-idempotent",
+      "topic": "application",
+      "difficulty": 2,
+      "type": "multi",
+      "body": "Which HTTP methods are defined as idempotent? Select all that apply.",
+      "options": [
+        { "id": "a", "text": "GET" },
+        { "id": "b", "text": "PUT" },
+        { "id": "c", "text": "POST" },
+        { "id": "d", "text": "DELETE" }
+      ],
+      "answer": ["a", "b", "d"],
+      "explanation": "Repeating GET, PUT or DELETE leaves the server in the same state as doing it once. POST is not idempotent: repeating it can create several resources.",
+      "interview_line": "Idempotency is what makes a retry safe, so design write APIs with idempotency keys when you cannot use PUT.",
+      "tags": ["http"]
+    },
+    {
+      "slug": "cn-status-codes",
+      "topic": "application",
+      "difficulty": 1,
+      "type": "blank",
+      "body": "The HTTP status code returned when a requested resource does not exist is ____. (Give the number.)",
+      "answer": ["404"],
+      "explanation": "404 Not Found means the server cannot find the resource. A 403 means it exists but access is forbidden, and a 401 means authentication is required.",
+      "interview_line": "Use 4xx for client mistakes and 5xx for server faults.",
+      "tags": ["http"]
+    },
+    {
+      "slug": "cn-dns-resolution",
+      "topic": "application",
+      "difficulty": 2,
+      "type": "single",
+      "body": "What does a recursive DNS resolver do when it has no cached answer for a name?",
+      "options": [
+        {
+          "id": "a",
+          "text": "It queries root, then TLD, then authoritative servers and returns the final answer"
+        },
+        { "id": "b", "text": "It asks the client to try again later" },
+        { "id": "c", "text": "It broadcasts the question to the whole subnet" },
+        { "id": "d", "text": "It reads the answer from the client's hosts file" }
+      ],
+      "answer": "a",
+      "explanation": "The resolver walks the hierarchy on behalf of the client and caches the result according to the record's TTL.",
+      "interview_line": "DNS is a cached, hierarchical lookup, so TTLs decide how fast a change spreads.",
+      "tags": ["dns"]
+    },
+    {
+      "slug": "cn-https-tls",
+      "topic": "security",
+      "difficulty": 2,
+      "type": "single",
+      "body": "What does the TLS handshake in HTTPS establish before application data is sent?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The server's identity (via its certificate) and shared session keys"
+        },
+        { "id": "b", "text": "The client's IP address" },
+        { "id": "c", "text": "A permanent connection that never needs closing" },
+        { "id": "d", "text": "A DNS record for the server" }
+      ],
+      "answer": "a",
+      "explanation": "The client verifies the server's certificate chain and both sides derive symmetric keys. After that the data is encrypted and integrity-protected.",
+      "interview_line": "Asymmetric crypto sets up the session, symmetric crypto carries the data.",
+      "tags": ["tls"]
+    },
+    {
+      "slug": "cn-congestion-control",
+      "topic": "transport",
+      "difficulty": 3,
+      "type": "single",
+      "body": "In TCP slow start, how does the congestion window grow until it reaches the threshold?",
+      "options": [
+        { "id": "a", "text": "It roughly doubles every round trip" },
+        { "id": "b", "text": "It grows by one segment per round trip" },
+        { "id": "c", "text": "It stays fixed" },
+        { "id": "d", "text": "It halves every round trip" }
+      ],
+      "answer": "a",
+      "explanation": "Each acknowledged segment increases the window by one segment, which doubles it per round trip. After the threshold TCP grows it linearly, and on loss it cuts the window back.",
+      "interview_line": "TCP probes for bandwidth exponentially, then carefully, and backs off on loss.",
+      "tags": ["tcp", "congestion"]
+    },
+    {
+      "slug": "cn-subnet-hosts",
+      "topic": "network",
+      "difficulty": 3,
+      "type": "blank",
+      "body": "How many usable host addresses does a /28 IPv4 subnet have? (Give a number.)",
+      "answer": ["14"],
+      "explanation": "A /28 has 4 host bits, so 16 addresses. The network address and the broadcast address are not usable, leaving 14.",
+      "interview_line": "Usable hosts are two to the power of host bits, minus two.",
+      "tags": ["ip"]
+    },
+    {
+      "slug": "cn-arp",
+      "topic": "network",
+      "difficulty": 2,
+      "type": "single",
+      "body": "What does ARP do?",
+      "options": [
+        { "id": "a", "text": "Maps an IP address to a MAC address on the local network" },
+        { "id": "b", "text": "Maps a domain name to an IP address" },
+        { "id": "c", "text": "Encrypts traffic between two hosts" },
+        { "id": "d", "text": "Assigns IP addresses automatically" }
+      ],
+      "answer": "a",
+      "explanation": "A host broadcasts \"who has this IP?\" and the owner replies with its MAC address, which is cached. DNS maps names to IPs and DHCP assigns addresses.",
+      "interview_line": "ARP bridges the IP layer and the link layer on one network.",
+      "tags": ["arp"]
+    },
+    {
+      "slug": "cn-nat",
+      "topic": "network",
+      "difficulty": 2,
+      "type": "tf",
+      "body": "NAT lets many devices on a private network share one public IP address by rewriting addresses and ports.",
+      "answer": true,
+      "explanation": "The NAT device keeps a table mapping each internal address and port to an external port, and rewrites packets in both directions.",
+      "interview_line": "NAT postponed IPv4 exhaustion but breaks true end-to-end connectivity.",
+      "tags": ["nat"]
+    },
+    {
+      "slug": "cn-load-balancer-layer",
+      "topic": "application",
+      "difficulty": 3,
+      "type": "single",
+      "body": "A load balancer that routes requests by URL path or HTTP header is working at which kind of layer?",
+      "options": [
+        { "id": "a", "text": "Layer 7, application" },
+        { "id": "b", "text": "Layer 4, transport" },
+        { "id": "c", "text": "Layer 2, data link" },
+        { "id": "d", "text": "Layer 1, physical" }
+      ],
+      "answer": "a",
+      "explanation": "Reading paths and headers needs the HTTP request, so it is application-layer (L7). An L4 balancer only sees IPs and ports, which makes it faster but less flexible.",
+      "interview_line": "L4 balancing is cheap and fast; L7 balancing is smarter and costs more per request.",
+      "tags": ["load-balancing"]
+    }
+  ]
+}

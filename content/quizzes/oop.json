@@ -1,0 +1,194 @@
+{
+  "subject": "oop",
+  "questions": [
+    {
+      "slug": "oop-four-pillars",
+      "topic": "principles",
+      "difficulty": 1,
+      "type": "multi",
+      "body": "Which of these are the classic pillars of object-oriented programming? Select all that apply.",
+      "options": [
+        { "id": "a", "text": "Encapsulation" },
+        { "id": "b", "text": "Inheritance" },
+        { "id": "c", "text": "Polymorphism" },
+        { "id": "d", "text": "Compilation" }
+      ],
+      "answer": ["a", "b", "c"],
+      "explanation": "Encapsulation, inheritance, polymorphism and (usually) abstraction are the pillars. Compilation is a build step, not a design principle.",
+      "interview_line": "Tie each pillar to a concrete example from your own code, not just the definition.",
+      "tags": ["basics"]
+    },
+    {
+      "slug": "oop-overload-override",
+      "topic": "polymorphism",
+      "difficulty": 2,
+      "type": "single",
+      "body": "What is the difference between overloading and overriding a method?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Overloading uses the same name with different parameters; overriding replaces a parent's method in a subclass"
+        },
+        { "id": "b", "text": "Overloading happens at runtime, overriding at compile time" },
+        { "id": "c", "text": "They are two names for the same thing" },
+        { "id": "d", "text": "Overriding changes the parameter list" }
+      ],
+      "answer": "a",
+      "explanation": "Overloading is chosen at compile time by the argument types. Overriding is resolved at runtime by the object's actual class, which is dynamic dispatch.",
+      "interview_line": "Overloading is compile-time polymorphism and overriding is runtime polymorphism.",
+      "tags": ["polymorphism"]
+    },
+    {
+      "slug": "oop-abstract-vs-interface",
+      "topic": "abstraction",
+      "difficulty": 2,
+      "type": "single",
+      "body": "When is an interface a better choice than an abstract class?",
+      "options": [
+        {
+          "id": "a",
+          "text": "When unrelated classes need to share a capability, since a class can implement many interfaces"
+        },
+        { "id": "b", "text": "When you want to share mutable state and constructor logic" },
+        { "id": "c", "text": "When you want to forbid any subclass" },
+        { "id": "d", "text": "Never, they are interchangeable" }
+      ],
+      "answer": "a",
+      "explanation": "Interfaces describe a contract and a class can implement several. An abstract class suits closely related types that share state or partial implementation.",
+      "interview_line": "Prefer interfaces for contracts and abstract classes for shared implementation.",
+      "tags": ["abstraction"]
+    },
+    {
+      "slug": "oop-solid-s",
+      "topic": "solid",
+      "difficulty": 2,
+      "type": "single",
+      "body": "A class that parses a file, validates it and also sends emails is mostly breaking which SOLID principle?",
+      "options": [
+        { "id": "a", "text": "Single Responsibility" },
+        { "id": "b", "text": "Open/Closed" },
+        { "id": "c", "text": "Liskov Substitution" },
+        { "id": "d", "text": "Interface Segregation" }
+      ],
+      "answer": "a",
+      "explanation": "A class should have one reason to change. Parsing, validation and notification change for different reasons and belong in separate classes.",
+      "interview_line": "If you cannot describe a class in one sentence without \"and\", split it.",
+      "tags": ["solid"]
+    },
+    {
+      "slug": "oop-liskov",
+      "topic": "solid",
+      "difficulty": 3,
+      "type": "single",
+      "body": "A Square class extends Rectangle, but setting its width also changes its height, so code that expects a Rectangle gives wrong results. Which principle does this violate?",
+      "options": [
+        { "id": "a", "text": "Liskov Substitution" },
+        { "id": "b", "text": "Dependency Inversion" },
+        { "id": "c", "text": "Single Responsibility" },
+        { "id": "d", "text": "Open/Closed" }
+      ],
+      "answer": "a",
+      "explanation": "A subtype must be usable anywhere its parent is without surprising the caller. The Square changes behaviour callers rely on, so it is not a true substitute.",
+      "interview_line": "Inherit for behaviour you can substitute, not just because the nouns are related.",
+      "tags": ["solid"]
+    },
+    {
+      "slug": "oop-composition",
+      "topic": "design",
+      "difficulty": 2,
+      "type": "tf",
+      "body": "\"Favour composition over inheritance\" means building behaviour by combining objects rather than by deep class hierarchies, which keeps code more flexible.",
+      "answer": true,
+      "explanation": "Composition lets you swap parts at runtime and avoids the tight coupling and fragile base class problems of deep inheritance trees.",
+      "interview_line": "Inheritance is a very strong coupling; composition is usually the lighter tool.",
+      "tags": ["design"]
+    },
+    {
+      "slug": "oop-singleton",
+      "topic": "patterns",
+      "difficulty": 2,
+      "type": "single",
+      "body": "Which design pattern ensures a class has exactly one instance and a global access point?",
+      "options": [
+        { "id": "a", "text": "Singleton" },
+        { "id": "b", "text": "Factory" },
+        { "id": "c", "text": "Observer" },
+        { "id": "d", "text": "Decorator" }
+      ],
+      "answer": "a",
+      "explanation": "Singleton restricts instantiation to one object. It is easy to overuse because it hides dependencies and makes testing harder.",
+      "interview_line": "Mention the downside too: global state and hard-to-test code.",
+      "tags": ["patterns"]
+    },
+    {
+      "slug": "oop-observer",
+      "topic": "patterns",
+      "difficulty": 2,
+      "type": "single",
+      "body": "A UI that must refresh whenever a model changes, without the model knowing about the UI, is a use case for which pattern?",
+      "options": [
+        { "id": "a", "text": "Observer" },
+        { "id": "b", "text": "Singleton" },
+        { "id": "c", "text": "Adapter" },
+        { "id": "d", "text": "Builder" }
+      ],
+      "answer": "a",
+      "explanation": "In Observer, subjects keep a list of subscribers and notify them of changes, so the model stays decoupled from its views.",
+      "interview_line": "Observer is the idea behind event listeners and reactive streams.",
+      "tags": ["patterns"]
+    },
+    {
+      "slug": "oop-factory-why",
+      "topic": "patterns",
+      "difficulty": 3,
+      "type": "blank",
+      "body": "The ____ pattern hides which concrete class is created behind a method, so callers depend only on an interface.",
+      "answer": ["factory", "factory method", "abstract factory"],
+      "explanation": "A factory moves object creation out of the caller. New product types can then be added without changing the code that uses them.",
+      "interview_line": "A factory makes the caller depend on an interface instead of a constructor.",
+      "tags": ["patterns"]
+    },
+    {
+      "slug": "oop-static-dispatch-output",
+      "topic": "polymorphism",
+      "difficulty": 3,
+      "type": "output",
+      "body": "What does this print?\n\n```python\nclass A:\n    def hi(self):\n        return \"A\"\nclass B(A):\n    def hi(self):\n        return \"B\"\nx = B()\nprint(x.hi(), A.hi(x))\n```",
+      "answer": ["B A"],
+      "explanation": "x.hi() uses B's override and prints B. A.hi(x) calls A's method explicitly on the same object, so it prints A.",
+      "interview_line": "Dynamic dispatch picks the method from the object's class, unless you name the class explicitly.",
+      "tags": ["python"]
+    },
+    {
+      "slug": "oop-encapsulation-why",
+      "topic": "principles",
+      "difficulty": 1,
+      "type": "single",
+      "body": "What is the main benefit of encapsulation?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Internal details can change without breaking the code that uses the class"
+        },
+        { "id": "b", "text": "It makes programs run faster" },
+        { "id": "c", "text": "It removes the need for constructors" },
+        { "id": "d", "text": "It allows multiple inheritance" }
+      ],
+      "answer": "a",
+      "explanation": "By hiding state behind a small public interface, a class can change its implementation while its callers stay untouched.",
+      "interview_line": "Encapsulation is about protecting invariants, not just making fields private.",
+      "tags": ["basics"]
+    },
+    {
+      "slug": "oop-diamond",
+      "topic": "inheritance",
+      "difficulty": 3,
+      "type": "tf",
+      "body": "The \"diamond problem\" arises when a class inherits from two classes that both inherit from a common base, making it ambiguous which inherited member to use.",
+      "answer": true,
+      "explanation": "Languages handle it differently: C++ uses virtual inheritance, Python orders parents with C3 linearisation, and Java forbids multiple class inheritance but allows interface defaults with explicit resolution.",
+      "interview_line": "Know how your language resolves the diamond, since that is what the interviewer will ask next.",
+      "tags": ["inheritance"]
+    }
+  ]
+}

@@ -243,3 +243,9 @@ Admin v0 now has Hints and Editorial tabs next to Statement, Starters and Tests;
 ## Question bank and company packs (Phase 8)
 
 `content/questions/{cs,behavioral,design}.json` and `content/company-packs/*.json` are the source of truth for non-coding interview content. `pnpm content:validate` checks unique slugs, known topics and competencies, pack weights summing to 1, and warns when a pack was last reviewed more than six months ago; `pnpm content:import --publish` loads them into `question_bank` and `company_packs`. Every pack must carry the disclaimer that it is a practice profile inspired by public patterns, not an official process. Reference answers are interviewer-only and never shown before a session ends.
+
+## Quizzes and roadmaps (Phase 10, as built)
+
+- `content/quizzes/<subject>.json`: `{subject, questions[]}` with `slug`, `topic`, `difficulty` (1 to 5), `type` (single, multi, tf, blank, output), `body` (markdown), `options` (ids a to f, choice types only), `answer` (an option id, a list of ids, a boolean, or a list of accepted answers), `explanation`, optional `interview_line`, `tags`. Subjects: os, dbms, cn, oop, sql, embedded, ml.
+- `content/roadmaps/<slug>.json`: `{slug, title, track, description, version, nodes[]}`. A node has `id`, `title`, `summary`, one of `topic`, `quiz_subject` or a `problems` ladder (easiest first; the last is the checkpoint), `requires` (node ids), optional `unlock_threshold` and `master_threshold`, and `resources`.
+- `pnpm content:validate` checks answers against types and options, duplicate slugs, the roadmap DAG, topics, quiz subjects, problem slugs and thresholds. `pnpm content:import --publish` upserts both by slug.

@@ -9,6 +9,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  smallint,
   text,
   timestamp,
   unique,
@@ -99,6 +100,8 @@ export const userSettings = pgTable(
     notifications: jsonb("notifications").$type<Record<string, unknown>>().notNull().default({}),
     quietHours: jsonb("quiet_hours").$type<Record<string, unknown>>(),
     personalizedCallbacks: boolean("personalized_callbacks").notNull().default(true), // X5
+    /** Most spaced-repetition reviews asked per day (D6). */
+    reviewCap: smallint("review_cap").notNull().default(5),
     ...timestamps,
   },
   (t) => [

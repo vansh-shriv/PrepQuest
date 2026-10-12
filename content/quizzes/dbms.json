@@ -1,0 +1,197 @@
+{
+  "subject": "dbms",
+  "questions": [
+    {
+      "slug": "dbms-acid-meaning",
+      "topic": "transactions",
+      "difficulty": 1,
+      "type": "single",
+      "body": "In ACID, what does the \"I\" for isolation guarantee?",
+      "options": [
+        { "id": "a", "text": "Concurrent transactions do not see each other's partial work" },
+        { "id": "b", "text": "Committed data survives a crash" },
+        { "id": "c", "text": "A transaction either fully happens or not at all" },
+        { "id": "d", "text": "Every table has an index" }
+      ],
+      "answer": "a",
+      "explanation": "Isolation makes concurrent transactions behave as if they ran one after another, to the degree of the chosen isolation level. Durability is about surviving crashes and atomicity about all-or-nothing.",
+      "interview_line": "Isolation levels are a dial between correctness and concurrency.",
+      "tags": ["acid"]
+    },
+    {
+      "slug": "dbms-atomicity-durability",
+      "topic": "transactions",
+      "difficulty": 2,
+      "type": "multi",
+      "body": "Which mechanisms are used to provide atomicity and durability? Select all that apply.",
+      "options": [
+        { "id": "a", "text": "Write-ahead logging" },
+        { "id": "b", "text": "Undo and redo of log records on recovery" },
+        { "id": "c", "text": "Denormalisation" },
+        { "id": "d", "text": "Forcing the log to disk before commit returns" }
+      ],
+      "answer": ["a", "b", "d"],
+      "explanation": "The log is written first, flushed before a commit is acknowledged, and replayed or undone at recovery. Denormalisation is a schema design choice unrelated to either.",
+      "interview_line": "Write-ahead logging is why a commit can be fast and still durable.",
+      "tags": ["acid"]
+    },
+    {
+      "slug": "dbms-dirty-read",
+      "topic": "transactions",
+      "difficulty": 2,
+      "type": "single",
+      "body": "Which isolation level is the weakest one that still prevents dirty reads?",
+      "options": [
+        { "id": "a", "text": "Read uncommitted" },
+        { "id": "b", "text": "Read committed" },
+        { "id": "c", "text": "Repeatable read" },
+        { "id": "d", "text": "Serializable" }
+      ],
+      "answer": "b",
+      "explanation": "Read committed only lets a transaction see committed data, which stops dirty reads. Non-repeatable reads and phantoms need the stronger levels.",
+      "interview_line": "Read committed is the default in many databases for a reason: it is cheap and avoids the worst anomaly.",
+      "tags": ["isolation"]
+    },
+    {
+      "slug": "dbms-1nf-2nf-3nf",
+      "topic": "normalization",
+      "difficulty": 2,
+      "type": "single",
+      "body": "A table is in 2NF but has a non-key column that depends on another non-key column. Which normal form does it violate?",
+      "options": [
+        { "id": "a", "text": "1NF" },
+        { "id": "b", "text": "2NF" },
+        { "id": "c", "text": "3NF" },
+        { "id": "d", "text": "None" }
+      ],
+      "answer": "c",
+      "explanation": "A transitive dependency of a non-key column on the key through another non-key column violates third normal form. 2NF only removes partial dependencies on part of a composite key.",
+      "interview_line": "Every non-key attribute should depend on the key, the whole key and nothing but the key.",
+      "tags": ["normal-forms"]
+    },
+    {
+      "slug": "dbms-denormalise-why",
+      "topic": "normalization",
+      "difficulty": 3,
+      "type": "tf",
+      "body": "Denormalising a schema can make reads faster at the cost of duplicate data and harder updates.",
+      "answer": true,
+      "explanation": "Copying data avoids joins, which speeds reads, but every copy must be kept consistent on writes. It is a deliberate trade-off, not a default.",
+      "interview_line": "Normalise first, then denormalise where measurements show the joins hurt.",
+      "tags": ["design"]
+    },
+    {
+      "slug": "dbms-primary-vs-unique",
+      "topic": "keys",
+      "difficulty": 1,
+      "type": "single",
+      "body": "How does a primary key differ from a unique constraint in standard SQL?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A table can have only one primary key, and its columns cannot be NULL"
+        },
+        { "id": "b", "text": "A primary key allows duplicates" },
+        { "id": "c", "text": "A unique constraint can only cover one column" },
+        { "id": "d", "text": "They are identical" }
+      ],
+      "answer": "a",
+      "explanation": "A table has at most one primary key and its columns are never NULL. It may have many unique constraints, which can span several columns.",
+      "interview_line": "The primary key identifies a row; unique constraints enforce other business rules.",
+      "tags": ["keys"]
+    },
+    {
+      "slug": "dbms-index-btree",
+      "topic": "indexing",
+      "difficulty": 2,
+      "type": "single",
+      "body": "Why do most database indexes use a B+ tree rather than a binary search tree?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A high fan-out keeps the tree shallow, so few disk pages are read per lookup"
+        },
+        { "id": "b", "text": "B+ trees need no balancing" },
+        { "id": "c", "text": "Binary trees cannot store integers" },
+        { "id": "d", "text": "B+ trees are smaller than the table itself" }
+      ],
+      "answer": "a",
+      "explanation": "Each node is a disk page holding hundreds of keys, so a lookup touches only a handful of pages, and leaves are linked for fast range scans.",
+      "interview_line": "B+ trees are built around disk page reads, not around comparisons.",
+      "tags": ["index"]
+    },
+    {
+      "slug": "dbms-index-cost",
+      "topic": "indexing",
+      "difficulty": 2,
+      "type": "multi",
+      "body": "Which statements about adding an index are true? Select all that apply.",
+      "options": [
+        { "id": "a", "text": "It can speed up reads that filter or sort on the indexed columns" },
+        { "id": "b", "text": "It slows down inserts and updates on those columns" },
+        { "id": "c", "text": "It uses extra storage" },
+        { "id": "d", "text": "It always makes every query faster" }
+      ],
+      "answer": ["a", "b", "c"],
+      "explanation": "An index speeds the queries it fits, but every write must also maintain it and it takes space. It does nothing for queries that cannot use it.",
+      "interview_line": "Index for the queries you run, not for every column.",
+      "tags": ["index"]
+    },
+    {
+      "slug": "dbms-left-join-nulls",
+      "topic": "sql-concepts",
+      "difficulty": 2,
+      "type": "single",
+      "body": "In a LEFT JOIN from A to B, what do you get for a row of A that has no match in B?",
+      "options": [
+        { "id": "a", "text": "The row is dropped" },
+        { "id": "b", "text": "The row appears with NULLs for B's columns" },
+        { "id": "c", "text": "An error is raised" },
+        { "id": "d", "text": "The row appears twice" }
+      ],
+      "answer": "b",
+      "explanation": "A left join keeps every row of the left table; where the right side has no match its columns are NULL. An inner join would drop the row.",
+      "interview_line": "Use a left join when absence is meaningful, an inner join when it is not.",
+      "tags": ["joins"]
+    },
+    {
+      "slug": "dbms-where-having",
+      "topic": "sql-concepts",
+      "difficulty": 2,
+      "type": "blank",
+      "body": "A condition on an aggregate such as COUNT(*) > 3 goes in the ____ clause, not WHERE.",
+      "answer": ["having"],
+      "explanation": "WHERE filters rows before grouping, so it cannot see aggregates. HAVING filters groups after aggregation.",
+      "interview_line": "WHERE filters rows, HAVING filters groups.",
+      "tags": ["sql"]
+    },
+    {
+      "slug": "dbms-deadlock-db",
+      "topic": "concurrency-control",
+      "difficulty": 3,
+      "type": "tf",
+      "body": "Two transactions that each hold a lock the other needs form a deadlock, and a database resolves it by aborting one of them.",
+      "answer": true,
+      "explanation": "The database detects the cycle in its wait-for graph (or times out) and rolls back a victim so the other can proceed. The application should retry the aborted transaction.",
+      "interview_line": "Keep transactions short and take locks in a consistent order to avoid deadlocks.",
+      "tags": ["locking"]
+    },
+    {
+      "slug": "dbms-mvcc",
+      "topic": "concurrency-control",
+      "difficulty": 3,
+      "type": "single",
+      "body": "What is the main benefit of multi-version concurrency control (MVCC)?",
+      "options": [
+        { "id": "a", "text": "Readers do not block writers, and writers do not block readers" },
+        { "id": "b", "text": "It removes the need for a transaction log" },
+        { "id": "c", "text": "It makes all queries serializable for free" },
+        { "id": "d", "text": "It stores every row only once" }
+      ],
+      "answer": "a",
+      "explanation": "Each transaction reads a consistent snapshot of older row versions, so reads take no locks that block writes. The cost is keeping old versions around until they can be cleaned up.",
+      "interview_line": "MVCC trades storage and cleanup work for much better read concurrency.",
+      "tags": ["mvcc"]
+    }
+  ]
+}

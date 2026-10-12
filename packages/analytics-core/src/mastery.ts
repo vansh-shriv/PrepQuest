@@ -38,17 +38,28 @@ export interface TopicMastery {
   solved: number;
   diagnosis: string | null;
   /** Which signals fed `mastery` (for the breakdown view). */
-  signals?: { solve: number; speed: number | null; independence: number; interview: number | null };
+  signals?: {
+    solve: number;
+    speed: number | null;
+    independence: number;
+    interview: number | null;
+    /** How well solved problems of this topic are remembered in spaced-repetition reviews. */
+    retention: number | null;
+  };
 }
 
 /** Interview evidence for a topic: mean score 0 to 1 over `n` sessions (recency weighted by the caller). */
 export type InterviewSignal = Record<string, { score: number; n: number }>;
+
+/** Review evidence for a topic: mean review quality 0 to 1 over `n` reviews (spaced repetition, D6). */
+export type RetentionSignal = Record<string, { score: number; n: number }>;
 
 export const SIGNAL_WEIGHTS = {
   solve: 0.3,
   speed: 0.2,
   independence: 0.15,
   interview: 0.1,
+  retention: 0.1,
 } as const;
 
 const HALF_LIFE_DAYS = 30;
@@ -98,6 +109,7 @@ export function topicMastery(
   now: Date,
   importance: (topic: string) => number = () => 1,
   interview: InterviewSignal = {},
+  retention: RetentionSignal = {},
 ): TopicMastery[] {
   return topics.map((topic) => {
     const rows = evidence.filter((e) => e.attempted && e.topics.includes(topic));
@@ -133,6 +145,7 @@ export function topicMastery(
       speed: speedW > 0 ? speed / speedW : null,
       independence: independent / wSum,
       interview: interview[topic] && interview[topic]!.n > 0 ? interview[topic]!.score : null,
+      retention: retention[topic] && retention[topic]!.n > 0 ? retention[topic]!.score : null,
     };
     let num =
       SIGNAL_WEIGHTS.solve * signals.solve + SIGNAL_WEIGHTS.independence * signals.independence;
@@ -144,6 +157,10 @@ export function topicMastery(
     if (signals.interview !== null) {
       num += SIGNAL_WEIGHTS.interview * signals.interview;
       den += SIGNAL_WEIGHTS.interview;
+    }
+    if (signals.retention !== null) {
+      num += SIGNAL_WEIGHTS.retention * signals.retention;
+      den += SIGNAL_WEIGHTS.retention;
     }
     const mastery = num / den;
     const evidenceCount = rows.length + (interview[topic]?.n ?? 0);

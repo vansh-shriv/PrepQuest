@@ -17,6 +17,7 @@ import {
   type TestResult,
 } from "@prepquest/judge-core";
 import { awardAccepted } from "../progress/award.js";
+import { afterAccepted } from "../reviews/service.js";
 
 /** Verdicts a submission can still move on from. Anything else is final and ignores later events. */
 const OPEN = ["QUEUED", "COMPILING", "RUNNING"] as const;
@@ -112,6 +113,7 @@ async function finish(db: Database, id: string, summary: JobSummary) {
         userId: submissions.userId,
         problemId: submissions.problemId,
         kind: submissions.kind,
+        mode: submissions.mode,
       });
     if (!done) return; // already finished: a redelivered event
 
@@ -204,6 +206,17 @@ async function finish(db: Database, id: string, summary: JobSummary) {
       .update(submissions)
       .set({ rewards: rewards as unknown as Record<string, unknown> })
       .where(eq(submissions.id, id));
+    if (done.mode === "practice") {
+      // spaced repetition: the first solve makes a review card, a later solve of a due card is its review
+      await afterAccepted(tx, {
+        userId: done.userId,
+        problemId: done.problemId,
+        solvedBefore,
+        attemptsBefore,
+        hintTiers,
+        now: new Date(),
+      });
+    }
     if (!solvedBefore) {
       await tx
         .update(userProblemState)

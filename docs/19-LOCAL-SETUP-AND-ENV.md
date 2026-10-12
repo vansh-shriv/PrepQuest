@@ -241,3 +241,5 @@ pnpm llm:record                 # record LLM fixtures for tests
 `pnpm content:import --publish` now also imports the question bank (72 questions) and the company packs (5). After changing `packages/content` or `packages/shared` exports, rebuild them (`pnpm --filter @prepquest/content build`, `pnpm --filter @prepquest/shared build`) before API tests: the API reads their `dist/`. Run Playwright one spec file at a time (`pnpm exec playwright test e2e/interview-rounds.spec.ts` in `apps/web`, after `pnpm build`).
 
 Phase 9: the nightly job runs inside the API process (`main.ts`, every 10 minutes). `pnpm db:migrate` applies migrations 0015 and 0016. API tests for planning pin the clock with `t.app.ai.now`; tests that count "solved today" use the real clock.
+
+Phase 10: `pnpm db:migrate` applies migrations 0017 to 0019 (tables, triggers, `review_cap`). After pulling, run `pnpm content:import --publish` so the dev database gets the quizzes and roadmaps. API tests import them with `seedLearning` from `src/test/content.ts`.

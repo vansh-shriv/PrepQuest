@@ -12,8 +12,11 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Home", icon: "home" },
   { href: "/problems", label: "Practice", icon: "code", phase: 3 },
+  { href: "/reviews", label: "Reviews", icon: "sparkle" },
   { href: "/interview", label: "Interview", icon: "chat" },
-  { href: "/quizzes", label: "Quizzes", icon: "quiz", phase: 8 },
+  { href: "/quizzes", label: "Quizzes", icon: "quiz" },
+  { href: "/roadmaps", label: "Roadmaps", icon: "plant" },
+  { href: "/tracks", label: "Tracks", icon: "folder" },
   { href: "/plan", label: "Plan", icon: "plan" },
   { href: "/analytics", label: "Analytics", icon: "chart" },
   { href: "/contests", label: "Contests", icon: "trophy", phase: 9 },

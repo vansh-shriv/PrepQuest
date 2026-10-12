@@ -1,4 +1,5 @@
 export * from "./bank.js";
+export * from "./learning.js";
 export * from "./build-tests.js";
 export * from "./codec.js";
 export * from "./format.js";

@@ -6,6 +6,7 @@ import {
   problems,
   userProblemState,
   userSettings,
+  type Database,
   type Db,
 } from "@prepquest/db";
 import { canGiveUp, editorialAccess, hintDecision, type HintMode } from "@prepquest/analytics-core";
@@ -19,6 +20,7 @@ import {
   type SolveRating,
 } from "@prepquest/shared";
 import { findVisibleProblem } from "../problems/service.js";
+import { applySolveRating } from "../reviews/service.js";
 
 /** What the unlock rules need to know about this user and problem. */
 async function context(db: Db, userId: string, problemId: string) {
@@ -245,7 +247,7 @@ export async function giveUp(db: Db, userId: string, slug: string): Promise<Edit
 // ---------------------------------------------------------------- self-rating
 
 export async function rateSolve(
-  db: Db,
+  db: Database,
   userId: string,
   slug: string,
   rating: SolveRating,
@@ -264,6 +266,18 @@ export async function rateSolve(
     .returning({ id: userProblemState.problemId });
   if (updated.length === 0) {
     throw new AppError("NOT_SOLVED", 403, "Solve the problem before rating it.");
+  }
+  const [state] = await db
+    .select()
+    .from(userProblemState)
+    .where(and(eq(userProblemState.userId, userId), eq(userProblemState.problemId, problem.id)));
+  if (state) {
+    await applySolveRating(db, userId, problem.id, rating, {
+      attempts: state.attempts,
+      firstTryAc: state.firstTryAc,
+      hintsUsed: state.gaveUpAt ? 3 : state.hintsUsed,
+      firstAcAt: state.firstAcAt,
+    });
   }
   return { rating };
 }

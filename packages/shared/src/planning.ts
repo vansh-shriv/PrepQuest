@@ -79,11 +79,17 @@ export interface TopicAnalyticsDto {
   solved: number;
   diagnosis: string | null;
   importance: number;
-  signals: { solve: number; speed: number | null; independence: number; interview: number | null };
+  signals: {
+    solve: number;
+    speed: number | null;
+    independence: number;
+    interview: number | null;
+    retention: number | null;
+  };
 }
 
 export interface NextActionDto {
-  kind: "problem" | "interview" | "diagnostic";
+  kind: "problem" | "interview" | "diagnostic" | "review";
   title: string;
   /** Where the Start button goes. */
   href: string;
@@ -267,5 +273,7 @@ export interface QuestBoardResponse {
   tasks: PlanTaskDto[];
   hasPlan: boolean;
   readiness: { score: number | null; band: number | null; label: string; needsDiagnostic: boolean };
+  /** Spaced-repetition reviews waiting today (already limited by the daily cap). */
+  reviews: { due: number; waiting: number; cap: number; doneToday: number };
   next: NextActionDto | null;
 }

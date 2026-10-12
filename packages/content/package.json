@@ -20,6 +20,7 @@
     "content": "tsx --env-file-if-exists=../../.env src/cli.ts"
   },
   "dependencies": {
+    "@prepquest/analytics-core": "workspace:*",
     "@prepquest/db": "workspace:*",
     "@prepquest/shared": "workspace:*",
     "@prepquest/storage": "workspace:*",

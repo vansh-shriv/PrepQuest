@@ -7,3 +7,4 @@ export * from "./submissions.js";
 export * from "./workflow.js";
 export * from "./interviews.js";
 export * from "./planning.js";
+export * from "./learning.js";

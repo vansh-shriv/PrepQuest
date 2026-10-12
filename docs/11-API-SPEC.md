@@ -537,3 +537,23 @@ Errors added: `INTERVIEW_IN_PROGRESS` (409), `INTERVIEW_PAUSED` (409), `RESUME_R
 | GET | `/me/quest-board` | Goals, today's tasks, readiness headline, next action |
 
 Not built: `/me/xp` ledger changes, `/roadmaps`, `/tracks`, `/me/reviews`.
+
+### Learning suite (Phase 10, as built)
+
+| Method | Path | As built |
+| ------ | ---- | -------- |
+| GET | `/me/reviews` | Today's queue (capped), waiting count, seven-day outlook, paused cards, stats; creates cards for older solves |
+| POST | `/me/reviews/:id/grade` | `{rating: again, hard, good, easy}`; 409 `NOT_DUE` or `SUSPENDED` |
+| POST | `/me/reviews/:id/snooze`, `/suspend` | `{days}` (1 to 30); `{suspended}` |
+| PUT | `/me/reviews/settings` | `{cap}` (1 to 30) |
+| GET | `/quizzes` | Subjects with topics, the learner's record, weak count, recent attempts |
+| POST | `/quizzes/attempts` | `{mode: practice, timed, drill, weak, subject?, topic?, count?, minutes?}`; questions come without answers |
+| GET | `/quizzes/attempts/:id` | Resume (`attempt`) or the result |
+| POST | `/quizzes/attempts/:id/answers` | `{questionId, response, timeMs}`; feedback in practice-style modes, none in timed; 409 `ALREADY_ANSWERED`, `QUIZ_EXPIRED`, `QUIZ_FINISHED` |
+| POST | `/quizzes/attempts/:id/finish` | Scores, pays XP once, returns the review with answers |
+| GET | `/roadmaps`, `/roadmaps/:slug` | Progress per roadmap; nodes with state, mastery, ladder, blockers |
+| GET | `/tracks`, `/tracks/:slug` | Company tracks with progress; one track in full |
+| POST | `/tracks/:slug/start` | Records the track and builds the plan; returns the track and `planCreated` |
+| GET | `/tracks/compare?a=&b=` | Shared problems, what is only in each, and what to add for B |
+
+Not built: `/quizzes/questions/:id/to-flashcard`, the `/sql/*`, `/oa/*` and `/aptitude/*` endpoints, `/roadmaps/:id/nodes/:id/skip`, `/tracks/:slug/progress`.

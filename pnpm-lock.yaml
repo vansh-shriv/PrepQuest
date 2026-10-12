@@ -265,6 +265,9 @@ importers:
 
   packages/content:
     dependencies:
+      '@prepquest/analytics-core':
+        specifier: workspace:*
+        version: link:../analytics-core
       '@prepquest/db':
         specifier: workspace:*
         version: link:../db

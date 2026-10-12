@@ -269,3 +269,9 @@ Placement/interview date, hours per day (per weekday), current level (diagnostic
 - **A5 time:** estimated from open, run and submit events (not keystrokes); idle threshold is the 20-minute break cap; read versus debug split instead of four phases.
 - **P1 plan:** problems, mock interviews and reviews only (quizzes, aptitude and SRS reviews have no content yet). Mix is capacity-driven rather than the 60/15/10/10/5 split. Phases are laid out by share of the horizon (20/35/20/15/10).
 - **P2 goals:** problems, XP, mock interviews this week, finish today's plan. Reminders and push are not built.
+
+## As built (Phase 10): P3 roadmaps, P4 company tracks, A2 retention
+
+- **A2:** the review signal (mean quality of spaced-repetition reviews per topic, recency weighted) joins mastery at weight 0.10. Quiz accuracy feeds the readiness "CS fundamentals" component (blended with CS mock interviews by confidence), not topic mastery, because quiz subjects are not DSA topics.
+- **P3:** roadmaps are DAGs of nodes stored as JSON in `roadmaps.data` and validated on import. Node mastery comes from the node's topic mastery, quiz accuracy for its subject, or its problem ladder. States: locked, open, cleared (60% by default), mastered (80%). The map is drawn in layers with the next node highlighted. Not built: checkpoint quizzes, skip assessment, role roadmaps beyond SDE and CS fundamentals, feeding the plan generator.
+- **P4:** a track is a published company pack. Its curated list is derived (topic weight x difficulty appetite, deterministic) rather than hand-written; the heatmap, process, checklist and pitfalls come from the pack; readiness is A4 for that pack. Starting a track records it, builds the plan around the company and links a ready interview setup. Overlap analysis is the plain intersection of two curated lists. Not built: anonymised in-platform insights, admin editing of tracks, per-track OA templates.
