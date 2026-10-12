@@ -113,6 +113,7 @@ test("a project interview: briefing, streamed conversation, early end and a scor
   await page.getByRole("button", { name: "End and get my scorecard" }).click();
   await expect(page.getByTestId("interview-finished")).toBeVisible();
   await page
+    .getByRole("main")
     .getByRole("link", { name: /scorecard|review/i })
     .first()
     .click();
@@ -163,6 +164,7 @@ test("a DSA interview with the editor, the judge and a scorecard that counts the
   await page.getByRole("button", { name: "End interview" }).click();
   await page.getByRole("button", { name: "End and get my scorecard" }).click();
   await page
+    .getByRole("main")
     .getByRole("link", { name: /scorecard|review/i })
     .first()
     .click();

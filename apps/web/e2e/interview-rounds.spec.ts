@@ -57,6 +57,7 @@ test("a behavioural round: stories, then STAR, ideal answers and speech in the r
   await page.getByRole("button", { name: "End interview" }).click();
   await page.getByRole("button", { name: "End and get my scorecard" }).click();
   await page
+    .getByRole("main")
     .getByRole("link", { name: /scorecard|review/i })
     .first()
     .click();
