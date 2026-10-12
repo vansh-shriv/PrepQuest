@@ -108,6 +108,8 @@ export interface JudgeOptions {
   firstTests?: number;
   /** `submit` stops at the first failure (default); `run` judges every test. */
   kind?: "submit" | "run";
+  /** Use the problem's base time limit without the per-language multiplier (for slow-solution mutants). */
+  baseLimit?: boolean;
 }
 
 export async function judgeCode(
@@ -125,7 +127,7 @@ export async function judgeCode(
     code,
     signature: fixture.signature,
     checker: { type: fixture.checker },
-    limits: limitsFor(language, fixture.limits),
+    limits: options.baseLimit ? fixture.limits : limitsFor(language, fixture.limits),
     tests: tests.map(({ ordinal, kind, label }) => ({
       ordinal,
       kind,
@@ -232,7 +234,9 @@ async function main() {
       });
     }
     for (const m of loadMutants(slug)) {
-      const r = await judgeCode(fixture, "python", m.code);
+      // A slow-solution mutant must miss the plain limit by a wide margin: with Python's 5x allowance a
+      // quadratic solution can squeak through on a fast runner, which made this gate flaky in CI.
+      const r = await judgeCode(fixture, "python", m.code, { baseLimit: m.expect === "TLE" });
       rows.push({
         slug,
         what: `mutant ${m.name}`,
