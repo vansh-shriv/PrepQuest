@@ -169,6 +169,44 @@ describe("verdicts", () => {
     expect(results[0]?.expectedPreview).toBeUndefined();
   });
 
+  it("times a custom input several times when asked, and only custom inputs", async () => {
+    const counting = (counter: { runs: number }): Sandbox => {
+      const inner = new ProcessSandbox();
+      return {
+        async create() {
+          const box = await inner.create();
+          return {
+            get dir() {
+              return box.dir;
+            },
+            writeFile: (name, data) => box.writeFile(name, data),
+            exec: (spec) => {
+              counter.runs++;
+              return box.exec(spec);
+            },
+            cleanup: () => box.cleanup(),
+          };
+        },
+      };
+    };
+    const custom = (repeat?: number): [JudgeTest, { input: string }] => [
+      { ordinal: 1001, kind: "custom", ...(repeat ? { repeat } : {}) },
+      { input: "4\n" },
+    ];
+    const once = { runs: 0 };
+    await judge(GOOD, [custom()], { kind: "run" }, counting(once));
+    const thrice = { runs: 0 };
+    const timed = await judge(GOOD, [custom(3)], { kind: "run" }, counting(thrice));
+    expect(thrice.runs - once.runs).toBe(2);
+    expect(timed.results[0]).toMatchObject({ verdict: "AC", stdoutTail: "8\n" });
+
+    // a hidden test is never repeated, whatever the job says
+    const other = { runs: 0 };
+    const [t, d] = hidden(1, 3);
+    await judge(GOOD, [[{ ...t, repeat: 3 }, d]], { kind: "run" }, counting(other));
+    expect(other.runs).toBe(once.runs);
+  });
+
   it("returns IE (never a user verdict) when the infrastructure fails", async () => {
     const broken: Sandbox = {
       create: async () => {

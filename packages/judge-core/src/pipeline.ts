@@ -33,6 +33,8 @@ export interface PipelineDeps {
 }
 
 const PREVIEW_CHARS = 2000;
+/** Most times one test may be run to take the fastest time. */
+const MAX_REPEAT = 5;
 
 const tail = (buf: Buffer, bytes = TAIL_BYTES): string => {
   if (buf.length === 0) return "";
@@ -161,7 +163,7 @@ async function runTest(
     );
   }
 
-  const exec = await box.exec({
+  const spec = {
     argv: config.run(job.limits.memoryKb),
     stdin: loaded.input,
     cpuMs: job.limits.timeMs,
@@ -169,8 +171,25 @@ async function runTest(
     memoryKb: job.limits.memoryKb,
     processes: config.runProcesses,
     outputLimit: RUN_OUTPUT_LIMIT,
-  });
+  };
+  let exec = await box.exec(spec);
   if (exec.status === "internal") throw new Error(exec.message ?? "run sandbox failure");
+  // Timing runs (the complexity analyzer) repeat a run that passed and keep the fastest, which removes most
+  // scheduling noise. A slow first run is not repeated: it would only burn the time limit again.
+  if (
+    test.repeat &&
+    test.repeat > 1 &&
+    test.kind === "custom" &&
+    !classifyRun(exec, job.limits.memoryKb) &&
+    exec.cpuMs < job.limits.timeMs * 0.4
+  ) {
+    for (let i = 1; i < Math.min(test.repeat, MAX_REPEAT); i++) {
+      const again = await box.exec(spec);
+      if (again.status === "internal") throw new Error(again.message ?? "run sandbox failure");
+      if (classifyRun(again, job.limits.memoryKb)) break;
+      if (again.cpuMs < exec.cpuMs) exec = again;
+    }
+  }
 
   const preview: Partial<TestResult> = visible
     ? {

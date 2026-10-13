@@ -126,8 +126,8 @@ async function finish(db: Database, id: string, summary: JobSummary) {
         AND tc.problem_id = s.problem_id AND tc.version = s.problem_version
         AND tc.ordinal = sr.test_ordinal AND tc.label IS NOT NULL`);
 
-    // Only real submissions count; runs and infrastructure errors never touch progress or statistics.
-    if (done.kind !== "submit" || summary.verdict === "IE") return;
+    // Only real submissions count; runs, review checks and infrastructure errors never touch progress or statistics.
+    if (done.kind !== "submit" || done.mode === "review" || summary.verdict === "IE") return;
     const accepted = summary.verdict === "AC";
 
     const [state] = await tx

@@ -30,6 +30,8 @@ export interface JudgeTest {
   outputKey?: string;
   /** Inline input for custom runs (no expected output, so no checker). */
   customInput?: string;
+  /** Custom runs only: run this many times and report the fastest (at most 5). Used for timing. */
+  repeat?: number;
 }
 
 export interface JudgeLimits {

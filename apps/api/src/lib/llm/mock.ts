@@ -520,6 +520,81 @@ function pack(req: LlmRequest) {
   };
 }
 
+/** A deterministic review: reads the numbered code from the prompt and flags a few real patterns. */
+function codeReview(req: LlmRequest) {
+  const user = firstUser(req);
+  const lang = /Language: (\w+)\./.exec(user)?.[1] ?? "python";
+  const strictness = /Strictness: (\w+):/.exec(user)?.[1]?.toLowerCase() ?? "strict";
+  const block = /<code>\n([\s\S]*?)\n<\/code>/.exec(user)?.[1] ?? "";
+  const lines = block.split("\n").map((l) => {
+    const m = /^\s*(\d+)\| ?(.*)$/.exec(l);
+    return { n: Number(m?.[1] ?? 0), text: m?.[2] ?? "" };
+  });
+  const comments: Array<{ line: number; severity: string; category: string; message: string }> = [];
+  let depth = 0;
+  let last = -1;
+  for (const { n, text } of lines) {
+    const indent = text.length - text.trimStart().length;
+    if (/^\s*(for|while)\b/.test(text) || /\b(for|while)\s*\(/.test(text)) {
+      if (last >= 0 && indent > last) depth++;
+      else depth = 1;
+      last = indent;
+      if (depth >= 2) {
+        comments.push({
+          line: n,
+          severity: "important",
+          category: "complexity",
+          message:
+            "This loop is nested inside another loop, so the work grows with the square of the input. Look for a lookup table or a sort that removes one level.",
+        });
+      }
+    }
+    if (/^\s*[a-z]\s*=/.test(text)) {
+      comments.push({
+        line: n,
+        severity: "nit",
+        category: "readability",
+        message: "A one-letter name hides what the value means. Name it after its role.",
+      });
+    }
+  }
+  if (comments.length === 0 && lines.length > 0) {
+    comments.push({
+      line: 1,
+      severity: "suggestion",
+      category: "presentation",
+      message:
+        "Say the idea in one sentence before the code when you present this in an interview.",
+    });
+  }
+  const allowed =
+    strictness === "gentle" ? ["important", "suggestion"] : ["important", "suggestion", "nit"];
+  const cap = strictness === "gentle" ? 5 : strictness === "strict" ? 10 : 18;
+  const kept = comments.filter((c) => allowed.includes(c.severity)).slice(0, cap);
+  const wantsRefactor = !/"refactor": null\}\s*$/.test(user.trimEnd());
+  const original = lines.map((l) => l.text).join("\n");
+  const mark = lang === "python" ? "# reviewed" : "// reviewed";
+  return {
+    summary:
+      "The solution is readable and does what the problem asks. The main thing to look at is how the loops are nested.",
+    ratings: {
+      readability: 4,
+      idioms: 4,
+      complexity: 3,
+      "edge-cases": 4,
+      maintainability: 4,
+      presentation: 3,
+    },
+    comments: kept,
+    refactor: wantsRefactor
+      ? {
+          code: `${original}\n${mark}\n`,
+          notes: "Same logic with a closing note; the mock never rewrites code.",
+        }
+      : null,
+  };
+}
+
 export class MockProvider implements LlmProvider {
   /** Test hook: replaces the reply for the next call(s) of a task. */
   readonly overrides = new Map<string, string[]>();
@@ -547,6 +622,7 @@ export class MockProvider implements LlmProvider {
     else if (req.task === "jd_analysis") text = JSON.stringify(jd(req));
     else if (req.task === "scorecard") text = JSON.stringify(scorecard(req));
     else if (req.task === "annotations") text = JSON.stringify(annotations(req));
+    else if (req.task === "code_review") text = JSON.stringify(codeReview(req));
     else text = words(lastUser(req).replace(/<[^>]+>/g, " "), 120);
     if (opts.onDelta) {
       for (let i = 0; i < text.length; i += 12) opts.onDelta(text.slice(i, i + 12));

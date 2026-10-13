@@ -1,0 +1,11 @@
+{
+  "sizes": [2000, 4000, 8000, 16000, 32000, 64000],
+  "args": {
+    "strs": {
+      "kind": "strings",
+      "length": 20,
+      "alphabet": "abcdefghij",
+      "shared": 15
+    }
+  }
+}

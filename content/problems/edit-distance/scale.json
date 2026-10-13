@@ -1,0 +1,13 @@
+{
+  "sizes": [100, 200, 400, 800, 1600, 2400],
+  "args": {
+    "a": {
+      "kind": "string",
+      "alphabet": "abcd"
+    },
+    "b": {
+      "kind": "string",
+      "alphabet": "abcd"
+    }
+  }
+}

@@ -264,6 +264,112 @@ export async function createSubmission(
   }
 }
 
+// ---------------------------------------------------------------- internal runs
+
+export interface ReviewRunInput {
+  userId: string;
+  problemId: string;
+  language: LanguageValue;
+  code: string;
+  /** `submit` runs the real tests (checks a refactor); `run` runs only the given inputs (measures growth). */
+  kind: "run" | "submit";
+  /** Inputs for a `run`: each is timed on its own. */
+  inputs?: string[];
+  /** Run each input this many times and keep the fastest (timing runs). */
+  repeat?: number;
+}
+
+/**
+ * Queues a judge run the learner did not type in: it checks a suggested refactor or measures growth (X3, X4).
+ * It is stored with mode `review`, so it never touches progress, XP, statistics or the history list.
+ */
+export async function createReviewRun(ctx: SubmissionCtx, input: ReviewRunInput): Promise<string> {
+  const { db } = ctx;
+  const [problem] = await db.select().from(problems).where(eq(problems.id, input.problemId));
+  if (!problem?.signature) throw new AppError("UNSUPPORTED", 422, "This problem can't be run yet.");
+  const checker = checkerFor(problem);
+  const [lang] = await db
+    .select({
+      timeLimitMs: problemLanguages.timeLimitMs,
+      memoryLimitKb: problemLanguages.memoryLimitKb,
+    })
+    .from(problemLanguages)
+    .where(
+      and(
+        eq(problemLanguages.problemId, problem.id),
+        eq(problemLanguages.language, input.language),
+      ),
+    );
+  if (!lang) throw new AppError("VALIDATION_ERROR", 422, "That language isn't available here.");
+
+  let tests: JudgeTest[];
+  if (input.kind === "submit") {
+    const rows = await db
+      .select()
+      .from(testCases)
+      .where(
+        and(eq(testCases.problemId, problem.id), eq(testCases.version, problem.currentVersion)),
+      )
+      .orderBy(asc(testCases.ordinal));
+    tests = rows.map((r) => ({
+      ordinal: r.ordinal,
+      kind: r.kind as JudgeTest["kind"],
+      ...(r.label ? { label: r.label } : {}),
+      inputKey: r.inputKey,
+      outputKey: r.outputKey,
+    }));
+  } else {
+    tests = (input.inputs ?? []).map((customInput, i) => ({
+      ordinal: CUSTOM_ORDINAL_BASE + i + 1,
+      kind: "custom" as const,
+      customInput,
+      ...(input.repeat ? { repeat: input.repeat } : {}),
+    }));
+  }
+  if (tests.length === 0) throw new AppError("UNSUPPORTED", 422, "This problem has no tests yet.");
+
+  const id = newId();
+  await db.insert(submissions).values({
+    id,
+    userId: input.userId,
+    problemId: problem.id,
+    problemVersion: problem.currentVersion,
+    language: input.language,
+    code: input.code,
+    codeHash: sha256(input.code),
+    kind: input.kind,
+    mode: "review",
+    verdict: "QUEUED",
+    total: tests.length,
+    queuedAt: new Date(),
+  });
+  const job: JudgeJob = {
+    submissionId: id,
+    kind: input.kind,
+    language: input.language,
+    code: input.code,
+    signature: problem.signature as JudgeJob["signature"],
+    checker,
+    limits: { timeMs: lang.timeLimitMs, memoryKb: lang.memoryLimitKb },
+    tests,
+  };
+  try {
+    await ctx.queue.enqueue(input.kind, job);
+  } catch (err) {
+    await db
+      .update(submissions)
+      .set({ verdict: "IE", stderrTail: "The judge could not be reached.", finishedAt: new Date() })
+      .where(eq(submissions.id, id));
+    if (err instanceof AppError) throw err;
+    throw new AppError(
+      "JUDGE_UNAVAILABLE",
+      503,
+      "The judge is unavailable right now. Try again soon.",
+    );
+  }
+  return id;
+}
+
 // ---------------------------------------------------------------- read
 
 const VISIBLE_KINDS: ReadonlySet<string> = new Set(["sample", "custom"]);
@@ -380,7 +486,8 @@ export async function listSubmissions(
   if (query.problem) where.push(eq(problems.slug, query.problem));
   if (query.verdict) where.push(eq(submissions.verdict, query.verdict));
   if (query.language) where.push(eq(submissions.language, query.language));
-  if (query.mode) where.push(eq(submissions.mode, query.mode));
+  // checks of suggested refactors and growth measurements are not the learner's own attempts
+  where.push(query.mode ? eq(submissions.mode, query.mode) : sql`${submissions.mode} <> 'review'`);
   if (query.from) where.push(sql`${submissions.createdAt} >= ${query.from}`);
   if (query.to) where.push(sql`${submissions.createdAt} <= ${query.to}`);
   if (query.q) where.push(ilike(problems.title, `%${query.q.replace(/[%_\\]/g, "\\$&")}%`));

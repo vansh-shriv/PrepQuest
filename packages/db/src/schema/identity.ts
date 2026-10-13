@@ -105,11 +105,17 @@ export const userSettings = pgTable(
     /** Flashcard limits per day (X6): new cards and reviews. */
     flashcardNewPerDay: smallint("flashcard_new_per_day").notNull().default(10),
     flashcardReviewsPerDay: smallint("flashcard_reviews_per_day").notNull().default(60),
+    /** Default strictness of code reviews (X3): gentle | strict | pedantic. */
+    reviewStrictness: text("review_strictness").notNull().default("strict"),
     ...timestamps,
   },
   (t) => [
     check("user_settings_theme_check", sql`${t.theme} IN ('cream','night','contrast','system')`),
     check("user_settings_hint_mode_check", sql`${t.hintMode} IN ('strict','relaxed')`),
+    check(
+      "user_settings_review_strictness_check",
+      sql`${t.reviewStrictness} IN ('gentle','strict','pedantic')`,
+    ),
   ],
 );
 

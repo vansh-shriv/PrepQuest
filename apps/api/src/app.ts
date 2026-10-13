@@ -37,6 +37,7 @@ import { roadmapRoutes } from "./modules/roadmaps/routes.js";
 import { sqlRoutes } from "./modules/sql/routes.js";
 import { trackRoutes } from "./modules/tracks/routes.js";
 import { reviewRoutes } from "./modules/reviews/routes.js";
+import { codeReviewRoutes } from "./modules/codereview/routes.js";
 import { flashcardRoutes } from "./modules/flashcards/routes.js";
 import { shareRoutes } from "./modules/shares/routes.js";
 import { progressRoutes } from "./modules/progress/routes.js";
@@ -237,6 +238,10 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(reviewRoutes, { prefix: "/v1", ctx: ai });
   await app.register(flashcardRoutes, { prefix: "/v1", ctx: ai });
   await app.register(shareRoutes, { prefix: "/v1", ctx: ai });
+  await app.register(codeReviewRoutes, {
+    prefix: "/v1",
+    ctx: { ai, sub: { db, queue: deps.judge, limiter: ctx.limiter } },
+  });
   await app.register(quizRoutes, { prefix: "/v1", ctx: ai });
   await app.register(sqlRoutes, { prefix: "/v1", ctx: ai });
   await app.register(oaRoutes, { prefix: "/v1", ctx: ai });

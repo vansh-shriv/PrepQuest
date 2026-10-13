@@ -13,7 +13,8 @@ export type LlmTask =
   | "pack"
   | "resume_parse"
   | "jd_analysis"
-  | "qgen";
+  | "qgen"
+  | "code_review";
 
 export interface LlmMessage {
   role: "user" | "assistant";

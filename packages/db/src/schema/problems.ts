@@ -53,6 +53,8 @@ export const problems = pgTable(
     signature: jsonb("signature").$type<ProblemSignature>(),
     checker: text("checker").notNull().default("exact"),
     checkerConfig: jsonb("checker_config").$type<Record<string, unknown>>(),
+    /** Generators for the complexity analyzer (`scale.json`); null when the problem has none. */
+    scale: jsonb("scale").$type<Record<string, unknown>>(),
     estMinutes: integer("est_minutes"),
     acceptanceRate: numeric("acceptance_rate", { precision: 5, scale: 2 }).notNull().default("0"),
     submissionsCount: integer("submissions_count").notNull().default(0),

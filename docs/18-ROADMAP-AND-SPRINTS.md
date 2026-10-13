@@ -171,3 +171,5 @@ Bug bash, content improvements, user-requested features, portfolio write-up/blog
 **Status:** Sprint 9 is being delivered in two phases. Phase 12 finished contests (D7). Still to do from Sprint 9: code review mode (X3), complexity analyzer (X4), flashcards with offline sync (X6) and shareable reports with OG images (U5).
 
 **Status:** Sprint 9 is delivered in three phases. Phase 12 finished contests (D7). Phase 13 finished flashcards with offline sync (X6) and shareable reports with preview images (U5). Still to do from Sprint 9: code review mode (X3) and the complexity analyzer (X4), with AI flashcard suggestions.
+
+**Status:** Sprint 9 is finished across Phases 12 to 14. Phase 14 built code review mode (X3) and the complexity analyzer (X4). AI flashcard suggestions move to the next phase with the other gateway features.

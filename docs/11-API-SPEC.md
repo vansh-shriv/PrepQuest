@@ -610,3 +610,11 @@ Hints and editorials answer 403 `HINT_LOCKED` for a contest problem while you ar
 | GET | `/r/:token/og.png` | Public 1200x630 preview image; does not count a view |
 
 A scorecard needs a finished interview with a ready scorecard (409 otherwise); a contest result needs a finished contest the learner took part in; a readiness summary needs enough data.
+
+## Phase 14 additions (as built)
+
+- `POST /submissions/:id/review` body `{strictness?, refactor?}`: verified email; 202 with the review (pending); asking again for the same strictness returns the same review at no cost. 409 while the judge is still working, 429 over the limits.
+- `GET /submissions/:id/review?strictness=`: `{review}` or `{review: null}`. The refactor code is present only when its status is `verified`.
+- `GET|PUT /code-review/settings`: `{strictness}`.
+- `POST /submissions/:id/complexity` body `{claimed}`: 202, status `running`. 422 when the problem has no `scale.json` or the code did not compile, 409 while the judge is busy.
+- `GET /submissions/:id/complexity`: `{supported, analysis}`; the analysis is finished lazily when the judge run is over.

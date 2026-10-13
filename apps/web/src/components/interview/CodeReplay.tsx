@@ -20,7 +20,9 @@ export function CodeReplay({ sessionId, durationMs }: { sessionId: string; durat
 
   const frames = useMemo(() => buildReplay(events ?? []), [events]);
   const last = frames.at(-1)?.offsetMs ?? 0;
-  const span = Math.max(durationMs, last, 1);
+  // a whole number of slider steps: otherwise "End" snaps to the step below the maximum and can land
+  // before the last edit, which hides the final code
+  const span = Math.max(Math.ceil(Math.max(durationMs, last, 1) / 1000) * 1000, 1000);
   const at = Math.min(chosen ?? span, span);
   const index = frameAt(frames, at);
   const frame = index >= 0 ? frames[index] : null;

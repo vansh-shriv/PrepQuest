@@ -233,6 +233,11 @@ async function syncCompanies(tx: Db, problemId: string, list: ProblemBundle["met
 export async function syncLearningContent(db: Db, problemId: string, bundle: ProblemBundle) {
   await syncHints(db, problemId, bundle.hints);
   await syncEditorial(db, problemId, bundle);
+  // generators for the complexity analyzer: replaced on every import, never a new version
+  await db
+    .update(problems)
+    .set({ scale: bundle.scale ?? null })
+    .where(eq(problems.id, problemId));
 }
 
 export async function syncEditorial(db: Db, problemId: string, bundle: ProblemBundle) {

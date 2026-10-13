@@ -4,42 +4,23 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button, Input, LoadingBar, Select, Sprite } from "@prepquest/ui";
-import type { DiffLine, SubmissionDetail, SubmissionListResponse } from "@prepquest/shared";
+import {
+  isTerminal,
+  type DiffLine,
+  type SubmissionDetail,
+  type SubmissionListResponse,
+} from "@prepquest/shared";
 import { api, ApiError } from "@/lib/api";
 import { ResultPanel } from "@/components/problems/ResultPanel";
 import { LANGUAGE_SHORT } from "@/components/problems/SubmissionHistory";
+import { CodeLines } from "./CodeLines";
+import { ComplexityPanel } from "@/components/review/ComplexityPanel";
+import { ReviewPanel } from "@/components/review/ReviewPanel";
 
 interface DiffResponse {
   before: { id: string; createdAt: string; verdict: string };
   after: { id: string; createdAt: string; verdict: string };
   lines: DiffLine[];
-}
-
-const LINE_STYLE: Record<DiffLine["type"], string> = {
-  same: "",
-  add: "bg-[color-mix(in_srgb,var(--leaf)_25%,transparent)]",
-  del: "bg-[color-mix(in_srgb,var(--danger)_25%,transparent)]",
-};
-const LINE_MARK: Record<DiffLine["type"], string> = { same: " ", add: "+", del: "-" };
-
-function CodeLines({ lines }: { lines: DiffLine[] }) {
-  return (
-    <pre
-      className="m-0 max-h-96 overflow-auto bg-surface-alt p-2 text-sm"
-      style={{ fontFamily: "var(--font-code)" }}
-      aria-label="Changes between the two attempts"
-    >
-      {lines.map((l, i) => (
-        <div key={i} className={LINE_STYLE[l.type]}>
-          <span aria-hidden="true">{LINE_MARK[l.type]} </span>
-          {l.type !== "same" ? (
-            <span className="sr-only">{l.type === "add" ? "added: " : "removed: "}</span>
-          ) : null}
-          {l.text}
-        </div>
-      ))}
-    </pre>
-  );
 }
 
 /** One submission (U2): verdict, per-test results, saved code, a note, and a diff against an earlier attempt. */
@@ -207,6 +188,20 @@ export function SubmissionDetailView({ id }: { id: string }) {
             {sub.code}
           </pre>
         </section>
+      ) : null}
+
+      {sub.code !== undefined && isTerminal(sub.verdict) ? (
+        <>
+          <ReviewPanel
+            submissionId={id}
+            slug={sub.problem.slug}
+            language={sub.language}
+            code={sub.code}
+          />
+          {sub.verdict !== "CE" && sub.verdict !== "IE" ? (
+            <ComplexityPanel submissionId={id} />
+          ) : null}
+        </>
       ) : null}
 
       {others.length > 0 ? (

@@ -63,6 +63,54 @@ export const exampleSchema = z.object({
 });
 export type Example = z.infer<typeof exampleSchema>;
 
+const alphabetSchema = z.string().min(1).max(64);
+const scaleArgSchema = z.union([
+  z.object({ kind: z.literal("int"), value: z.number().int() }),
+  z.object({
+    kind: z.literal("int"),
+    scale: z.number().positive(),
+    min: z.number().int().optional(),
+  }),
+  z.object({
+    kind: z.literal("ints"),
+    scale: z.number().positive().optional(),
+    length: z.number().int().min(1).optional(),
+    min: z.number().int(),
+    max: z.number().int(),
+    order: z.enum(["random", "sorted", "descending", "distinct", "constant"]).optional(),
+  }),
+  z.object({
+    kind: z.literal("string"),
+    scale: z.number().positive().optional(),
+    alphabet: alphabetSchema,
+    shape: z.enum(["random", "palindrome", "balanced"]).optional(),
+  }),
+  z.object({
+    kind: z.literal("strings"),
+    scale: z.number().positive().optional(),
+    length: z.number().int().min(1),
+    alphabet: alphabetSchema,
+    shared: z.number().int().min(0).optional(),
+  }),
+  z.object({
+    kind: z.literal("grid"),
+    chars: z.string().length(2),
+    density: z.number().min(0).max(1).optional(),
+  }),
+  z.object({
+    kind: z.literal("intervals"),
+    scale: z.number().positive().optional(),
+    max: z.number().int().min(10),
+  }),
+]);
+
+/** `scale.json`: how the complexity analyzer (X4) builds inputs of growing size for this problem. */
+export const scaleFileSchema = z.object({
+  sizes: z.array(z.number().int().min(1)).min(5).max(14),
+  args: z.record(z.string(), scaleArgSchema),
+});
+export type ScaleFile = z.infer<typeof scaleFileSchema>;
+
 export const TEST_KINDS = ["sample", "hidden", "edge", "stress"] as const;
 export type TestKind = (typeof TEST_KINDS)[number];
 
@@ -146,6 +194,8 @@ export interface ProblemBundle {
   hints: Partial<Record<1 | 2 | 3, string>>;
   /** Resolved from `editorial.json` (file references replaced by their contents), or null. */
   editorial: SaveEditorial | null;
+  /** Generators for the complexity analyzer (optional). Not part of the problem's version. */
+  scale?: ScaleFile | null;
   tests: TestFile[];
 }
 

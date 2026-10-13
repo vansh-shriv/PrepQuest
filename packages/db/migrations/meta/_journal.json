@@ -190,6 +190,20 @@
       "when": 1791911575846,
       "tag": "0026_green_orphan",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1791926620737,
+      "tag": "0027_gifted_squirrel_girl",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1791926624962,
+      "tag": "0028_triggers_phase14",
+      "breakpoints": true
     }
   ]
 }

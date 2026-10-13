@@ -1,5 +1,6 @@
 import { encodeInput, encodeOutput, parseInput, parseOutput } from "./codec.js";
-import type { Issue, ProblemBundle, Signature, TestFile } from "./types.js";
+import { buildScaledInput, scaleIssues } from "@prepquest/analytics-core";
+import type { Issue, ProblemBundle, ScaleFile, Signature, TestFile } from "./types.js";
 
 /** Minimum non-sample tests per difficulty (doc 17 §3 step 4). */
 export const MIN_TESTS = { easy: 10, medium: 15, hard: 20 } as const;
@@ -164,8 +165,27 @@ export function validateBundle(bundle: ProblemBundle, folder: string, taxonomy: 
   const missingHints = ([1, 2, 3] as const).filter((t) => bundle.hints[t] === undefined);
   if (missingHints.length) issues.push(warn(p, `missing hints: ${missingHints.join(", ")}`));
 
+  if (bundle.scale) issues.push(...validateScale(p, signature, bundle.scale));
+
   issues.push(...validateTests(p, signature, meta.difficulty, examples.length, bundle.tests));
   return issues;
+}
+
+/** The complexity analyzer's generators must fit the signature and make inputs the codec accepts. */
+function validateScale(p: string, signature: Signature, scale: ScaleFile): Issue[] {
+  const problems = scaleIssues(scale, signature.params);
+  if (problems.length > 0) return problems.map((m) => err(p, `scale.json: ${m}`));
+  const out: Issue[] = [];
+  const first = scale.sizes[0]!;
+  const last = scale.sizes[scale.sizes.length - 1]!;
+  try {
+    // the format is the same at every size, so only the smallest is parsed; the largest only has to fit the size cap
+    parseInput(signature, buildScaledInput(scale, signature.params, first));
+    buildScaledInput(scale, signature.params, last);
+  } catch (e) {
+    out.push(err(p, `scale.json: ${(e as Error).message}`));
+  }
+  return out;
 }
 
 export function hasErrors(issues: Issue[]): boolean {

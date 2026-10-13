@@ -5,6 +5,7 @@ import { saveEditorialSchema, type SaveEditorial } from "@prepquest/shared";
 import {
   caseSchema,
   editorialFileSchema,
+  scaleFileSchema,
   exampleSchema,
   LANGUAGES,
   manifestEntrySchema,
@@ -117,6 +118,7 @@ export async function loadProblem(
   }
 
   const editorial = await loadEditorial(dir, slug, issues);
+  const scale = await readJson(join(dir, "scale.json"), scaleFileSchema, slug, issues, false);
 
   const tests: TestFile[] = [];
   const manifest = await readJson(
@@ -154,6 +156,7 @@ export async function loadProblem(
       starters,
       hints,
       editorial,
+      scale,
       tests,
     },
     issues,

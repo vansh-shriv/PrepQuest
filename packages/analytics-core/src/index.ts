@@ -16,3 +16,5 @@ export * from "./sql.js";
 export * from "./oa.js";
 export * from "./contest.js";
 export * from "./flashcards.js";
+export * from "./complexity.js";
+export * from "./scale.js";

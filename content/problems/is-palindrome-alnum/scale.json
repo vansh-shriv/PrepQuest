@@ -1,0 +1,10 @@
+{
+  "sizes": [20000, 40000, 80000, 160000, 320000, 640000],
+  "args": {
+    "s": {
+      "kind": "string",
+      "alphabet": "abcdefghij",
+      "shape": "palindrome"
+    }
+  }
+}

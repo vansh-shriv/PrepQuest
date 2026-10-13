@@ -18,8 +18,9 @@ Phase-by-phase build log. Plan source: `docs/18-ROADMAP-AND-SPRINTS.md`. Each ph
 | 10    | Learning suite: spaced repetition, CS quizzes, roadmaps, company tracks                                                                     | M8 (part) | Done                  |
 | 11    | SQL practice runner, aptitude items and the online-assessment simulator                                                                     | M8        | Done                  |
 | 12    | Contests: ICPC and points scoring, private contests, live standings, virtual runs                                                           | M9 (part) | Done                  |
-| 13    | Flashcards with offline review sync, shareable reports with preview images                                                                  | M9 (part) | Done (pending commit) |
-| 14+   | Code review mode, complexity analyzer, AI card suggestions, integrity, peer mocks, hardening                                                | M9-M12    | Planned               |
+| 13    | Flashcards with offline review sync, shareable reports with preview images                                                                  | M9 (part) | Done                  |
+| 14    | Code review mode, complexity analyzer                                                                                                       | M9 (part) | Done (pending commit) |
+| 15+   | AI card suggestions, integrity, peer mocks, hardening                                                                                       | M10-M12   | Planned               |
 
 ## Phase 0 - Foundation
 
@@ -442,3 +443,29 @@ Decisions / gotchas:
 Deferred:
 
 - Service worker and app-shell caching, IndexedDB storage, reversible and image cards, AI card suggestions (next phase with the gateway), cards from notes, editorials and interview moments (the API accepts the origin, the web has no shortcut yet), public deck links, spaced-repetition plan tasks for flashcards, shareable streak badge and public profile, "report viewed" notifications, peer feedback reports (X1).
+
+## Phase 14 - Code review and the complexity analyzer (milestone M9, last part)
+
+Done:
+
+- **Code review (X3):** from a finished submission the learner asks for a review at a strictness (gentle: 5 comments, no nits; strict: 10; pedantic: 18). The model returns a summary, a 1 to 5 rating for six categories (readability, idioms, complexity, edge cases, maintainability, interview presentation) and line comments with a severity (important, suggestion, nit). Code checks the reply (`reviewIssues`: lines inside the file, severities allowed for the strictness, comment cap) and sends problems back to the model for a repair. The review runs in the background and the page polls. A review is stored per submission and strictness, so asking again costs nothing; limits are 3 a minute and 20 a day, and a verified email is required. A pending review older than 5 minutes is reported as failed so it can be retried.
+- **Refactor, verified by the judge:** the model may also return a cleaner version. It is queued as a full `submit` run with mode `review`, and the browser receives it only when that run is `AC`. A failing rewrite is hidden and the page says so. Review runs never touch attempts, XP, statistics, streaks, review cards or the history list.
+- **Complexity analyzer (X4):** the learner picks a claimed class (O(1) to O(2^n)); the API builds inputs of growing size from the problem's `scale.json`, queues one judge `run` with a custom input per size (each timed three times, fastest kept, `repeat` in `JudgeTest`) and fits the growth when the run ends (`analytics-core/complexity.ts`, pure). Method: the fixed cost is the fastest run; a straight line is fitted to log(time - fixed) against log(n), each point weighted by its signal over the timer noise; the slope is the growth exponent (1, 2, 3). A class is plausible when its own slope over the same sizes agrees within the fit error, so a noisy run answers "O(n) to O(n log n)" with low confidence instead of one wrong class. The first size that hits the time limit is shown on the chart but kept out of the fit (it is only a lower bound) and later sizes are dropped. Sublinear claims (O(1), O(log n)) cannot be told from O(n) because reading the input is O(n); the message says so. A static check (loop nesting depth, self calls, the line of the deepest loop) is added to the message. The result is always labelled an empirical estimate.
+- **Scaling inputs:** `content/problems/<slug>/scale.json` (`sizes` and one generator per parameter: `int`, `ints`, `string`, `strings`, `grid`, `intervals`; deterministic, at most 2 MB). 19 of 20 problems have one (climbing-stairs does not: its answers grow into big integers). `content:validate` checks each spec against the signature and the codec. Stored in `problems.scale`, not part of the problem's version hash.
+- **Web:** the submission page has "Code review" (strictness select saved in settings, annotated code with comments under their lines, severity filters, ratings, refactor shown as a diff with copy and open in editor) and "Complexity check" (claim select, a pixel growth chart, a table with the same numbers, caveat). Severity and ratings are text, not colour only.
+- **API:** module `codereview`: `POST/GET /submissions/:id/review`, `GET/PUT /code-review/settings`, `POST/GET /submissions/:id/complexity`. Internal `createReviewRun` in `submissions/service.ts`. The submission list hides mode `review` unless asked for.
+- **Database:** migrations 0027 and 0028 (triggers): `code_reviews`, `complexity_analyses`, `user_settings.review_strictness`, `problems.scale`.
+- **Fix (CI flake in `interview.spec.ts`):** the interview code replay slider used a step of 1 s with a maximum that was not a multiple of it, so pressing End could land before the last edit and show no code. The maximum is now a whole number of steps (3 of 3 runs green, it failed about half the time before).
+- **Tests:** analytics-core 37 new (205; includes real judge timings of the reference solutions), API 22 new (587), web 10 new (92), judge pipeline 1 new, e2e `review.spec.ts` (7, with the real judge).
+
+Decisions / gotchas:
+
+- The analyzer cannot prove anything. On the development process sandbox start-up is about 100 ms and noisy, so many linear solutions answer "O(n) to O(n log n)" with medium confidence; the isolate sandbox reports CPU time and is much quieter.
+- Measured on the real judge, the true class of all 19 reference solutions was among the plausible ones. A first least-squares fit of t = b + a f(n) was overconfident under noise and was replaced by the log-log slope method; counting the time-limit point in the fit made slow code look fast, so it is left out.
+- A review of a submission that failed (WA or TLE) is allowed on purpose: slow code is exactly what the complexity check is for.
+- The mock reviewer is deterministic and does not rewrite code (its "refactor" adds a comment), so the verified-refactor flow is tested but the quality of real refactors is not; run with a key before trusting the prompt (`CODE_REVIEW_PROMPT_VERSION`).
+- A test that ages a row must disable its `updated_at` trigger first.
+
+Deferred:
+
+- Compare mode (your code against the editorial and a peer-style version), reusing the review for interview code-quality scoring (E1), generators for exponential and recursive solutions (sizes up to about 25), memory growth fitting, AI flashcard suggestions (X6, next phase).
