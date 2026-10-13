@@ -650,3 +650,7 @@ New tables: `question_bank` (slug, category cs/behavioral/hld/lld, topic, compet
 ## Phase 10 additions (as built)
 
 `srs_cards` (`due_on date` in the learner's local day, `ease`, `interval_days`, `repetitions`, `lapses`, `suspended`, unique per user and problem), `srs_reviews` (`quality`, `source` auto or manual, `reviewed_on` for the daily cap), `quiz_questions` (slug from content, `type`, `options`, `answer`, `explanation_md`, `interview_line`), `quiz_attempts` (`mode`, ordered `question_ids`, `deadline_at`, `xp_awarded`), `quiz_attempt_answers`, `roadmaps` (graph in `data`), `user_tracks`, and `user_settings.review_cap`. Not built: `quiz_sets`, `aptitude_items`, `oa_*`, `sql_*`, `roadmap_nodes` and `roadmap_edges` (the graph is a JSON column). Triggers in migration 0018.
+
+## Phase 11 additions (as built)
+
+`sql_datasets` (`schema_sql`, `seed_sql`, `dialect` always sqlite), `sql_problems` (`expected_query`, `order_sensitive`, `hint`, `solution_note`, `position`), `sql_attempts` (`verdict` AC, WA, ERROR or TLE, `xp_awarded`), `aptitude_items` (`section`, `type` single or blank, `shortcut_md`, `est_seconds`), `oa_templates` (`sections` JSON, `negative_marking`, `calculator`, `kind` oa or drill) and `oa_attempts` (`state` JSON with the items, answers and clocks of every section, `report` JSON, `marks`, `max_marks`, `xp_awarded`). Triggers in migration 0021. Not built: `quiz_sets`, `roadmap_nodes` and `roadmap_edges`.

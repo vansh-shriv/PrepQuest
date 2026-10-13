@@ -243,3 +243,5 @@ pnpm llm:record                 # record LLM fixtures for tests
 Phase 9: the nightly job runs inside the API process (`main.ts`, every 10 minutes). `pnpm db:migrate` applies migrations 0015 and 0016. API tests for planning pin the clock with `t.app.ai.now`; tests that count "solved today" use the real clock.
 
 Phase 10: `pnpm db:migrate` applies migrations 0017 to 0019 (tables, triggers, `review_cap`). After pulling, run `pnpm content:import --publish` so the dev database gets the quizzes and roadmaps. API tests import them with `seedLearning` from `src/test/content.ts`.
+
+Phase 11: `pnpm db:migrate` applies migrations 0020 and 0021; run `pnpm content:import --publish` to load the SQL problems, aptitude items and test templates. SQL runs on `sql.js` (WebAssembly, installed by `pnpm install`, no native build or Docker needed). `pnpm build` must have built `@prepquest/sql-runner` before the API or the content CLI runs. API tests for OA pin the clock with `t.app.ai.now` and call `seedLearning` and `seedAssess`; e2e specs need the content imported.

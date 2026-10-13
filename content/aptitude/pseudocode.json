@@ -1,0 +1,141 @@
+{
+  "section": "pseudocode",
+  "items": [
+    {
+      "slug": "pseudo-swap-arithmetic",
+      "topic": "variables",
+      "difficulty": 1,
+      "type": "single",
+      "body": "What does this print?\n\n```\nx = 5\ny = 3\nx = x + y\ny = x - y\nx = x - y\nprint(x, y)\n```",
+      "options": [
+        { "id": "a", "text": "5 3" },
+        { "id": "b", "text": "3 5" },
+        { "id": "c", "text": "8 3" },
+        { "id": "d", "text": "3 8" }
+      ],
+      "answer": "b",
+      "explanation": "x becomes 8, then y = 8 - 3 = 5, then x = 8 - 5 = 3. The two values were swapped, so it prints 3 5.",
+      "shortcut": "Trace each line in a small table of x and y.",
+      "estSeconds": 50
+    },
+    {
+      "slug": "pseudo-odd-sum",
+      "topic": "loops",
+      "difficulty": 1,
+      "type": "single",
+      "body": "What does this print? (The loop runs for i = 1 to 5.)\n\n```\ns = 0\nfor i in 1..5:\n    if i % 2 == 0:\n        continue\n    s = s + i\nprint(s)\n```",
+      "options": [
+        { "id": "a", "text": "6" },
+        { "id": "b", "text": "9" },
+        { "id": "c", "text": "12" },
+        { "id": "d", "text": "15" }
+      ],
+      "answer": "b",
+      "explanation": "Even values of i are skipped, so s adds 1, 3 and 5, giving 9.",
+      "shortcut": "continue skips the rest of that turn only.",
+      "estSeconds": 40
+    },
+    {
+      "slug": "pseudo-reverse-number",
+      "topic": "loops",
+      "difficulty": 1,
+      "type": "single",
+      "body": "What does this print?\n\n```\nn = 1234\nr = 0\nwhile n > 0:\n    r = r * 10 + n % 10\n    n = n // 10\nprint(r)\n```",
+      "options": [
+        { "id": "a", "text": "1234" },
+        { "id": "b", "text": "4321" },
+        { "id": "c", "text": "10" },
+        { "id": "d", "text": "4" }
+      ],
+      "answer": "b",
+      "explanation": "Each pass moves the last digit of n onto the end of r: 4, 43, 432, 4321. This is the standard way to reverse a number.",
+      "shortcut": "n % 10 takes the last digit, n // 10 drops it.",
+      "estSeconds": 50
+    },
+    {
+      "slug": "pseudo-factorial",
+      "topic": "recursion",
+      "difficulty": 1,
+      "type": "single",
+      "body": "What does this print?\n\n```\nf(n):\n    if n <= 1:\n        return 1\n    return n * f(n - 1)\n\nprint(f(5))\n```",
+      "options": [
+        { "id": "a", "text": "5" },
+        { "id": "b", "text": "24" },
+        { "id": "c", "text": "120" },
+        { "id": "d", "text": "720" }
+      ],
+      "answer": "c",
+      "explanation": "f(5) = 5 x 4 x 3 x 2 x 1 = 120, the factorial of 5.",
+      "shortcut": "Recognise the factorial: 5! = 120.",
+      "estSeconds": 35
+    },
+    {
+      "slug": "pseudo-int-division",
+      "topic": "operators",
+      "difficulty": 1,
+      "type": "single",
+      "body": "What does this print? (// is integer division and % is the remainder.)\n\n```\na = 10\nb = 3\nprint(a // b, a % b)\n```",
+      "options": [
+        { "id": "a", "text": "3 1" },
+        { "id": "b", "text": "3.33 1" },
+        { "id": "c", "text": "1 3" },
+        { "id": "d", "text": "3 3" }
+      ],
+      "answer": "a",
+      "explanation": "10 divided by 3 is 3 remainder 1, so it prints 3 1.",
+      "shortcut": "quotient x divisor + remainder gives back the number: 3 x 3 + 1 = 10.",
+      "estSeconds": 25
+    },
+    {
+      "slug": "pseudo-nested-count",
+      "topic": "loops",
+      "difficulty": 2,
+      "type": "single",
+      "body": "How many times is count increased? (Both loops are inclusive: for i = 1 to 4, and for j = i to 4.)\n\n```\ncount = 0\nfor i in 1..4:\n    for j in i..4:\n        count = count + 1\nprint(count)\n```",
+      "options": [
+        { "id": "a", "text": "8" },
+        { "id": "b", "text": "10" },
+        { "id": "c", "text": "12" },
+        { "id": "d", "text": "16" }
+      ],
+      "answer": "b",
+      "explanation": "The inner loop runs 4, 3, 2 and 1 times for i = 1 to 4. That is 4 + 3 + 2 + 1 = 10.",
+      "shortcut": "A triangular loop runs n(n+1)/2 times: 4 x 5 / 2.",
+      "estSeconds": 50
+    },
+    {
+      "slug": "pseudo-bit-shift",
+      "topic": "bit-operations",
+      "difficulty": 2,
+      "type": "single",
+      "body": "What does this print? (>> is a right shift and ^ is bitwise XOR.)\n\n```\nx = 7\nx = x >> 1\nx = x ^ 2\nprint(x)\n```",
+      "options": [
+        { "id": "a", "text": "0" },
+        { "id": "b", "text": "1" },
+        { "id": "c", "text": "3" },
+        { "id": "d", "text": "5" }
+      ],
+      "answer": "b",
+      "explanation": "7 is 111 in binary; shifting right by one gives 11, which is 3. Then 3 XOR 2 is 11 XOR 10 = 01, which is 1.",
+      "shortcut": "A right shift by one halves the number, rounding down: 7 becomes 3.",
+      "estSeconds": 55
+    },
+    {
+      "slug": "pseudo-short-circuit",
+      "topic": "conditions",
+      "difficulty": 2,
+      "type": "single",
+      "body": "What does this print?\n\n```\ni = 0\nif i != 0 and 10 / i > 1:\n    print(\"A\")\nelse:\n    print(\"B\")\n```",
+      "options": [
+        { "id": "a", "text": "A" },
+        { "id": "b", "text": "B" },
+        { "id": "c", "text": "A division-by-zero error" },
+        { "id": "d", "text": "Nothing" }
+      ],
+      "answer": "b",
+      "explanation": "The first test i != 0 is false, and \"and\" stops there (short-circuit evaluation), so 10 / i is never computed. The else branch prints B.",
+      "shortcut": "In a and b, b only runs if a is true. Guards like this prevent errors.",
+      "estSeconds": 40
+    }
+  ]
+}

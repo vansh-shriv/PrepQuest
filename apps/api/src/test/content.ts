@@ -2,8 +2,10 @@ import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
+  importAssess,
   importBank,
   importLearning,
+  loadAssess,
   loadLearning,
   importFolder,
   importSheet,
@@ -59,4 +61,10 @@ export async function seedBank(t: TestApp) {
 export async function seedLearning(t: TestApp) {
   const learning = await loadLearning(findContentRoot());
   return importLearning(t.db, learning);
+}
+
+/** Imports the real SQL datasets, aptitude items and test templates (needs the quiz questions for technical sections). */
+export async function seedAssess(t: TestApp) {
+  const assess = await loadAssess(findContentRoot());
+  return importAssess(t.db, assess);
 }

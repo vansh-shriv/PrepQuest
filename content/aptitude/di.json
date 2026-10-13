@@ -1,0 +1,73 @@
+{
+  "section": "di",
+  "items": [
+    {
+      "slug": "di-total-product-a",
+      "topic": "tables",
+      "difficulty": 1,
+      "type": "single",
+      "body": "Units sold per quarter:\n\n| Quarter | Product A | Product B |\n| --- | --- | --- |\n| Q1 | 120 | 80 |\n| Q2 | 150 | 90 |\n| Q3 | 130 | 110 |\n| Q4 | 200 | 120 |\n\nWhat is the total number of units of Product A sold over the year?",
+      "options": [
+        { "id": "a", "text": "560" },
+        { "id": "b", "text": "580" },
+        { "id": "c", "text": "600" },
+        { "id": "d", "text": "620" }
+      ],
+      "answer": "c",
+      "explanation": "120 + 150 + 130 + 200 = 600.",
+      "shortcut": "Group to round numbers: (120 + 130) + (150 + 200) = 250 + 350.",
+      "estSeconds": 40
+    },
+    {
+      "slug": "di-share-product-b",
+      "topic": "tables",
+      "difficulty": 2,
+      "type": "single",
+      "body": "Units sold per quarter:\n\n| Quarter | Product A | Product B |\n| --- | --- | --- |\n| Q1 | 120 | 80 |\n| Q2 | 150 | 90 |\n| Q3 | 130 | 110 |\n| Q4 | 200 | 120 |\n\nIn which quarter was Product B's share of the quarter's total (A + B) the highest?",
+      "options": [
+        { "id": "a", "text": "Q1" },
+        { "id": "b", "text": "Q2" },
+        { "id": "c", "text": "Q3" },
+        { "id": "d", "text": "Q4" }
+      ],
+      "answer": "c",
+      "explanation": "B's share is 80/200 = 40% in Q1, 90/240 = 37.5% in Q2, 110/240 = about 45.8% in Q3 and 120/320 = 37.5% in Q4. Q3 is highest.",
+      "shortcut": "Compare fractions by cross-multiplying, or just estimate: only Q3 is clearly above 40%.",
+      "estSeconds": 75
+    },
+    {
+      "slug": "di-growth-product-a",
+      "topic": "percent-change",
+      "difficulty": 2,
+      "type": "single",
+      "body": "Units sold per quarter:\n\n| Quarter | Product A | Product B |\n| --- | --- | --- |\n| Q1 | 120 | 80 |\n| Q2 | 150 | 90 |\n| Q3 | 130 | 110 |\n| Q4 | 200 | 120 |\n\nBy roughly what percentage did Product A sales rise from Q3 to Q4?",
+      "options": [
+        { "id": "a", "text": "35%" },
+        { "id": "b", "text": "50%" },
+        { "id": "c", "text": "54%" },
+        { "id": "d", "text": "70%" }
+      ],
+      "answer": "c",
+      "explanation": "The rise is 200 - 130 = 70, and 70 / 130 is about 53.8%, which is roughly 54%. Percent change is measured on the starting value.",
+      "shortcut": "70 over 130 is a bit more than half: 65 would be exactly 50%.",
+      "estSeconds": 60
+    },
+    {
+      "slug": "di-average-product-b",
+      "topic": "tables",
+      "difficulty": 1,
+      "type": "single",
+      "body": "Units sold per quarter:\n\n| Quarter | Product A | Product B |\n| --- | --- | --- |\n| Q1 | 120 | 80 |\n| Q2 | 150 | 90 |\n| Q3 | 130 | 110 |\n| Q4 | 200 | 120 |\n\nWhat is the average number of units of Product B sold per quarter?",
+      "options": [
+        { "id": "a", "text": "90" },
+        { "id": "b", "text": "95" },
+        { "id": "c", "text": "100" },
+        { "id": "d", "text": "105" }
+      ],
+      "answer": "c",
+      "explanation": "The total is 80 + 90 + 110 + 120 = 400, and 400 / 4 = 100.",
+      "shortcut": "Guess 100 and add the differences: -20, -10, +10, +20 sum to zero.",
+      "estSeconds": 40
+    }
+  ]
+}

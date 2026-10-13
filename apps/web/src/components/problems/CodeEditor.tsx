@@ -5,7 +5,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { LanguageValue } from "@prepquest/shared";
 import { toHex, toRuleColor, withAlpha } from "./editor-colors";
 
-const MONACO_LANGUAGE: Record<LanguageValue, string> = {
+const MONACO_LANGUAGE: Record<LanguageValue | "sql", string> = {
+  sql: "sql",
   cpp: "cpp",
   java: "java",
   python: "python",
@@ -51,7 +52,7 @@ export interface CodeEditorProps {
   value: string;
   /** Bump to replace the editor's text with `value` (reset, restore, load newer). Typing never bumps it. */
   revision: number;
-  language: LanguageValue;
+  language: LanguageValue | "sql";
   onChange: (code: string) => void;
   /** Where to put the caret when the editor opens. */
   initialCursor?: { line: number; column: number } | null;

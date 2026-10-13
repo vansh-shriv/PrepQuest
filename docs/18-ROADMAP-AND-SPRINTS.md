@@ -165,3 +165,5 @@ Bug bash, content improvements, user-requested features, portfolio write-up/blog
 - Highlight talking points: sandboxed execution (`isolate`, seccomp, cgroups), queue fairness, WebSockets with replay, LLM guardrails + evaluation harness, pgvector retrieval, deterministic planning engine, observability stack, CI/CD with security scanning.
 - Metrics to quote after launch: submissions judged, p95 verdict latency, users, interviews run.
 - Write 2 blog posts: "Building a sandboxed judge" and "Evaluating an AI interviewer".
+
+**Status:** Sprint 8 is finished across Phases 10 and 11 (SRS, quizzes, roadmaps, tracks, SQL practice, aptitude and the OA simulator). The next scope is Sprint 9: contests, code review mode, complexity analyzer, flashcards and shareable reports.

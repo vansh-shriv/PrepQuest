@@ -1,0 +1,158 @@
+{
+  "section": "verbal",
+  "items": [
+    {
+      "slug": "verbal-each-agreement",
+      "topic": "grammar",
+      "difficulty": 1,
+      "type": "single",
+      "body": "Choose the correct sentence.",
+      "options": [
+        { "id": "a", "text": "Each of the students have a book." },
+        { "id": "b", "text": "Each of the students has a book." },
+        { "id": "c", "text": "Each of the student have a book." },
+        { "id": "d", "text": "Each of the students are having a book." }
+      ],
+      "answer": "b",
+      "explanation": "\"Each\" is singular, so the verb is \"has\", and \"of the students\" keeps a plural noun.",
+      "shortcut": "Each, every, either and neither take a singular verb.",
+      "estSeconds": 30
+    },
+    {
+      "slug": "verbal-neither-nor",
+      "topic": "grammar",
+      "difficulty": 2,
+      "type": "single",
+      "body": "Neither the teacher nor the students ____ present when the bell rang.",
+      "options": [
+        { "id": "a", "text": "was" },
+        { "id": "b", "text": "were" },
+        { "id": "c", "text": "is" },
+        { "id": "d", "text": "has been" }
+      ],
+      "answer": "b",
+      "explanation": "With neither ... nor, the verb agrees with the noun nearest to it. \"Students\" is plural and the sentence is in the past, so \"were\".",
+      "shortcut": "Either/or and neither/nor: agree with the closer subject.",
+      "estSeconds": 35
+    },
+    {
+      "slug": "verbal-senior-to",
+      "topic": "sentence-correction",
+      "difficulty": 2,
+      "type": "single",
+      "body": "Choose the best correction of: \"She is senior than me.\"",
+      "options": [
+        { "id": "a", "text": "She is senior to me." },
+        { "id": "b", "text": "She is more senior than me." },
+        { "id": "c", "text": "She is seniorer than me." },
+        { "id": "d", "text": "No correction needed." }
+      ],
+      "answer": "a",
+      "explanation": "Adjectives that come from Latin comparatives (senior, junior, superior, inferior, prior) take \"to\", not \"than\".",
+      "shortcut": "Senior, junior, superior, inferior, prior: always followed by \"to\".",
+      "estSeconds": 35
+    },
+    {
+      "slug": "verbal-abundant",
+      "topic": "vocabulary",
+      "difficulty": 1,
+      "type": "single",
+      "body": "Choose the word closest in meaning to ABUNDANT.",
+      "options": [
+        { "id": "a", "text": "Scarce" },
+        { "id": "b", "text": "Plentiful" },
+        { "id": "c", "text": "Bitter" },
+        { "id": "d", "text": "Rapid" }
+      ],
+      "answer": "b",
+      "explanation": "Abundant means existing in large quantity, which is plentiful. Scarce is its opposite.",
+      "shortcut": "Rule out the opposite first; it is usually among the options.",
+      "estSeconds": 20
+    },
+    {
+      "slug": "verbal-candid-antonym",
+      "topic": "vocabulary",
+      "difficulty": 2,
+      "type": "single",
+      "body": "Choose the word most opposite in meaning to CANDID.",
+      "options": [
+        { "id": "a", "text": "Frank" },
+        { "id": "b", "text": "Deceitful" },
+        { "id": "c", "text": "Honest" },
+        { "id": "d", "text": "Open" }
+      ],
+      "answer": "b",
+      "explanation": "Candid means honest and straightforward. Frank, honest and open are synonyms; deceitful is the opposite.",
+      "shortcut": "Three similar options and one outlier: the outlier is the antonym.",
+      "estSeconds": 25
+    },
+    {
+      "slug": "verbal-remote-work-main-idea",
+      "topic": "reading-comprehension",
+      "difficulty": 2,
+      "type": "single",
+      "body": "Passage: Remote work removed commuting time for many employees, and several surveys found that they used part of that time to work longer. Yet the same surveys show that employees who worked fully remotely reported feeling less connected to their teams. Managers therefore began to schedule short in-person days, hoping to keep the flexibility without losing the connection.\n\nWhy did managers introduce in-person days?",
+      "options": [
+        { "id": "a", "text": "To reduce the cost of office space" },
+        { "id": "b", "text": "To keep flexibility while rebuilding team connection" },
+        { "id": "c", "text": "To increase commuting time" },
+        { "id": "d", "text": "To stop employees from working longer" }
+      ],
+      "answer": "b",
+      "explanation": "The last sentence says it directly: they hoped to keep the flexibility without losing the connection.",
+      "shortcut": "Answers to \"why\" questions usually sit after words such as therefore, so and because.",
+      "estSeconds": 75
+    },
+    {
+      "slug": "verbal-remote-work-detail",
+      "topic": "reading-comprehension",
+      "difficulty": 1,
+      "type": "single",
+      "body": "Passage: Remote work removed commuting time for many employees, and several surveys found that they used part of that time to work longer. Yet the same surveys show that employees who worked fully remotely reported feeling less connected to their teams. Managers therefore began to schedule short in-person days, hoping to keep the flexibility without losing the connection.\n\nAccording to the passage, what did the surveys find about fully remote employees?",
+      "options": [
+        { "id": "a", "text": "They worked fewer hours" },
+        { "id": "b", "text": "They felt less connected to their teams" },
+        { "id": "c", "text": "They wanted longer commutes" },
+        { "id": "d", "text": "They changed jobs more often" }
+      ],
+      "answer": "b",
+      "explanation": "The second sentence states it: they reported feeling less connected to their teams.",
+      "shortcut": "Detail questions are answered in the text, word for word. Do not use outside knowledge.",
+      "estSeconds": 60
+    },
+    {
+      "slug": "verbal-bite-the-bullet",
+      "topic": "idioms",
+      "difficulty": 1,
+      "type": "single",
+      "body": "What does the idiom \"to bite the bullet\" mean?",
+      "options": [
+        { "id": "a", "text": "To eat very quickly" },
+        { "id": "b", "text": "To face an unpleasant situation with courage" },
+        { "id": "c", "text": "To argue loudly" },
+        { "id": "d", "text": "To give up" }
+      ],
+      "answer": "b",
+      "explanation": "It means to get through something difficult or unpleasant bravely, from the old practice of giving a patient a bullet to bite during surgery.",
+      "shortcut": "Idioms are never literal. Match the feeling, not the words.",
+      "estSeconds": 20
+    },
+    {
+      "slug": "verbal-so-that",
+      "topic": "grammar",
+      "difficulty": 1,
+      "type": "single",
+      "body": "She was so tired ____ she fell asleep at her desk.",
+      "options": [
+        { "id": "a", "text": "that" },
+        { "id": "b", "text": "than" },
+        { "id": "c", "text": "as" },
+        { "id": "d", "text": "which" }
+      ],
+      "answer": "a",
+      "explanation": "\"So ... that\" links a cause to its result.",
+      "shortcut": "So ... that (result), as ... as (equal), more ... than (comparison).",
+      "estSeconds": 15
+    }
+  ]
+}

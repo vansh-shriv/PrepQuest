@@ -14,9 +14,10 @@ Phase-by-phase build log. Plan source: `docs/18-ROADMAP-AND-SPRINTS.md`. Each ph
 | 6     | AI interview MVP, resume parse, scorecards                                                                                                  | M4        | Done (pending commit) |
 | 7     | Voice, live-coding awareness, AI eval harness                                                                                               | M5        | Done (pending commit) |
 | 8     | Evaluation depth: more interview types, company packs, ideal answers, STAR, speech analytics, question memory                               | M6        | Done (pending commit) |
-| 9     | Analytics and planning: readiness, topic mastery v2, interview trends, time analysis, study plan, daily goals, diagnostic                   | M7        | Done (pending commit) |
-| 10    | Learning suite: spaced repetition, CS quizzes, roadmaps, company tracks                                                                     | M8 (part) | Done (pending commit) |
-| 11+   | SQL runner, aptitude and OA simulator, contests, peer, hardening                                                                            | M8-M12    | Planned               |
+| 9     | Analytics and planning: readiness, topic mastery v2, interview trends, time analysis, study plan, daily goals, diagnostic                   | M7        | Done                  |
+| 10    | Learning suite: spaced repetition, CS quizzes, roadmaps, company tracks                                                                     | M8 (part) | Done                  |
+| 11    | SQL practice runner, aptitude items and the online-assessment simulator                                                                     | M8        | Done (pending commit) |
+| 12+   | Contests, code tools, flashcards, integrity, peer mocks, hardening                                                                          | M9-M12    | Planned               |
 
 ## Phase 0 - Foundation
 
@@ -354,3 +355,31 @@ Decisions / gotchas:
 Deferred:
 
 - SQL practice runner, aptitude items and the OA simulator (C2), quiz sets and AI-graded short answers, flashcards (X6) and "wrong answer to flashcard", roadmaps and SRS feeding the study plan generator (plan reviews are still based on shaky solves), checkpoint quizzes and skip-assessment for roadmap nodes, role roadmaps beyond SDE and CS fundamentals, pattern-level reviews, XP for reviews, reminders and notifications, community-extendable track editing in the admin UI, 400 quiz questions (48 so far).
+
+## Phase 11 - SQL practice and online assessments (milestone M8, second part)
+
+Finishes Sprint 8: the SQL practice runner and the aptitude and OA simulator (C1, C2).
+
+Done:
+
+- **SQL runner (`packages/sql-runner`):** every run builds a throwaway in-memory SQLite database (sql.js, WebAssembly) inside a worker thread, so nothing persists between runs and there is no file system, network or extension loading. A statement timeout of 3 s kills the worker; results are capped at 1000 rows. No native build is needed (CI runs Node 20).
+- **Guard and comparison (`analytics-core/sql.ts`, pure):** only one read-only statement is accepted (SELECT, WITH, EXPLAIN QUERY PLAN; writes, PRAGMA, ATTACH and friends are refused, keywords inside strings and comments are ignored). Results are compared by column position (aliases are free), NULL equals NULL, numbers match to 9 decimals, and rows are compared as a multiset unless the problem is order sensitive.
+- **SQL problems (C1):** 26 problems on three datasets (company, online shop, college) in `content/sql/*.json`: select, joins, group by and having, subqueries, windows, recursive CTEs, NULL handling. `content:validate` runs every expected query through the real runner. Verdicts AC, WA (says what differs without showing the expected rows), ERROR and TLE. The first accepted solution pays XP once (10, 20 or 30 by difficulty); the reference solution and a note unlock after solving. Schema explorer with column types and sample rows.
+- **Aptitude items (C2):** 47 items in `content/aptitude` (quantitative, logical reasoning, verbal, data interpretation, pseudocode), single choice or typed answer, each with an explanation and a speed shortcut.
+- **OA simulator (C2, `analytics-core/oa.ts`, pure):** six templates in `content/oa/templates.json` (campus test, service-company style, product-company style, CS fundamentals test, two speed drills). A paper is built deterministically from an attempt-specific seed with mixed difficulty (aptitude items and CS quiz questions). Each section has its own server-side clock, sections run in order and a finished section is locked. Negative marking and the calculator are per template. The report gives marks per section, accuracy, pace, weak topics, rushed sections, a percentile (only once 10 other attempts exist) and a review of every question with its answer, explanation and shortcut. XP is half the correct answers, 30 at most, paid once.
+- **API:** modules `sql` (`/sql/problems`, `/:slug`, `/run`, `/submit`) and `oa` (`/oa`, `/oa/attempts`, `/:id`, `/:id/sections/:index/start`, `/:id/answers`, `/:id/submit-section`, `/:id/finish`). A forgotten test is closed after 24 hours so it cannot block the next one. `progress/xp.ts` pays XP and activity for these.
+- **Web:** `/sql`, `/sql/[slug]` (Monaco in SQL mode), `/tests`, `/tests/[id]` (between sections, running section with question navigator and timer, on-screen calculator, report); nav entries SQL and Tests.
+- **Database:** migrations 0020 (tables) and 0021 (triggers): `sql_datasets`, `sql_problems`, `sql_attempts`, `aptitude_items`, `oa_templates`, `oa_attempts`.
+- **Tests:** analytics-core 16 new (121), sql-runner 6, content 3 new (43), API 20 new (9 sql, 11 oa), web helpers 9 new (58), 5 e2e tests in `assess.spec.ts`.
+
+Decisions / gotchas:
+
+- SQLite (sql.js) is the only dialect; PostgreSQL practice and query-plan questions are deferred. The worker is an eval'd string that `require`s sql.js, so it works the same from `dist`, tsx and vitest.
+- Section clocks live in `oa_attempts.state` (JSON): `syncClock` closes a section whose deadline passed whenever the attempt is read or written, so no timer job is needed.
+- Quiz answers and aptitude answers share the OA path: responses travel as strings (`true`/`false` for tf, comma-joined ids for multi) and are parsed before grading.
+- A test template's technical sections draw on `quiz_questions`, so `seedLearning` must run before OA tests.
+- The e2e spec filters template cards by description text (the card title is outside the test id element).
+
+Deferred:
+
+- Coding questions inside an OA, work-simulation questions, admin editing of templates, AI-graded short answers, PostgreSQL dialect and EXPLAIN-interpretation problems, more content (aptitude is 47 of the planned 200 and SQL 26 problems), per-section percentile bands from a larger population, aptitude practice outside timed papers, SQL and OA results feeding mastery and the study plan.

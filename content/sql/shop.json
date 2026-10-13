@@ -1,0 +1,118 @@
+{
+  "slug": "shop",
+  "title": "Online shop",
+  "description": "Customers, products, orders and the items in each order.",
+  "schema": [
+    "CREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT NOT NULL, city TEXT NOT NULL, joined_on TEXT NOT NULL);",
+    "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL, price INTEGER NOT NULL);",
+    "CREATE TABLE orders (id INTEGER PRIMARY KEY, customer_id INTEGER NOT NULL REFERENCES customers(id), ordered_on TEXT NOT NULL, status TEXT NOT NULL);",
+    "CREATE TABLE order_items (order_id INTEGER NOT NULL REFERENCES orders(id), product_id INTEGER NOT NULL REFERENCES products(id), qty INTEGER NOT NULL, PRIMARY KEY (order_id, product_id));"
+  ],
+  "seed": [
+    "INSERT INTO customers VALUES (1,'Aarav','Pune','2024-01-10'),(2,'Bhavna','Mumbai','2024-02-05'),(3,'Chetan','Delhi','2024-03-12'),(4,'Divya','Pune','2024-04-01'),(5,'Eshan','Mumbai','2024-04-20'),(6,'Fatima','Pune','2024-06-02');",
+    "INSERT INTO products VALUES (1,'Notebook','stationery',50),(2,'Pen','stationery',10),(3,'Backpack','bags',800),(4,'Headphones','electronics',1500),(5,'Keyboard','electronics',1200),(6,'Water Bottle','misc',300),(7,'Desk Lamp','electronics',700);",
+    "INSERT INTO orders VALUES (1,1,'2024-05-01','delivered'),(2,1,'2024-05-20','delivered'),(3,2,'2024-05-03','delivered'),(4,3,'2024-06-11','cancelled'),(5,4,'2024-06-15','delivered'),(6,2,'2024-07-02','delivered'),(7,5,'2024-07-09','shipped'),(8,1,'2024-07-21','delivered');",
+    "INSERT INTO order_items VALUES (1,1,3),(1,2,5),(2,4,1),(3,3,1),(3,2,2),(4,5,1),(5,6,2),(5,1,4),(6,4,1),(6,6,1),(7,5,1),(8,3,2),(8,1,1);"
+  ],
+  "problems": [
+    {
+      "slug": "cheap-products",
+      "title": "Cheap products",
+      "topic": "select",
+      "difficulty": "easy",
+      "statement": "Return the `name` of every product that costs **less than 100**.",
+      "expected": "SELECT name FROM products WHERE price < 100",
+      "orderSensitive": false,
+      "hint": "A plain WHERE on price.",
+      "note": "The simplest shape: one table, one condition."
+    },
+    {
+      "slug": "customers-per-city",
+      "title": "Customers per city",
+      "topic": "group-by",
+      "difficulty": "easy",
+      "statement": "Count the customers in each city. Return `city` and `customers`, the city with the most customers first, ties in alphabetical order of city.",
+      "expected": "SELECT city, COUNT(*) AS customers FROM customers GROUP BY city ORDER BY customers DESC, city",
+      "orderSensitive": true,
+      "hint": "GROUP BY city, then ORDER BY the count and the city.",
+      "note": "You can ORDER BY an alias defined in the SELECT list."
+    },
+    {
+      "slug": "never-ordered",
+      "title": "Customers who never ordered",
+      "topic": "joins",
+      "difficulty": "medium",
+      "statement": "Which customers have **never placed an order**? Return their `name`.",
+      "expected": "SELECT c.name FROM customers c LEFT JOIN orders o ON o.customer_id = c.id WHERE o.id IS NULL",
+      "orderSensitive": false,
+      "hint": "LEFT JOIN orders and keep the rows where the order is NULL.",
+      "note": "NOT EXISTS gives the same answer and reads closer to the question."
+    },
+    {
+      "slug": "unsold-products",
+      "title": "Products nobody bought",
+      "topic": "subqueries",
+      "difficulty": "easy",
+      "statement": "Return the `name` of products that appear in **no order at all**.",
+      "expected": "SELECT p.name FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items i WHERE i.product_id = p.id)",
+      "orderSensitive": false,
+      "hint": "NOT EXISTS with a subquery on order_items, or a LEFT JOIN with IS NULL.",
+      "note": "NOT EXISTS is safe with NULLs, unlike NOT IN over a nullable column."
+    },
+    {
+      "slug": "delivered-order-totals",
+      "title": "Delivered order totals",
+      "topic": "joins",
+      "difficulty": "medium",
+      "statement": "For every **delivered** order return `order_id` and its `total`, the sum of quantity times price of its items.",
+      "expected": "SELECT o.id AS order_id, SUM(i.qty * p.price) AS total FROM orders o JOIN order_items i ON i.order_id = o.id JOIN products p ON p.id = i.product_id WHERE o.status = 'delivered' GROUP BY o.id",
+      "orderSensitive": false,
+      "hint": "Join orders, order_items and products; multiply qty by price inside SUM.",
+      "note": "Filter the status in WHERE before grouping."
+    },
+    {
+      "slug": "revenue-by-category",
+      "title": "Revenue by category",
+      "topic": "joins",
+      "difficulty": "medium",
+      "statement": "Using **delivered** orders only, return each product `category` and its `revenue`, largest revenue first.",
+      "expected": "SELECT p.category, SUM(i.qty * p.price) AS revenue FROM orders o JOIN order_items i ON i.order_id = o.id JOIN products p ON p.id = i.product_id WHERE o.status = 'delivered' GROUP BY p.category ORDER BY revenue DESC",
+      "orderSensitive": true,
+      "hint": "Same joins as the order totals, grouped by category instead.",
+      "note": "The grain of the join is one row per order line, so SUM(qty * price) adds up correctly."
+    },
+    {
+      "slug": "best-customer",
+      "title": "Best customer",
+      "topic": "subqueries",
+      "difficulty": "hard",
+      "statement": "Which customer spent the most on **delivered** orders? Return their `name` and `total_spent`.",
+      "expected": "SELECT c.name, SUM(i.qty * p.price) AS total_spent FROM customers c JOIN orders o ON o.customer_id = c.id JOIN order_items i ON i.order_id = o.id JOIN products p ON p.id = i.product_id WHERE o.status = 'delivered' GROUP BY c.id, c.name ORDER BY total_spent DESC LIMIT 1",
+      "orderSensitive": true,
+      "hint": "Total per customer, order by it descending, take one row.",
+      "note": "LIMIT 1 hides ties. If ties matter, compare against MAX of the totals in a subquery instead."
+    },
+    {
+      "slug": "running-revenue",
+      "title": "Running revenue",
+      "topic": "windows",
+      "difficulty": "hard",
+      "statement": "For **delivered** orders in date order, return `order_id`, the order's `total` and `running_total`, the revenue so far including this order. Order by date.",
+      "expected": "WITH t AS (SELECT o.id AS order_id, o.ordered_on AS d, SUM(i.qty * p.price) AS total FROM orders o JOIN order_items i ON i.order_id = o.id JOIN products p ON p.id = i.product_id WHERE o.status = 'delivered' GROUP BY o.id) SELECT order_id, total, SUM(total) OVER (ORDER BY d, order_id) AS running_total FROM t ORDER BY d, order_id",
+      "orderSensitive": true,
+      "hint": "Compute order totals in a CTE, then SUM(total) OVER (ORDER BY date).",
+      "note": "A window SUM with ORDER BY and no frame is a running total from the first row to the current one."
+    },
+    {
+      "slug": "orders-per-month",
+      "title": "Orders per month",
+      "topic": "group-by",
+      "difficulty": "medium",
+      "statement": "How many orders (any status) were placed each month? Return `month` as `YYYY-MM` and `orders`, oldest first.",
+      "expected": "SELECT strftime('%Y-%m', ordered_on) AS month, COUNT(*) AS orders FROM orders GROUP BY month ORDER BY month",
+      "orderSensitive": true,
+      "hint": "strftime('%Y-%m', ordered_on) gives the month.",
+      "note": "Grouping on an expression is fine; the alias can be reused in GROUP BY and ORDER BY in SQLite."
+    }
+  ]
+}

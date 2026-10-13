@@ -1,0 +1,186 @@
+{
+  "section": "logical",
+  "items": [
+    {
+      "slug": "logical-series-pronic",
+      "topic": "series",
+      "difficulty": 1,
+      "type": "single",
+      "body": "Find the next number: 2, 6, 12, 20, 30, ?",
+      "options": [
+        { "id": "a", "text": "38" },
+        { "id": "b", "text": "40" },
+        { "id": "c", "text": "42" },
+        { "id": "d", "text": "44" }
+      ],
+      "answer": "c",
+      "explanation": "The terms are 1x2, 2x3, 3x4, 4x5, 5x6, so the next is 6x7 = 42. The gaps grow by 2 each time: 4, 6, 8, 10, 12.",
+      "shortcut": "Write the gaps. Gaps that grow by a constant mean a quadratic pattern.",
+      "estSeconds": 40
+    },
+    {
+      "slug": "logical-series-odd-gaps",
+      "topic": "series",
+      "difficulty": 2,
+      "type": "single",
+      "body": "Find the next number: 3, 6, 11, 18, 27, ?",
+      "options": [
+        { "id": "a", "text": "36" },
+        { "id": "b", "text": "38" },
+        { "id": "c", "text": "40" },
+        { "id": "d", "text": "42" }
+      ],
+      "answer": "b",
+      "explanation": "The gaps are 3, 5, 7, 9, so the next gap is 11 and the next term is 27 + 11 = 38. (They are also n squared + 2.)",
+      "shortcut": "Gaps of consecutive odd numbers mean squares: 1+2, 4+2, 9+2, 16+2, 25+2, 36+2.",
+      "estSeconds": 45
+    },
+    {
+      "slug": "logical-series-fibonacci",
+      "topic": "series",
+      "difficulty": 1,
+      "type": "blank",
+      "body": "Find the next number: 1, 1, 2, 3, 5, 8, ?",
+      "answer": ["13"],
+      "explanation": "Each term is the sum of the two before it: 5 + 8 = 13.",
+      "shortcut": "If the gaps do not settle, try adding the previous two terms.",
+      "estSeconds": 20
+    },
+    {
+      "slug": "logical-coding-letters",
+      "topic": "coding-decoding",
+      "difficulty": 1,
+      "type": "single",
+      "body": "If CAT is written as 3-1-20, using each letter's place in the alphabet, how is DOG written?",
+      "options": [
+        { "id": "a", "text": "4-15-7" },
+        { "id": "b", "text": "4-14-7" },
+        { "id": "c", "text": "5-15-7" },
+        { "id": "d", "text": "4-15-8" }
+      ],
+      "answer": "a",
+      "explanation": "D is the 4th letter, O the 15th and G the 7th.",
+      "shortcut": "Memorise A=1, E=5, J=10, O=15, T=20 and count from the nearest.",
+      "estSeconds": 30
+    },
+    {
+      "slug": "logical-direction-distance",
+      "topic": "directions",
+      "difficulty": 1,
+      "type": "single",
+      "body": "Ravi walks 5 km north, then 3 km east, then 5 km south. How far is he from his starting point?",
+      "options": [
+        { "id": "a", "text": "3 km" },
+        { "id": "b", "text": "5 km" },
+        { "id": "c", "text": "8 km" },
+        { "id": "d", "text": "13 km" }
+      ],
+      "answer": "a",
+      "explanation": "The north and south legs cancel, leaving only the 3 km east.",
+      "shortcut": "Sketch it: opposite legs of equal length cancel out.",
+      "estSeconds": 30
+    },
+    {
+      "slug": "logical-syllogism-pens",
+      "topic": "syllogisms",
+      "difficulty": 2,
+      "type": "single",
+      "body": "Statements: All pens are books. Some books are tables.\nConclusions: I. Some pens are tables. II. Some tables are books.\nWhich conclusion follows?",
+      "options": [
+        { "id": "a", "text": "Only I" },
+        { "id": "b", "text": "Only II" },
+        { "id": "c", "text": "Both I and II" },
+        { "id": "d", "text": "Neither I nor II" }
+      ],
+      "answer": "b",
+      "explanation": "\"Some books are tables\" can always be turned round to \"some tables are books\", so II follows. The tables that are books need not be the books that are pens, so I does not follow.",
+      "shortcut": "Draw circles: pens inside books, tables overlapping books somewhere, possibly outside pens.",
+      "estSeconds": 60
+    },
+    {
+      "slug": "logical-blood-relation",
+      "topic": "blood-relations",
+      "difficulty": 2,
+      "type": "single",
+      "body": "Pointing to a man, Meera says: \"His mother is the only daughter of my mother.\" How is the man related to Meera?",
+      "options": [
+        { "id": "a", "text": "Brother" },
+        { "id": "b", "text": "Son" },
+        { "id": "c", "text": "Nephew" },
+        { "id": "d", "text": "Cousin" }
+      ],
+      "answer": "b",
+      "explanation": "The only daughter of Meera's mother is Meera herself. So the man's mother is Meera, and he is her son.",
+      "shortcut": "\"Only daughter of my mother\" is either me or my sister, and \"only\" rules out a sister.",
+      "estSeconds": 50
+    },
+    {
+      "slug": "logical-race-order",
+      "topic": "ordering",
+      "difficulty": 1,
+      "type": "single",
+      "body": "In a race, Asha finished before Bala but after Chitra. Dev finished after Bala. Who finished second?",
+      "options": [
+        { "id": "a", "text": "Chitra" },
+        { "id": "b", "text": "Asha" },
+        { "id": "c", "text": "Bala" },
+        { "id": "d", "text": "Dev" }
+      ],
+      "answer": "b",
+      "explanation": "The order is Chitra, Asha, Bala, Dev, so Asha was second.",
+      "shortcut": "Chain the clues into one line from first to last.",
+      "estSeconds": 35
+    },
+    {
+      "slug": "logical-odd-one-cubes",
+      "topic": "odd-one-out",
+      "difficulty": 1,
+      "type": "single",
+      "body": "Find the odd one out: 8, 27, 64, 100, 125",
+      "options": [
+        { "id": "a", "text": "8" },
+        { "id": "b", "text": "27" },
+        { "id": "c", "text": "100" },
+        { "id": "d", "text": "125" }
+      ],
+      "answer": "c",
+      "explanation": "8, 27, 64 and 125 are the cubes of 2, 3, 4 and 5. 100 is a square, not a cube.",
+      "shortcut": "Learn the first ten cubes: 1, 8, 27, 64, 125, 216, 343, 512, 729, 1000.",
+      "estSeconds": 30
+    },
+    {
+      "slug": "logical-clock-angle",
+      "topic": "clocks",
+      "difficulty": 1,
+      "type": "single",
+      "body": "What is the angle between the hands of a clock at 3:00?",
+      "options": [
+        { "id": "a", "text": "60 degrees" },
+        { "id": "b", "text": "75 degrees" },
+        { "id": "c", "text": "90 degrees" },
+        { "id": "d", "text": "120 degrees" }
+      ],
+      "answer": "c",
+      "explanation": "Each hour mark is 30 degrees, and 3 hours apart is 90 degrees.",
+      "shortcut": "30 degrees per hour mark; for minutes use |30h - 5.5m|.",
+      "estSeconds": 25
+    },
+    {
+      "slug": "logical-calendar-days",
+      "topic": "calendar",
+      "difficulty": 2,
+      "type": "single",
+      "body": "If today is Wednesday, what day of the week will it be after 100 days?",
+      "options": [
+        { "id": "a", "text": "Thursday" },
+        { "id": "b", "text": "Friday" },
+        { "id": "c", "text": "Saturday" },
+        { "id": "d", "text": "Sunday" }
+      ],
+      "answer": "b",
+      "explanation": "Days repeat every 7, and 100 = 14 x 7 + 2, so it is 2 days after Wednesday: Friday.",
+      "shortcut": "Only the remainder after dividing by 7 matters.",
+      "estSeconds": 35
+    }
+  ]
+}

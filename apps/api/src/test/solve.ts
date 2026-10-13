@@ -39,6 +39,8 @@ export async function solveProblem(
 /** Resets everything a learner accumulates, keeping users and problems. */
 export async function resetLearning(t: TestApp) {
   for (const table of [
+    "sql_attempts",
+    "oa_attempts",
     "srs_reviews",
     "srs_cards",
     "quiz_attempt_answers",

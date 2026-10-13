@@ -1,0 +1,138 @@
+{
+  "slug": "company",
+  "title": "Company",
+  "description": "Employees, the departments they work in and who they report to.",
+  "schema": [
+    "CREATE TABLE departments (id INTEGER PRIMARY KEY, name TEXT NOT NULL, location TEXT NOT NULL);",
+    "CREATE TABLE employees (id INTEGER PRIMARY KEY, name TEXT NOT NULL, dept_id INTEGER REFERENCES departments(id), manager_id INTEGER REFERENCES employees(id), title TEXT NOT NULL, salary INTEGER NOT NULL, hire_date TEXT NOT NULL);"
+  ],
+  "seed": [
+    "INSERT INTO departments VALUES (1,'Engineering','Pune'),(2,'Sales','Mumbai'),(3,'HR','Pune'),(4,'Finance','Delhi'),(5,'Research','Bangalore');",
+    "INSERT INTO employees VALUES",
+    "(1,'Asha',1,NULL,'CTO',250000,'2018-03-01'),",
+    "(2,'Bilal',1,1,'Engineering Manager',180000,'2019-06-15'),",
+    "(3,'Chitra',1,2,'Senior Engineer',150000,'2020-01-10'),",
+    "(4,'Dev',1,2,'Engineer',110000,'2021-08-23'),",
+    "(5,'Esha',1,2,'Engineer',105000,'2022-02-14'),",
+    "(6,'Farid',2,1,'Sales Head',170000,'2018-11-05'),",
+    "(7,'Gita',2,6,'Account Executive',90000,'2020-09-01'),",
+    "(8,'Hari',2,6,'Account Executive',95000,'2021-04-19'),",
+    "(9,'Isha',2,6,'Sales Associate',60000,'2023-01-09'),",
+    "(10,'Jai',3,1,'HR Lead',100000,'2019-02-18'),",
+    "(11,'Kiran',3,10,'Recruiter',70000,'2022-07-11'),",
+    "(12,'Lata',4,1,'Finance Lead',140000,'2019-10-07'),",
+    "(13,'Manu',NULL,1,'Consultant',120000,'2023-05-22');"
+  ],
+  "problems": [
+    {
+      "slug": "high-earners",
+      "title": "High earners",
+      "topic": "select",
+      "difficulty": "easy",
+      "statement": "List the `name` and `salary` of every employee who earns **more than 120000**, highest salary first.",
+      "expected": "SELECT name, salary FROM employees WHERE salary > 120000 ORDER BY salary DESC",
+      "orderSensitive": true,
+      "hint": "Filter with WHERE, then ORDER BY salary DESC.",
+      "note": "WHERE keeps the rows you want; ORDER BY only sorts what is left."
+    },
+    {
+      "slug": "engineering-team",
+      "title": "Engineering team",
+      "topic": "joins",
+      "difficulty": "easy",
+      "statement": "Return the `name` of every employee who works in the **Engineering** department.",
+      "expected": "SELECT e.name FROM employees e JOIN departments d ON d.id = e.dept_id WHERE d.name = 'Engineering'",
+      "orderSensitive": false,
+      "hint": "Join employees to departments on dept_id = departments.id.",
+      "note": "An inner join drops employees without a department, which is what we want here."
+    },
+    {
+      "slug": "empty-departments",
+      "title": "Departments with nobody",
+      "topic": "joins",
+      "difficulty": "medium",
+      "statement": "Which departments have **no employees**? Return the department `name`.",
+      "expected": "SELECT d.name FROM departments d LEFT JOIN employees e ON e.dept_id = d.id WHERE e.id IS NULL",
+      "orderSensitive": false,
+      "hint": "A LEFT JOIN keeps departments with no match; those rows have NULL employee columns.",
+      "note": "LEFT JOIN plus IS NULL (an anti-join) and NOT EXISTS are the two usual ways. Avoid NOT IN when the column can be NULL."
+    },
+    {
+      "slug": "average-pay-by-department",
+      "title": "Average pay by department",
+      "topic": "group-by",
+      "difficulty": "easy",
+      "statement": "For each department that has employees, return the department `name` and the average salary rounded to one decimal place (call it `avg_salary`).",
+      "expected": "SELECT d.name, ROUND(AVG(e.salary), 1) AS avg_salary FROM departments d JOIN employees e ON e.dept_id = d.id GROUP BY d.id, d.name",
+      "orderSensitive": false,
+      "hint": "Join, then GROUP BY the department.",
+      "note": "Every selected column is either grouped or aggregated."
+    },
+    {
+      "slug": "big-departments",
+      "title": "Big departments",
+      "topic": "group-by",
+      "difficulty": "medium",
+      "statement": "Return the `name` and head count (`headcount`) of departments with **at least 3 employees**.",
+      "expected": "SELECT d.name, COUNT(*) AS headcount FROM departments d JOIN employees e ON e.dept_id = d.id GROUP BY d.id, d.name HAVING COUNT(*) >= 3",
+      "orderSensitive": false,
+      "hint": "A condition on COUNT(*) belongs in HAVING, not WHERE.",
+      "note": "WHERE filters rows before grouping; HAVING filters groups after."
+    },
+    {
+      "slug": "above-department-average",
+      "title": "Above the department average",
+      "topic": "subqueries",
+      "difficulty": "medium",
+      "statement": "Return the `name` of employees who earn **more than the average salary of their own department**. Employees without a department are ignored.",
+      "expected": "SELECT e.name FROM employees e WHERE e.dept_id IS NOT NULL AND e.salary > (SELECT AVG(x.salary) FROM employees x WHERE x.dept_id = e.dept_id)",
+      "orderSensitive": false,
+      "hint": "A correlated subquery can average the salaries of the same dept_id as the current row.",
+      "note": "The subquery runs per row and refers to the outer row. A window function (AVG ... OVER (PARTITION BY dept_id)) does the same in one pass."
+    },
+    {
+      "slug": "top-earner-per-department",
+      "title": "Top earner per department",
+      "topic": "windows",
+      "difficulty": "hard",
+      "statement": "For each department that has employees, return the department `name` (as `department`), the `name` of its best-paid employee (as `employee`) and that `salary`. Employees without a department are ignored.",
+      "expected": "SELECT department, employee, salary FROM (SELECT d.name AS department, e.name AS employee, e.salary AS salary, RANK() OVER (PARTITION BY d.id ORDER BY e.salary DESC) AS r FROM employees e JOIN departments d ON d.id = e.dept_id) WHERE r = 1",
+      "orderSensitive": false,
+      "hint": "RANK() OVER (PARTITION BY department ORDER BY salary DESC), then keep rank 1.",
+      "note": "Window functions cannot be filtered in the same SELECT, so wrap the ranking in a subquery or CTE."
+    },
+    {
+      "slug": "engineering-salary-rank",
+      "title": "Salary ranking in Engineering",
+      "topic": "windows",
+      "difficulty": "medium",
+      "statement": "For employees in **Engineering**, return `name`, `salary` and `salary_rank`, where `salary_rank` is 1 for the highest salary, using no gaps between ranks. Order by rank.",
+      "expected": "SELECT e.name, e.salary, DENSE_RANK() OVER (ORDER BY e.salary DESC) AS salary_rank FROM employees e JOIN departments d ON d.id = e.dept_id WHERE d.name = 'Engineering' ORDER BY salary_rank",
+      "orderSensitive": true,
+      "hint": "DENSE_RANK() OVER (ORDER BY salary DESC). Filter to Engineering first.",
+      "note": "RANK leaves gaps after ties, DENSE_RANK does not, ROW_NUMBER never ties."
+    },
+    {
+      "slug": "everyone-under-the-cto",
+      "title": "Everyone under the CTO",
+      "topic": "ctes",
+      "difficulty": "hard",
+      "statement": "List the `name` of everyone who reports to **Asha** (employee 1), directly or through other managers. Do not include Asha.",
+      "expected": "WITH RECURSIVE chain(id, name) AS (SELECT id, name FROM employees WHERE manager_id = 1 UNION ALL SELECT e.id, e.name FROM employees e JOIN chain c ON e.manager_id = c.id) SELECT name FROM chain",
+      "orderSensitive": false,
+      "hint": "Start with the direct reports, then repeatedly add people whose manager is already in the set (WITH RECURSIVE).",
+      "note": "A recursive CTE has an anchor query and a recursive step joined with UNION ALL; it stops when the step adds no rows."
+    },
+    {
+      "slug": "hires-per-year",
+      "title": "Hires per year",
+      "topic": "group-by",
+      "difficulty": "medium",
+      "statement": "How many people were hired each year? Return `year` (as text, like `2020`) and `hires`, oldest year first.",
+      "expected": "SELECT strftime('%Y', hire_date) AS year, COUNT(*) AS hires FROM employees GROUP BY year ORDER BY year",
+      "orderSensitive": true,
+      "hint": "strftime('%Y', hire_date) extracts the year in SQLite.",
+      "note": "Dates are stored as ISO text, so they sort and group correctly as strings."
+    }
+  ]
+}

@@ -557,3 +557,19 @@ Not built: `/me/xp` ledger changes, `/roadmaps`, `/tracks`, `/me/reviews`.
 | GET | `/tracks/compare?a=&b=` | Shared problems, what is only in each, and what to add for B |
 
 Not built: `/quizzes/questions/:id/to-flashcard`, the `/sql/*`, `/oa/*` and `/aptitude/*` endpoints, `/roadmaps/:id/nodes/:id/skip`, `/tracks/:slug/progress`.
+
+### SQL practice and online assessments (Phase 11, as built)
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/sql/problems`, `/sql/problems/:slug` | List with solved state; detail with statement, tables and sample rows, the learner's last query and (after solving) the reference solution |
+| POST | `/sql/problems/:slug/run` | `{query}`; one read-only statement; returns columns, rows (at most 1000), time or an error; own rate limit (40 a minute) |
+| POST | `/sql/problems/:slug/submit` | Verdict AC, WA, ERROR or TLE with the reason, the expected column and row counts, XP on the first accepted solution |
+| GET | `/oa` | Templates with the learner's attempts and best score, recent results, an open attempt to resume |
+| POST | `/oa/attempts` | `{template}`; builds the paper; 409 `OA_OPEN` while another test is open |
+| GET | `/oa/attempts/:id` | Step (between, section, finished), section list, the running section's questions without keys, saved answers, seconds left; the report when finished |
+| POST | `/oa/attempts/:id/sections/:index/start` | Starts the next section (409 `OA_ORDER` out of order or while one runs) |
+| PUT | `/oa/attempts/:id/answers` | `{itemId, response|null}`; 409 `OA_SECTION_CLOSED` after the deadline |
+| POST | `/oa/attempts/:id/submit-section`, `/finish` | Hand in the running section; end the whole test (waiting sections score zero) |
+
+Not built: `/aptitude/*` practice endpoints, `/admin/sql`, `/admin/aptitude` and `POST /admin/*/import-csv`.

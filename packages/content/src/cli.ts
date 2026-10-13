@@ -4,6 +4,7 @@ import { createDatabase } from "@prepquest/db";
 import { serverEnvSchema } from "@prepquest/shared";
 import { createObjectStore } from "@prepquest/storage";
 import { importBank, loadBank, validateBank } from "./bank.js";
+import { importAssess, loadAssess, validateAssess } from "./assess.js";
 import { importLearning, loadLearning, validateLearning } from "./learning.js";
 import { buildTests, verifyTests } from "./build-tests.js";
 import { importProblem, importSheet, linkRelatedEditorials } from "./import.js";
@@ -192,12 +193,16 @@ async function main() {
     ...learning.issues,
     ...validateLearning(learning, taxonomy, new Set(bundles.map((b) => b.bundle.meta.slug))),
   );
+  const assess = await loadAssess(root);
+  const quizCounts = new Map<string, number>();
+  for (const q of learning.quizzes) quizCounts.set(q.subject, (quizCounts.get(q.subject) ?? 0) + 1);
+  issues.push(...assess.issues, ...(await validateAssess(assess, quizCounts)));
 
   print(issues);
   const errors = issues.filter((i) => i.level === "error").length;
   const warnings = issues.length - errors;
   console.log(
-    `${bundles.length} problem(s), ${sheets.length} sheet(s), ${bank.questions.length} question(s), ${bank.packs.length} pack(s), ${learning.quizzes.length} quiz question(s), ${learning.roadmaps.length} roadmap(s): ${errors} error(s), ${warnings} warning(s)`,
+    `${bundles.length} problem(s), ${sheets.length} sheet(s), ${bank.questions.length} question(s), ${bank.packs.length} pack(s), ${learning.quizzes.length} quiz question(s), ${learning.roadmaps.length} roadmap(s), ${assess.datasets.reduce((a, d) => a + d.problems.length, 0)} SQL problem(s), ${assess.aptitude.length} aptitude item(s), ${assess.templates.length} test template(s): ${errors} error(s), ${warnings} warning(s)`,
   );
   if (errors) {
     process.exitCode = 1;
@@ -237,6 +242,10 @@ async function main() {
       console.log(`bank      ${b.questions} question(s), ${b.packs} pack(s)`);
       const l = await importLearning(db, learning);
       console.log(`learning  ${l.quizzes} quiz question(s), ${l.roadmaps} roadmap(s)`);
+      const a = await importAssess(db, assess);
+      console.log(
+        `assess    ${a.problems} SQL problem(s) on ${a.datasets} dataset(s), ${a.aptitude} aptitude item(s), ${a.templates} test template(s)`,
+      );
       for (const sheet of sheets) {
         const r = await importSheet(db, sheet);
         console.log(`sheet     ${r.slug} (${r.problems} problems)`);

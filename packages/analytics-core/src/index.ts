@@ -12,3 +12,5 @@ export * from "./srs.js";
 export * from "./quiz.js";
 export * from "./roadmap.js";
 export * from "./tracks.js";
+export * from "./sql.js";
+export * from "./oa.js";

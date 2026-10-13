@@ -1,0 +1,94 @@
+{
+  "slug": "school",
+  "title": "College",
+  "description": "Students, courses and the scores they have earned. Some scores are not in yet (NULL).",
+  "schema": [
+    "CREATE TABLE students (id INTEGER PRIMARY KEY, name TEXT NOT NULL, year_of_study INTEGER NOT NULL, branch TEXT NOT NULL);",
+    "CREATE TABLE courses (id INTEGER PRIMARY KEY, code TEXT NOT NULL UNIQUE, title TEXT NOT NULL, credits INTEGER NOT NULL);",
+    "CREATE TABLE enrollments (student_id INTEGER NOT NULL REFERENCES students(id), course_id INTEGER NOT NULL REFERENCES courses(id), score INTEGER, PRIMARY KEY (student_id, course_id));"
+  ],
+  "seed": [
+    "INSERT INTO students VALUES (1,'Anil',2,'CSE'),(2,'Bela',3,'ECE'),(3,'Chirag',2,'CSE'),(4,'Disha',4,'CSE'),(5,'Eknath',3,'ECE'),(6,'Farah',2,'MECH');",
+    "INSERT INTO courses VALUES (1,'CS101','Intro to Programming',4),(2,'CS201','Data Structures',4),(3,'EC101','Circuits',3),(4,'MA101','Calculus',3),(5,'CS301','Databases',3);",
+    "INSERT INTO enrollments VALUES (1,1,88),(1,2,92),(1,4,75),(2,3,81),(2,4,90),(2,1,67),(3,1,54),(3,2,NULL),(3,4,62),(4,1,95),(4,2,89),(5,3,72),(5,4,NULL),(6,4,58);"
+  ],
+  "problems": [
+    {
+      "slug": "scores-pending",
+      "title": "Scores still pending",
+      "topic": "null-handling",
+      "difficulty": "easy",
+      "statement": "Which students have at least one enrollment with **no score yet**? Return each student's `name` once.",
+      "expected": "SELECT DISTINCT s.name FROM students s JOIN enrollments e ON e.student_id = s.id WHERE e.score IS NULL",
+      "orderSensitive": false,
+      "hint": "NULL is tested with IS NULL, never with = NULL.",
+      "note": "Comparisons with NULL are never true, so `score = NULL` returns nothing."
+    },
+    {
+      "slug": "average-score-per-student",
+      "title": "Average score per student",
+      "topic": "group-by",
+      "difficulty": "medium",
+      "statement": "Return each student's `name` and the average of their scores rounded to one decimal place (`avg_score`). Students with no scores at all are left out.",
+      "expected": "SELECT s.name, ROUND(AVG(e.score), 1) AS avg_score FROM students s JOIN enrollments e ON e.student_id = s.id GROUP BY s.id, s.name HAVING COUNT(e.score) > 0",
+      "orderSensitive": false,
+      "hint": "AVG skips NULL scores. COUNT(score) counts only the non-NULL ones.",
+      "note": "COUNT(*) counts rows; COUNT(column) counts non-NULL values. That difference decides many NULL questions."
+    },
+    {
+      "slug": "courses-nobody-takes",
+      "title": "Courses nobody takes",
+      "topic": "joins",
+      "difficulty": "easy",
+      "statement": "Return the `code` and `title` of courses with **no enrollments**.",
+      "expected": "SELECT c.code, c.title FROM courses c LEFT JOIN enrollments e ON e.course_id = c.id WHERE e.student_id IS NULL",
+      "orderSensitive": false,
+      "hint": "LEFT JOIN from courses and keep the unmatched rows.",
+      "note": "Test a column from the right table that can never be NULL when matched (here the key)."
+    },
+    {
+      "slug": "credit-load",
+      "title": "Credit load",
+      "topic": "group-by",
+      "difficulty": "medium",
+      "statement": "A student's credit load is the sum of the credits of the courses they are enrolled in. Return `name` and `credits` for students with a load of **10 or more**.",
+      "expected": "SELECT s.name, SUM(c.credits) AS credits FROM students s JOIN enrollments e ON e.student_id = s.id JOIN courses c ON c.id = e.course_id GROUP BY s.id, s.name HAVING SUM(c.credits) >= 10",
+      "orderSensitive": false,
+      "hint": "Join through enrollments to courses, SUM the credits, filter with HAVING.",
+      "note": "Enrollment rows without a score still count towards the load."
+    },
+    {
+      "slug": "top-scorer-per-course",
+      "title": "Top scorer per course",
+      "topic": "windows",
+      "difficulty": "hard",
+      "statement": "For each course that has scores, return the course `code`, the `student` with the highest score and that `score`.",
+      "expected": "SELECT code, student, score FROM (SELECT c.code AS code, s.name AS student, e.score AS score, RANK() OVER (PARTITION BY c.id ORDER BY e.score DESC) AS r FROM enrollments e JOIN courses c ON c.id = e.course_id JOIN students s ON s.id = e.student_id WHERE e.score IS NOT NULL) WHERE r = 1",
+      "orderSensitive": false,
+      "hint": "Rank scores within each course, ignore NULL scores, keep rank 1.",
+      "note": "Without the IS NOT NULL filter, NULL scores sort first in some databases and last in others."
+    },
+    {
+      "slug": "pass-rate-per-course",
+      "title": "Pass rate per course",
+      "topic": "group-by",
+      "difficulty": "hard",
+      "statement": "A score of **60 or more passes**. For each course with scores, return its `code` and `pass_rate`: the percentage of scored enrollments that passed, rounded to a whole number. Order by code.",
+      "expected": "SELECT c.code, ROUND(100.0 * SUM(e.score >= 60) / COUNT(e.score)) AS pass_rate FROM courses c JOIN enrollments e ON e.course_id = c.id WHERE e.score IS NOT NULL GROUP BY c.id, c.code ORDER BY c.code",
+      "orderSensitive": true,
+      "hint": "In SQLite a comparison is 1 or 0, so SUM(score >= 60) counts passes. Divide by the number of scored rows.",
+      "note": "Multiplying by 100.0 (not 100) avoids integer division."
+    },
+    {
+      "slug": "second-highest-score",
+      "title": "Second highest score",
+      "topic": "subqueries",
+      "difficulty": "medium",
+      "statement": "Return the **second highest distinct score** as a single value called `score`.",
+      "expected": "SELECT MAX(score) AS score FROM enrollments WHERE score < (SELECT MAX(score) FROM enrollments)",
+      "orderSensitive": false,
+      "hint": "The largest score that is smaller than the largest score.",
+      "note": "A classic interview question. LIMIT 1 OFFSET 1 over DISTINCT scores works too."
+    }
+  ]
+}

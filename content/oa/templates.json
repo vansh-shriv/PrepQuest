@@ -1,0 +1,216 @@
+{
+  "templates": [
+    {
+      "slug": "campus-oa",
+      "title": "Campus placement test",
+      "kind": "oa",
+      "description": "A general campus test: quantitative, reasoning, verbal, data interpretation and pseudocode. Each section has its own clock and cannot be reopened.",
+      "negativeMarking": 0.25,
+      "calculator": false,
+      "sections": [
+        {
+          "key": "quant",
+          "title": "Quantitative aptitude",
+          "source": "aptitude",
+          "from": "quant",
+          "count": 10,
+          "minutes": 15
+        },
+        {
+          "key": "logical",
+          "title": "Logical reasoning",
+          "source": "aptitude",
+          "from": "logical",
+          "count": 8,
+          "minutes": 10
+        },
+        {
+          "key": "verbal",
+          "title": "Verbal ability",
+          "source": "aptitude",
+          "from": "verbal",
+          "count": 8,
+          "minutes": 8
+        },
+        {
+          "key": "di",
+          "title": "Data interpretation",
+          "source": "aptitude",
+          "from": "di",
+          "count": 4,
+          "minutes": 6
+        },
+        {
+          "key": "pseudocode",
+          "title": "Pseudocode and output",
+          "source": "aptitude",
+          "from": "pseudocode",
+          "count": 6,
+          "minutes": 8
+        }
+      ]
+    },
+    {
+      "slug": "service-company-style",
+      "title": "Service company style",
+      "kind": "oa",
+      "description": "Modelled on the public descriptions of service-company hiring tests: numerical, reasoning, verbal and a short technical round, no negative marking, an on-screen calculator. Real formats change every year, so treat it as practice for the shape, not a promise.",
+      "negativeMarking": 0,
+      "calculator": true,
+      "sections": [
+        {
+          "key": "quant",
+          "title": "Numerical ability",
+          "source": "aptitude",
+          "from": "quant",
+          "count": 10,
+          "minutes": 15
+        },
+        {
+          "key": "logical",
+          "title": "Reasoning ability",
+          "source": "aptitude",
+          "from": "logical",
+          "count": 8,
+          "minutes": 10
+        },
+        {
+          "key": "verbal",
+          "title": "Verbal ability",
+          "source": "aptitude",
+          "from": "verbal",
+          "count": 8,
+          "minutes": 8
+        },
+        {
+          "key": "dbms",
+          "title": "Technical: databases",
+          "source": "quiz",
+          "from": "dbms",
+          "count": 8,
+          "minutes": 10
+        }
+      ]
+    },
+    {
+      "slug": "product-company-style",
+      "title": "Product company style",
+      "kind": "oa",
+      "description": "A tougher test with negative marking and a technical bias: reasoning, pseudocode, operating systems and networks. No calculator.",
+      "negativeMarking": 0.33,
+      "calculator": false,
+      "sections": [
+        {
+          "key": "logical",
+          "title": "Logical reasoning",
+          "source": "aptitude",
+          "from": "logical",
+          "count": 8,
+          "minutes": 10
+        },
+        {
+          "key": "pseudocode",
+          "title": "Pseudocode and output",
+          "source": "aptitude",
+          "from": "pseudocode",
+          "count": 8,
+          "minutes": 10
+        },
+        {
+          "key": "os",
+          "title": "Technical: operating systems",
+          "source": "quiz",
+          "from": "os",
+          "count": 8,
+          "minutes": 10
+        },
+        {
+          "key": "cn",
+          "title": "Technical: networks",
+          "source": "quiz",
+          "from": "cn",
+          "count": 8,
+          "minutes": 10
+        }
+      ]
+    },
+    {
+      "slug": "cs-fundamentals-test",
+      "title": "CS fundamentals test",
+      "kind": "oa",
+      "description": "Four short technical sections, one per subject: operating systems, databases, networks and object-oriented programming.",
+      "negativeMarking": 0.25,
+      "calculator": false,
+      "sections": [
+        {
+          "key": "os",
+          "title": "Operating systems",
+          "source": "quiz",
+          "from": "os",
+          "count": 6,
+          "minutes": 6
+        },
+        {
+          "key": "dbms",
+          "title": "Databases",
+          "source": "quiz",
+          "from": "dbms",
+          "count": 6,
+          "minutes": 6
+        },
+        {
+          "key": "cn",
+          "title": "Networks",
+          "source": "quiz",
+          "from": "cn",
+          "count": 6,
+          "minutes": 6
+        },
+        {
+          "key": "oop",
+          "title": "Object-oriented programming",
+          "source": "quiz",
+          "from": "oop",
+          "count": 6,
+          "minutes": 6
+        }
+      ]
+    },
+    {
+      "slug": "speed-quant",
+      "title": "Speed drill: quantitative",
+      "kind": "drill",
+      "description": "Fifteen calculation questions in ten minutes. Build speed before accuracy matters.",
+      "negativeMarking": 0,
+      "calculator": false,
+      "sections": [
+        {
+          "key": "quant",
+          "title": "Quantitative aptitude",
+          "source": "aptitude",
+          "from": "quant",
+          "count": 15,
+          "minutes": 10
+        }
+      ]
+    },
+    {
+      "slug": "speed-reasoning",
+      "title": "Speed drill: reasoning",
+      "kind": "drill",
+      "description": "Ten reasoning questions in six minutes.",
+      "negativeMarking": 0,
+      "calculator": false,
+      "sections": [
+        {
+          "key": "logical",
+          "title": "Logical reasoning",
+          "source": "aptitude",
+          "from": "logical",
+          "count": 10,
+          "minutes": 6
+        }
+      ]
+    }
+  ]
+}

@@ -27,6 +27,7 @@
     "@prepquest/judge-core": "workspace:*",
     "@prepquest/prompts": "workspace:*",
     "@prepquest/shared": "workspace:*",
+    "@prepquest/sql-runner": "workspace:*",
     "@prepquest/storage": "workspace:*",
     "bullmq": "^6.3.12",
     "drizzle-orm": "^0.45.4",

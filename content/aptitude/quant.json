@@ -1,0 +1,248 @@
+{
+  "section": "quant",
+  "items": [
+    {
+      "slug": "quant-discount-price",
+      "topic": "percentages",
+      "difficulty": 1,
+      "type": "single",
+      "body": "A bag is marked at 800 and sold at a 15% discount. What is the selling price?",
+      "options": [
+        { "id": "a", "text": "640" },
+        { "id": "b", "text": "680" },
+        { "id": "c", "text": "700" },
+        { "id": "d", "text": "720" }
+      ],
+      "answer": "b",
+      "explanation": "A 15% discount leaves 85% of the price: 800 x 0.85 = 680.",
+      "shortcut": "Take the discount, not the price: 10% of 800 is 80 and 5% is 40, so the discount is 120 and the price 680.",
+      "estSeconds": 40
+    },
+    {
+      "slug": "quant-ratio-larger",
+      "topic": "ratio",
+      "difficulty": 1,
+      "type": "single",
+      "body": "Two numbers are in the ratio 3 : 5 and their sum is 96. What is the larger number?",
+      "options": [
+        { "id": "a", "text": "36" },
+        { "id": "b", "text": "48" },
+        { "id": "c", "text": "60" },
+        { "id": "d", "text": "72" }
+      ],
+      "answer": "c",
+      "explanation": "The parts add to 3 + 5 = 8, so one part is 96 / 8 = 12 and the larger number is 5 x 12 = 60.",
+      "shortcut": "Divide the total by the sum of the ratio parts, then multiply by your part.",
+      "estSeconds": 40
+    },
+    {
+      "slug": "quant-train-pole",
+      "topic": "time-speed-distance",
+      "difficulty": 2,
+      "type": "single",
+      "body": "A train 150 m long passes a pole in 10 seconds. What is its speed in km/h?",
+      "options": [
+        { "id": "a", "text": "45" },
+        { "id": "b", "text": "54" },
+        { "id": "c", "text": "60" },
+        { "id": "d", "text": "72" }
+      ],
+      "answer": "b",
+      "explanation": "Passing a pole means covering its own length: 150 / 10 = 15 m/s. Multiply by 18/5 to get km/h: 15 x 3.6 = 54.",
+      "shortcut": "m/s to km/h: multiply by 3.6 (or by 18 and divide by 5).",
+      "estSeconds": 60
+    },
+    {
+      "slug": "quant-work-together",
+      "topic": "time-and-work",
+      "difficulty": 2,
+      "type": "single",
+      "body": "A can finish a job in 12 days and B in 18 days. Working together, how many days do they take?",
+      "options": [
+        { "id": "a", "text": "6" },
+        { "id": "b", "text": "7.2" },
+        { "id": "c", "text": "7.5" },
+        { "id": "d", "text": "8" }
+      ],
+      "answer": "b",
+      "explanation": "In one day they do 1/12 + 1/18 = 5/36 of the job, so the job takes 36/5 = 7.2 days.",
+      "shortcut": "Two workers: (a x b) / (a + b) = (12 x 18) / 30 = 7.2.",
+      "estSeconds": 60
+    },
+    {
+      "slug": "quant-profit-percent",
+      "topic": "profit-and-loss",
+      "difficulty": 1,
+      "type": "single",
+      "body": "An item bought for 400 is sold for 500. What is the profit percentage?",
+      "options": [
+        { "id": "a", "text": "20%" },
+        { "id": "b", "text": "25%" },
+        { "id": "c", "text": "30%" },
+        { "id": "d", "text": "12.5%" }
+      ],
+      "answer": "b",
+      "explanation": "Profit is 100 and profit percent is always measured on the cost price: 100 / 400 = 25%.",
+      "shortcut": "Profit over cost, not over selling price. 100 on 400 is a quarter.",
+      "estSeconds": 30
+    },
+    {
+      "slug": "quant-simple-interest",
+      "topic": "interest",
+      "difficulty": 1,
+      "type": "single",
+      "body": "What is the simple interest on 5000 at 8% per year for 3 years?",
+      "options": [
+        { "id": "a", "text": "1000" },
+        { "id": "b", "text": "1200" },
+        { "id": "c", "text": "1400" },
+        { "id": "d", "text": "1600" }
+      ],
+      "answer": "b",
+      "explanation": "Simple interest = principal x rate x time / 100 = 5000 x 8 x 3 / 100 = 1200.",
+      "shortcut": "8% of 5000 is 400 a year, so three years is 1200.",
+      "estSeconds": 30
+    },
+    {
+      "slug": "quant-compound-interest",
+      "topic": "interest",
+      "difficulty": 2,
+      "type": "single",
+      "body": "What is the compound interest on 10000 at 10% per year for 2 years, compounded yearly?",
+      "options": [
+        { "id": "a", "text": "2000" },
+        { "id": "b", "text": "2100" },
+        { "id": "c", "text": "2200" },
+        { "id": "d", "text": "2500" }
+      ],
+      "answer": "b",
+      "explanation": "After two years the amount is 10000 x 1.1 x 1.1 = 12100, so the interest is 2100.",
+      "shortcut": "Two years at 10%: 10 + 10 + (10 x 10 / 100) = 21%, and 21% of 10000 is 2100.",
+      "estSeconds": 50
+    },
+    {
+      "slug": "quant-two-dice-seven",
+      "topic": "probability",
+      "difficulty": 2,
+      "type": "single",
+      "body": "Two fair dice are rolled. What is the probability that the sum is 7?",
+      "options": [
+        { "id": "a", "text": "1/12" },
+        { "id": "b", "text": "1/9" },
+        { "id": "c", "text": "1/6" },
+        { "id": "d", "text": "5/36" }
+      ],
+      "answer": "c",
+      "explanation": "Six of the 36 equally likely outcomes sum to 7: (1,6), (2,5), (3,4), (4,3), (5,2), (6,1). So 6/36 = 1/6.",
+      "shortcut": "7 is the most likely sum of two dice: whatever the first die shows, exactly one value on the second works.",
+      "estSeconds": 45
+    },
+    {
+      "slug": "quant-committee",
+      "topic": "permutations-combinations",
+      "difficulty": 2,
+      "type": "single",
+      "body": "In how many ways can a committee of 3 be chosen from 6 people?",
+      "options": [
+        { "id": "a", "text": "15" },
+        { "id": "b", "text": "20" },
+        { "id": "c", "text": "30" },
+        { "id": "d", "text": "120" }
+      ],
+      "answer": "b",
+      "explanation": "Order does not matter, so it is C(6,3) = 6 x 5 x 4 / (3 x 2 x 1) = 20.",
+      "shortcut": "C(n,r): write r factors counting down from n over r factorial.",
+      "estSeconds": 45
+    },
+    {
+      "slug": "quant-level-arrangements",
+      "topic": "permutations-combinations",
+      "difficulty": 3,
+      "type": "single",
+      "body": "How many different arrangements can be made from all the letters of the word LEVEL?",
+      "options": [
+        { "id": "a", "text": "20" },
+        { "id": "b", "text": "30" },
+        { "id": "c", "text": "60" },
+        { "id": "d", "text": "120" }
+      ],
+      "answer": "b",
+      "explanation": "There are 5 letters, with L twice and E twice: 5! / (2! x 2!) = 120 / 4 = 30.",
+      "shortcut": "Divide the factorial of the length by the factorial of each repeated letter's count.",
+      "estSeconds": 60
+    },
+    {
+      "slug": "quant-average-removed",
+      "topic": "averages",
+      "difficulty": 2,
+      "type": "single",
+      "body": "The average of five numbers is 24. When one of them, 30, is removed, what is the average of the other four?",
+      "options": [
+        { "id": "a", "text": "21" },
+        { "id": "b", "text": "22" },
+        { "id": "c", "text": "22.5" },
+        { "id": "d", "text": "23" }
+      ],
+      "answer": "c",
+      "explanation": "The five numbers add to 5 x 24 = 120. Without 30 they add to 90, and 90 / 4 = 22.5.",
+      "shortcut": "Work with totals: total = average x count.",
+      "estSeconds": 45
+    },
+    {
+      "slug": "quant-ages-ratio",
+      "topic": "ages",
+      "difficulty": 3,
+      "type": "single",
+      "body": "The ages of a father and his son are in the ratio 7 : 2. In 10 years the ratio will be 9 : 4. How old is the father now?",
+      "options": [
+        { "id": "a", "text": "28" },
+        { "id": "b", "text": "35" },
+        { "id": "c", "text": "42" },
+        { "id": "d", "text": "49" }
+      ],
+      "answer": "b",
+      "explanation": "Let the ages be 7x and 2x. Then (7x + 10) / (2x + 10) = 9/4, so 28x + 40 = 18x + 90, giving x = 5. The father is 35 (and the son 10: in 10 years 45 : 20 = 9 : 4).",
+      "shortcut": "Test the options: only 35 with a son of 10 gives 45 : 20 = 9 : 4 after 10 years.",
+      "estSeconds": 90
+    },
+    {
+      "slug": "quant-percent-of",
+      "topic": "percentages",
+      "difficulty": 1,
+      "type": "blank",
+      "body": "What is 15% of 240? (Give a number.)",
+      "answer": ["36"],
+      "explanation": "10% of 240 is 24 and 5% is 12, so 15% is 36.",
+      "shortcut": "Split the percentage: 15% = 10% + half of 10%.",
+      "estSeconds": 25
+    },
+    {
+      "slug": "quant-pipes",
+      "topic": "pipes-and-cisterns",
+      "difficulty": 2,
+      "type": "blank",
+      "body": "One pipe fills a tank in 6 hours and another pipe empties it in 12 hours. With both open, in how many hours is the empty tank full? (Give a number.)",
+      "answer": ["12"],
+      "explanation": "Net rate per hour is 1/6 - 1/12 = 1/12 of the tank, so it takes 12 hours.",
+      "shortcut": "Filling counts positive, emptying negative: add the rates.",
+      "estSeconds": 50
+    },
+    {
+      "slug": "quant-trains-opposite",
+      "topic": "time-speed-distance",
+      "difficulty": 3,
+      "type": "single",
+      "body": "Two trains, 100 m and 120 m long, run towards each other at 36 km/h and 54 km/h. How many seconds do they take to cross each other completely?",
+      "options": [
+        { "id": "a", "text": "8" },
+        { "id": "b", "text": "8.8" },
+        { "id": "c", "text": "9.6" },
+        { "id": "d", "text": "11" }
+      ],
+      "answer": "b",
+      "explanation": "Opposite directions: speeds add, 36 + 54 = 90 km/h = 25 m/s. They must cover 100 + 120 = 220 m, which takes 220 / 25 = 8.8 s.",
+      "shortcut": "Same direction subtract the speeds, opposite directions add them. Add the lengths.",
+      "estSeconds": 75
+    }
+  ]
+}
