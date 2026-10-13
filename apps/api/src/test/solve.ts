@@ -22,12 +22,13 @@ export async function solveProblem(
   token: string,
   slug: string,
   verdict: JobSummary["verdict"] = "AC",
+  extra: object = {},
 ): Promise<string> {
   const res = await t.app.inject({
     method: "POST",
     url: "/v1/submissions",
     headers: bearer(token),
-    payload: { problemSlug: slug, language: "python", code: "x", kind: "submit" },
+    payload: { problemSlug: slug, language: "python", code: "x", kind: "submit", ...extra },
   });
   expect(res.statusCode, res.body).toBe(202);
   const id = res.json<SubmissionCreated>().submissionId;
@@ -39,6 +40,9 @@ export async function solveProblem(
 /** Resets everything a learner accumulates, keeping users and problems. */
 export async function resetLearning(t: TestApp) {
   for (const table of [
+    "contest_participants",
+    "contest_problems",
+    "contests",
     "sql_attempts",
     "oa_attempts",
     "srs_reviews",

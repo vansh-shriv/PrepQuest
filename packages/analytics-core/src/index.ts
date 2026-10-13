@@ -14,3 +14,4 @@ export * from "./roadmap.js";
 export * from "./tracks.js";
 export * from "./sql.js";
 export * from "./oa.js";
+export * from "./contest.js";

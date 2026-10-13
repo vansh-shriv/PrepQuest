@@ -16,8 +16,9 @@ Phase-by-phase build log. Plan source: `docs/18-ROADMAP-AND-SPRINTS.md`. Each ph
 | 8     | Evaluation depth: more interview types, company packs, ideal answers, STAR, speech analytics, question memory                               | M6        | Done (pending commit) |
 | 9     | Analytics and planning: readiness, topic mastery v2, interview trends, time analysis, study plan, daily goals, diagnostic                   | M7        | Done                  |
 | 10    | Learning suite: spaced repetition, CS quizzes, roadmaps, company tracks                                                                     | M8 (part) | Done                  |
-| 11    | SQL practice runner, aptitude items and the online-assessment simulator                                                                     | M8        | Done (pending commit) |
-| 12+   | Contests, code tools, flashcards, integrity, peer mocks, hardening                                                                          | M9-M12    | Planned               |
+| 11    | SQL practice runner, aptitude items and the online-assessment simulator                                                                     | M8        | Done                  |
+| 12    | Contests: ICPC and points scoring, private contests, live standings, virtual runs                                                           | M9 (part) | Done (pending commit) |
+| 13+   | Code review mode, complexity analyzer, flashcards, shareable reports, integrity, peer mocks, hardening                                      | M9-M12    | Planned               |
 
 ## Phase 0 - Foundation
 
@@ -383,3 +384,31 @@ Decisions / gotchas:
 Deferred:
 
 - Coding questions inside an OA, work-simulation questions, admin editing of templates, AI-graded short answers, PostgreSQL dialect and EXPLAIN-interpretation problems, more content (aptitude is 47 of the planned 200 and SQL 26 problems), per-section percentile bands from a larger population, aptitude practice outside timed papers, SQL and OA results feeding mastery and the study plan.
+
+## Phase 12 - Contests (milestone M9, first part)
+
+Sprint 9 is split. This phase builds timed contests (D7). Code review mode (X3), the complexity analyzer (X4), flashcards (X6) and shareable reports (U5) move to the next phase.
+
+Done:
+
+- **Scoring and standings (`analytics-core/contest.ts`, pure):** ICPC scoring (solved count, then penalty: the minute of each solve plus 20 minutes per wrong attempt before it) and points scoring (points decay linearly to 50% by the end, minus 10 per wrong attempt, never below 30%). Only the first accepted attempt per problem counts; compile and infrastructure errors cost nothing; pending attempts are not wrong attempts; attempts outside the window are ignored; ties share a rank (1, 2, 2, 4). The freeze hides attempts from the last N minutes (shown as `?`). 26 hand-computed scenarios pin the rules (the "20 recorded scenarios" acceptance criterion), plus virtual placement.
+- **Contests:** weekly, company-style and private. Public contests need a reviewer or admin; anyone with a verified email can run a private contest with an 8-character invite code (only the creator sees it; without the code, registration, or authorship the contest is a 404). The problems stay hidden until the start. Registration opens early and a late join keeps the contest's own end time; after the end registration is refused. The creator of a private contest is registered automatically.
+- **Taking part:** the web problem page takes `?contest=<slug>`: attempts are sent in `contest` mode (the server checks that the learner is registered, the contest is running for them and the problem belongs to it), hints and editorials are `HINT_LOCKED` for contest problems while the learner is inside the window (editorials open at the end), a pinned bar shows the server clock, and focus loss and pastes are counted for the integrity review (X2 later).
+- **Standings:** computed from the contest-mode submissions on every request, so they follow a verdict the moment it is stored (the page polls every 5 s while running). The freeze applies to everyone but the creator and lifts at the end. The table shows the top 50 and always the caller's own row. The final table is the same computation, so the leaderboard is permanent without a separate copy.
+- **Virtual contests:** after the end a learner can replay the contest on their own clock (one run at a time). Virtual attempts never touch the real standings; the best run is placed among the real results ("you would have placed #3 of 12").
+- **API:** module `contests`: `GET /contests?status=`, `POST /contests`, `GET /contests/:slug`, `POST /:slug/register`, `GET /:slug/standings`, `GET /:slug/me`, `POST /:slug/virtual`, `POST /:slug/events`. `POST /submissions` accepts `mode: contest` and `contestSlug`.
+- **Web:** `/contests` (running, upcoming, past, join by code, create form) and `/contests/[slug]` (clock, problems, standings, your submissions, virtual run).
+- **Database:** migrations 0022 (tables) and 0023 (triggers): `contests`, `contest_problems`, `contest_participants` (live and virtual rows, integrity counters).
+- **Tests:** analytics-core 30 new (151), API 15 new, web helpers 5 new, 5 e2e tests in `contests.spec.ts`.
+
+Decisions / gotchas:
+
+- Standings are computed from `submissions` instead of a Redis sorted set or a `contest_standings` table: at this scale it is one indexed query, it needs no cache invalidation, and the 2-second acceptance criterion holds. Move to a ZSET if a contest ever has thousands of participants.
+- A live participation follows the contest's own window (moving the contest moves everyone); a virtual one has its own start and end.
+- Contest submissions still pay normal solve XP and statistics through the judge-result transaction; spaced repetition cards are only created for practice mode.
+- Tests use the real clock for contests, because submission timestamps come from the database, not the pinned test clock. Tests move a contest with SQL (`UPDATE contests SET starts_at = ...`).
+- The start time field has minute precision, so the server accepts a start up to two minutes in the past.
+
+Deferred:
+
+- Rating updates (Elo-like, P3), reminders by email or in-app, per-college and global leaderboards, similarity detection after a contest (X2), a certificate-style report card (U5), admin editing and cancelling of contests, contest-only first-failing-test feedback trimming, MCQ sections inside contests.

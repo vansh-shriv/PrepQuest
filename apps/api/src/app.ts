@@ -30,6 +30,7 @@ import { problemRoutes } from "./modules/problems/routes.js";
 import { ensureBadgeCatalog } from "./modules/progress/award.js";
 import { analyticsRoutes } from "./modules/analytics/routes.js";
 import { planningRoutes } from "./modules/planning/routes.js";
+import { contestRoutes } from "./modules/contests/routes.js";
 import { oaRoutes } from "./modules/oa/routes.js";
 import { quizRoutes } from "./modules/quizzes/routes.js";
 import { roadmapRoutes } from "./modules/roadmaps/routes.js";
@@ -235,6 +236,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(quizRoutes, { prefix: "/v1", ctx: ai });
   await app.register(sqlRoutes, { prefix: "/v1", ctx: ai });
   await app.register(oaRoutes, { prefix: "/v1", ctx: ai });
+  await app.register(contestRoutes, { prefix: "/v1", ctx: ai });
   await app.register(roadmapRoutes, { prefix: "/v1", ctx: ai });
   await app.register(trackRoutes, { prefix: "/v1", ctx: ai });
   attachInterviewGateway(app, { ctx: ai, engine, kv, origins: env.CORS_ORIGINS.split(",") });

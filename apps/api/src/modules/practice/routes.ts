@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { problems, type Database } from "@prepquest/db";
 import { giveUpSchema, ratingSchema } from "@prepquest/shared";
 import { parse } from "../../lib/validate.js";
+import { assertNoContestLock } from "../contests/service.js";
 import { assertNoInterviewLock } from "../interviews/access.js";
 import * as svc from "./service.js";
 
@@ -15,10 +16,12 @@ const slugParams = z.object({
 });
 const tierParams = slugParams.extend({ tier: z.coerce.number().int().min(1).max(3) });
 
-/** Resolves the slug and refuses while the problem is being asked in the user's live interview. */
+/** Resolves the slug and refuses while the problem is in the user's live interview or running contest. */
 async function guardInterview(db: Database, userId: string, slug: string) {
   const [p] = await db.select({ id: problems.id }).from(problems).where(eq(problems.slug, slug));
-  if (p) await assertNoInterviewLock(db, userId, p.id);
+  if (!p) return;
+  await assertNoInterviewLock(db, userId, p.id);
+  await assertNoContestLock(db, userId, p.id, new Date());
 }
 
 /** Hints, editorial and self-rating (D4, D5). All of it is signed-in only and enforced server side. */

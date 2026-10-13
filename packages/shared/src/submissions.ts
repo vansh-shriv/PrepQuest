@@ -58,13 +58,23 @@ export const submissionCreateSchema = z
       )
       .max(5)
       .default([]),
-    mode: z.enum(["practice", "interview"]).default("practice"),
+    mode: z.enum(["practice", "interview", "contest"]).default("practice"),
+    /** Required when `mode` is `contest`: the contest the attempt belongs to. */
+    contestSlug: z
+      .string()
+      .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/)
+      .max(80)
+      .optional(),
     /** Required when `mode` is `interview`: the session the run belongs to. */
     interviewSessionId: z.string().uuid().optional(),
   })
   .refine((v) => v.mode !== "interview" || Boolean(v.interviewSessionId), {
     message: "An interview run needs the interview session",
     path: ["interviewSessionId"],
+  })
+  .refine((v) => v.mode !== "contest" || Boolean(v.contestSlug), {
+    message: "A contest attempt needs the contest",
+    path: ["contestSlug"],
   });
 export type SubmissionCreate = z.infer<typeof submissionCreateSchema>;
 

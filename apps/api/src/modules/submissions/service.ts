@@ -1,3 +1,4 @@
+import { assertContestSubmissionAllowed } from "../contests/service.js";
 import { assertInterviewSubmissionAllowed } from "../interviews/access.js";
 import { createHash } from "node:crypto";
 import { and, asc, desc, eq, ilike, inArray, lt, or, sql, type SQL } from "drizzle-orm";
@@ -105,6 +106,17 @@ export async function createSubmission(
   if (input.mode === "interview") {
     await assertInterviewSubmissionAllowed(db, userId, input.interviewSessionId ?? "", problem.id);
   }
+  let contestId: string | null = null;
+  if (input.mode === "contest") {
+    // inside the learner's own running window, for a problem of that contest
+    ({ contestId } = await assertContestSubmissionAllowed(
+      db,
+      userId,
+      input.contestSlug ?? "",
+      problem.id,
+      new Date(),
+    ));
+  }
   const checker = checkerFor(problem);
 
   const [lang] = await db
@@ -203,6 +215,7 @@ export async function createSubmission(
       kind: input.kind,
       mode: input.mode,
       interviewSessionId: input.mode === "interview" ? (input.interviewSessionId ?? null) : null,
+      contestId,
       verdict: "QUEUED",
       total: tests.length,
       hintsUsed: priorState?.hintsUsed ?? 0,

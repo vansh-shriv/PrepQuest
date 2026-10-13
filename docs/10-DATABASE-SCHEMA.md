@@ -654,3 +654,7 @@ New tables: `question_bank` (slug, category cs/behavioral/hld/lld, topic, compet
 ## Phase 11 additions (as built)
 
 `sql_datasets` (`schema_sql`, `seed_sql`, `dialect` always sqlite), `sql_problems` (`expected_query`, `order_sensitive`, `hint`, `solution_note`, `position`), `sql_attempts` (`verdict` AC, WA, ERROR or TLE, `xp_awarded`), `aptitude_items` (`section`, `type` single or blank, `shortcut_md`, `est_seconds`), `oa_templates` (`sections` JSON, `negative_marking`, `calculator`, `kind` oa or drill) and `oa_attempts` (`state` JSON with the items, answers and clocks of every section, `report` JSON, `marks`, `max_marks`, `xp_awarded`). Triggers in migration 0021. Not built: `quiz_sets`, `roadmap_nodes` and `roadmap_edges`.
+
+## Phase 12 additions (as built)
+
+`contests` (`kind` weekly, oa or private; `scoring` icpc or points; `freeze_minutes`; `visibility`; `invite_code`; `cancelled`; a window check `ends_at > starts_at`), `contest_problems` (`label`, `points`, `ordinal`) and `contest_participants` (`kind` live or virtual, `started_at`, `ends_at`, `integrity` JSON with blur and paste counts; one live row per user and contest). Triggers in migration 0023. `submissions.contest_id` (already present) links contest-mode attempts. Not built: `contest_standings` (standings are computed on request) and `lb:contest:{id}` in Redis.

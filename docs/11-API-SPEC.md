@@ -573,3 +573,19 @@ Not built: `/quizzes/questions/:id/to-flashcard`, the `/sql/*`, `/oa/*` and `/ap
 | POST | `/oa/attempts/:id/submit-section`, `/finish` | Hand in the running section; end the whole test (waiting sections score zero) |
 
 Not built: `/aptitude/*` practice endpoints, `/admin/sql`, `/admin/aptitude` and `POST /admin/*/import-csv`.
+
+### Contests (Phase 12, as built)
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/contests?status=upcoming\|running\|past` | Public contests plus private ones you created or joined |
+| POST | `/contests` | Verified email. `kind: private` for everyone (returns an invite code to the creator); `weekly` and `oa` need a reviewer or admin; the start may be at most 2 minutes in the past |
+| GET | `/contests/:slug?code=` | Details; problems only after the start (or for the creator); a private contest is 404 without the code, registration or authorship |
+| POST | `/contests/:slug/register` | `{inviteCode?}`; idempotent; 409 `CONTEST_ENDED` after the end |
+| GET | `/contests/:slug/standings?page=` | Top 50 plus your own row; frozen for non-creators during the freeze minutes |
+| GET | `/contests/:slug/me` | Your running participation and seconds left, your contest submissions, your best virtual result and where it would place |
+| POST | `/contests/:slug/virtual` | Starts a virtual run of a finished contest (409 `CONTEST_NOT_OVER`, `VIRTUAL_RUNNING`) |
+| POST | `/contests/:slug/events` | `{type: blur\|paste}`; counted on your running participation |
+| POST | `/submissions` | `mode: contest` with `contestSlug`: 403 `CONTEST_NOT_REGISTERED`, 409 `CONTEST_NOT_RUNNING`, 422 for a problem outside the contest |
+
+Hints and editorials answer 403 `HINT_LOCKED` for a contest problem while you are inside the window. Not built: `/contests/:slug/export`, rating updates.

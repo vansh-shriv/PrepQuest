@@ -46,6 +46,8 @@ export interface JudgeRequest {
   customTestIds?: string[];
   /** Tags the run to a live interview (the server checks the session and the problem). */
   interviewSessionId?: string;
+  /** Tags the attempt to a contest the learner is taking part in (the server checks the window). */
+  contestSlug?: string;
 }
 
 /**
@@ -81,7 +83,9 @@ export function useJudge(onFinished?: (s: SubmissionDetail) => void) {
           customTestIds: req.customTestIds ?? [],
           ...(req.interviewSessionId
             ? { mode: "interview", interviewSessionId: req.interviewSessionId }
-            : {}),
+            : req.contestSlug
+              ? { mode: "contest", contestSlug: req.contestSlug }
+              : {}),
         },
       });
       if (!alive()) return;

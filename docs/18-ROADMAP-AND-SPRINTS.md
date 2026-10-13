@@ -167,3 +167,5 @@ Bug bash, content improvements, user-requested features, portfolio write-up/blog
 - Write 2 blog posts: "Building a sandboxed judge" and "Evaluating an AI interviewer".
 
 **Status:** Sprint 8 is finished across Phases 10 and 11 (SRS, quizzes, roadmaps, tracks, SQL practice, aptitude and the OA simulator). The next scope is Sprint 9: contests, code review mode, complexity analyzer, flashcards and shareable reports.
+
+**Status:** Sprint 9 is being delivered in two phases. Phase 12 finished contests (D7). Still to do from Sprint 9: code review mode (X3), complexity analyzer (X4), flashcards with offline sync (X6) and shareable reports with OG images (U5).

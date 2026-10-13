@@ -21,7 +21,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/tracks", label: "Tracks", icon: "folder" },
   { href: "/plan", label: "Plan", icon: "plan" },
   { href: "/analytics", label: "Analytics", icon: "chart" },
-  { href: "/contests", label: "Contests", icon: "trophy", phase: 9 },
+  { href: "/contests", label: "Contests", icon: "trophy" },
 ];
 
 const ADMIN_ITEM: NavItem = { href: "/admin/problems", label: "Admin", icon: "admin" };

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, Chip, Dialog, LoadingBar, Sprite, Tabs, Window } from "@prepquest/ui";
 import type { CustomTest, DraftHistoryItem, LanguageValue, ProblemDetail } from "@prepquest/shared";
@@ -9,6 +10,7 @@ import { useJudge } from "@/features/submissions/use-judge";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { readLocal, writeLocal } from "@/lib/local-store";
+import { ContestBar } from "../contest/ContestBar";
 import { CodeEditor } from "./CodeEditor";
 import { CustomTests } from "./CustomTests";
 import { EditorialPanel } from "./EditorialPanel";
@@ -173,6 +175,8 @@ function Description({ problem }: { problem: ProblemDetail }) {
 
 function Workspace({ problem }: { problem: ProblemDetail }) {
   const { user, reload } = useAuth();
+  // opened from a contest page: attempts count for that contest and help is switched off
+  const contest = useSearchParams().get("contest");
   const [language, setLanguage] = useState<LanguageValue>(() => {
     const saved = typeof window === "undefined" ? null : readLocal<LanguageValue>("pq:language");
     const preferred = saved ?? (user?.settings.defaultLanguage as LanguageValue | undefined);
@@ -205,6 +209,7 @@ function Workspace({ problem }: { problem: ProblemDetail }) {
     language,
     code: draft.code,
     customTestIds: [...selected],
+    ...(contest ? { contestSlug: contest } : {}),
   });
   const runCode = () => {
     if (judge.busy) return;
@@ -274,7 +279,9 @@ function Workspace({ problem }: { problem: ProblemDetail }) {
         {
           id: "hints",
           label: "Hints",
-          content: user ? (
+          content: contest ? (
+            <p className="m-0 p-2">Hints are off during a contest.</p>
+          ) : user ? (
             <HintsPanel slug={problem.slug} />
           ) : (
             <p className="m-0 p-2">Sign in to use hints.</p>
@@ -283,7 +290,9 @@ function Workspace({ problem }: { problem: ProblemDetail }) {
         {
           id: "editorial",
           label: "Editorial",
-          content: user ? (
+          content: contest ? (
+            <p className="m-0 p-2">Editorials open when the contest ends.</p>
+          ) : user ? (
             <EditorialPanel slug={problem.slug} key={historyKey} />
           ) : (
             <p className="m-0 p-2">Sign in to read editorials.</p>
@@ -472,6 +481,7 @@ function Workspace({ problem }: { problem: ProblemDetail }) {
 
   return (
     <div className="flex h-[calc(100dvh-57px-56px)] flex-col md:h-[calc(100dvh-57px)]">
+      {contest ? <ContestBar slug={contest} /> : null}
       <div
         className="flex gap-2 border-b-[3px] border-ink bg-bg p-2 md:hidden"
         role="tablist"
