@@ -40,6 +40,10 @@ export async function solveProblem(
 /** Resets everything a learner accumulates, keeping users and problems. */
 export async function resetLearning(t: TestApp) {
   for (const table of [
+    "shared_reports",
+    "flashcard_reviews",
+    "flashcards",
+    "flashcard_decks",
     "contest_participants",
     "contest_problems",
     "contests",

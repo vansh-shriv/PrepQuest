@@ -169,3 +169,5 @@ Bug bash, content improvements, user-requested features, portfolio write-up/blog
 **Status:** Sprint 8 is finished across Phases 10 and 11 (SRS, quizzes, roadmaps, tracks, SQL practice, aptitude and the OA simulator). The next scope is Sprint 9: contests, code review mode, complexity analyzer, flashcards and shareable reports.
 
 **Status:** Sprint 9 is being delivered in two phases. Phase 12 finished contests (D7). Still to do from Sprint 9: code review mode (X3), complexity analyzer (X4), flashcards with offline sync (X6) and shareable reports with OG images (U5).
+
+**Status:** Sprint 9 is delivered in three phases. Phase 12 finished contests (D7). Phase 13 finished flashcards with offline sync (X6) and shareable reports with preview images (U5). Still to do from Sprint 9: code review mode (X3) and the complexity analyzer (X4), with AI flashcard suggestions.

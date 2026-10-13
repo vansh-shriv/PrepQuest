@@ -6,6 +6,7 @@ import { PracticeSection } from "@/components/settings/PracticeSection";
 import { ProfileSection } from "@/components/settings/ProfileSection";
 import { SecuritySection } from "@/components/settings/SecuritySection";
 import { SessionsSection } from "@/components/settings/SessionsSection";
+import { SharedLinksSection } from "@/components/share/SharedLinks";
 
 export default function SettingsPage() {
   return (
@@ -14,6 +15,7 @@ export default function SettingsPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="grid content-start gap-6">
           <ProfileSection />
+          <SharedLinksSection />
           <DataSection />
         </div>
         <div className="grid content-start gap-6">

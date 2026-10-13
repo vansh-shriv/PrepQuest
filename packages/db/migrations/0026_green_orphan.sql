@@ -1,0 +1,2 @@
+ALTER TABLE "user_settings" ADD COLUMN "flashcard_new_per_day" smallint DEFAULT 10 NOT NULL;--> statement-breakpoint
+ALTER TABLE "user_settings" ADD COLUMN "flashcard_reviews_per_day" smallint DEFAULT 60 NOT NULL;

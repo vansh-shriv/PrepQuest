@@ -15,3 +15,4 @@ export * from "./tracks.js";
 export * from "./sql.js";
 export * from "./oa.js";
 export * from "./contest.js";
+export * from "./flashcards.js";

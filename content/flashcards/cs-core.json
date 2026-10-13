@@ -1,0 +1,72 @@
+{
+  "slug": "cs-core-facts",
+  "title": "CS core facts",
+  "kind": "cs",
+  "description": "Operating systems, networks and databases answers that placement interviews keep asking for.",
+  "cards": [
+    {
+      "front": "TCP three-way handshake",
+      "back": "Client sends SYN, server replies SYN-ACK, client sends ACK. Both sides now agree on initial sequence numbers and the connection is established."
+    },
+    {
+      "front": "TCP vs UDP in one line each",
+      "back": "TCP: connection-oriented, reliable, ordered, with flow and congestion control. UDP: connectionless, no delivery or order guarantee, low overhead (DNS, video calls, games)."
+    },
+    {
+      "front": "What happens when you type a URL and press Enter?",
+      "back": "DNS lookup -> TCP connection (and TLS handshake for https) -> HTTP request -> server processes and responds -> browser parses HTML, fetches CSS/JS/images, builds the DOM and renders."
+    },
+    {
+      "type": "cloze",
+      "front": "ACID: {{c1::Atomicity}} (all or nothing), {{c2::Consistency}} (valid state to valid state), {{c3::Isolation}} (concurrent transactions do not see each other's partial work), {{c4::Durability}} (committed data survives a crash)."
+    },
+    {
+      "front": "Process vs thread",
+      "back": "A process has its own address space and resources. Threads of one process share its memory and open files but have their own stack and registers. Thread switches are cheaper; a crashing thread can bring down the whole process."
+    },
+    {
+      "front": "The four conditions for deadlock (Coffman)",
+      "back": "Mutual exclusion, hold and wait, no preemption, circular wait. Break any one of them to prevent deadlock (for example, always lock in a fixed order to break circular wait)."
+    },
+    {
+      "front": "Mutex vs semaphore",
+      "back": "A mutex is a lock owned by the thread that holds it (one at a time). A semaphore is a counter that allows up to N holders and can be signalled by a different thread."
+    },
+    {
+      "front": "What is virtual memory and what is a page fault?",
+      "back": "Each process sees its own address space, mapped to physical frames in pages. A page fault happens when the page is not in RAM; the OS loads it from disk (or kills the process on an invalid access)."
+    },
+    {
+      "front": "First three normal forms",
+      "back": "1NF: atomic values, no repeating groups. 2NF: 1NF and no partial dependency on part of a composite key. 3NF: 2NF and no transitive dependency (non-key columns depend only on the key)."
+    },
+    {
+      "front": "Why does an index speed up reads and what does it cost?",
+      "back": "A B-tree index finds rows in O(log n) instead of scanning the table. It costs disk space and makes inserts, updates and deletes slower because the index must be maintained."
+    },
+    {
+      "front": "INNER JOIN vs LEFT JOIN",
+      "back": "INNER keeps only rows that match on both sides. LEFT keeps every row of the left table; where there is no match the right-side columns are NULL."
+    },
+    {
+      "front": "WHERE vs HAVING",
+      "back": "WHERE filters rows before grouping. HAVING filters groups after aggregation (it can use COUNT, SUM and so on)."
+    },
+    {
+      "type": "cloze",
+      "front": "The CAP theorem: during a network {{c1::partition}} a distributed store must choose between {{c2::consistency}} and {{c3::availability}}."
+    },
+    {
+      "front": "HTTP status classes and three to remember",
+      "back": "2xx success (200 OK, 201 Created), 3xx redirect (301, 302), 4xx client error (400, 401, 403, 404, 429), 5xx server error (500, 502, 503)."
+    },
+    {
+      "front": "Stack vs heap memory",
+      "back": "Stack: fast, per-thread, holds call frames and locals, freed automatically on return. Heap: shared, for objects that outlive a call, managed by hand (C/C++) or a garbage collector."
+    },
+    {
+      "front": "Abstraction vs encapsulation",
+      "back": "Encapsulation hides state behind a controlled interface (private fields, getters). Abstraction exposes only what a caller needs, hiding how it works (interfaces, abstract classes)."
+    }
+  ]
+}

@@ -10,3 +10,5 @@ export * from "./planning.js";
 export * from "./learning.js";
 export * from "./assess.js";
 export * from "./contests.js";
+export * from "./flashcards.js";
+export * from "./sharing.js";

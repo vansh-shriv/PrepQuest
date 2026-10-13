@@ -22,6 +22,7 @@ import {
   clock,
 } from "@/features/interview/format";
 import { api, apiDownload, ApiError } from "@/lib/api";
+import { ShareButton } from "../share/ShareDialog";
 import { CodeReplay } from "./CodeReplay";
 import { IdealAnswers, SpeechPanel, StarScores } from "./ReviewExtras";
 import { useSubmit } from "@/lib/use-submit";
@@ -138,6 +139,7 @@ function Loaded({
           >
             Export transcript
           </Button>
+          {scorecard && <ShareButton entityType="scorecard" refId={session.id} />}
           <Link href="/interview/new" className={buttonClasses({ size: "sm", variant: "accent" })}>
             Another interview
           </Link>

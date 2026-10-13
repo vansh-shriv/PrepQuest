@@ -360,6 +360,10 @@ function QuizResult({ result }: { result: QuizResultDto }) {
               Back to the roadmaps
             </Link>
           </div>
+          <SaveMistakes
+            attemptId={result.id}
+            count={result.review.filter((r) => r.answered && !r.correct).length}
+          />
         </div>
       </Window>
 
@@ -386,6 +390,49 @@ function QuizResult({ result }: { result: QuizResultDto }) {
           </li>
         ))}
       </ol>
+    </div>
+  );
+}
+
+/** Wrong answers become flashcards in the "Quiz mistakes" deck (X6). */
+function SaveMistakes({ attemptId, count }: { attemptId: string; count: number }) {
+  const [saved, setSaved] = useState<{ added: number; deckId: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  if (count === 0) return null;
+  if (saved)
+    return (
+      <p className="m-0" data-testid="mistakes-saved">
+        {saved.added > 0
+          ? `Saved ${saved.added} card${saved.added === 1 ? "" : "s"} to your Quiz mistakes deck. `
+          : "These are already in your Quiz mistakes deck. "}
+        <Link href={`/flashcards/${saved.deckId}`} className="underline">
+          Open the deck
+        </Link>
+      </p>
+    );
+  return (
+    <div className="grid gap-1">
+      <div>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={async () => {
+            try {
+              setSaved(
+                await api<{ added: number; deckId: string }>("/flashcards/from-quiz", {
+                  method: "POST",
+                  json: { attemptId },
+                }),
+              );
+            } catch (err) {
+              setError(err instanceof ApiError ? err.message : "Couldn't reach the server.");
+            }
+          }}
+        >
+          Save my {count} mistake{count === 1 ? "" : "s"} as flashcards
+        </Button>
+      </div>
+      <FormError message={error} />
     </div>
   );
 }

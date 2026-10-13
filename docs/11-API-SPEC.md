@@ -589,3 +589,24 @@ Not built: `/aptitude/*` practice endpoints, `/admin/sql`, `/admin/aptitude` and
 | POST | `/submissions` | `mode: contest` with `contestSlug`: 403 `CONTEST_NOT_REGISTERED`, 409 `CONTEST_NOT_RUNNING`, 422 for a problem outside the contest |
 
 Hints and editorials answer 403 `HINT_LOCKED` for a contest problem while you are inside the window. Not built: `/contests/:slug/export`, rating updates.
+
+### Flashcards and shared reports (Phase 13, as built)
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/flashcards` | Decks with due and new counts, starter decks (with `adoptedAs`), daily limits and what was done today |
+| PUT | `/flashcards/settings` | `{newPerDay, reviewsPerDay}` |
+| POST, GET, PATCH, DELETE | `/flashcards/decks`, `/flashcards/decks/:id` | Deck detail includes its cards (rendered prompt and answer) |
+| GET | `/flashcards/decks/:id/export` | `{format: "prepquest-deck", version: 1, title, kind, cards[]}` as an attachment |
+| POST | `/flashcards/import` | The same JSON; 422 names the first bad card |
+| POST | `/flashcards/decks/:id/cards`, PATCH and DELETE `/flashcards/cards/:id` | Cloze needs a `{{c1::...}}` part, other types need a back |
+| POST | `/flashcards/starters/:slug/adopt` | Copies a starter deck once (returns the existing copy the second time) |
+| GET | `/flashcards/study?deckId=&cram=true` | Due reviews then new cards within the limits; cram ignores dates and limits |
+| POST | `/flashcards/sync` | `{reviews: [{clientId, cardId, quality 0-5, reviewedAt}]}` (1 to 500); each result is `applied`, `stale`, `duplicate` or `unknown_card` |
+| POST | `/flashcards/from-quiz` | `{attemptId}` or `{questionId}`: wrong answers of a finished quiz become cards in the "Quiz mistakes" deck |
+| POST | `/shares` | Verified email. `{entityType: scorecard\|contest\|readiness, ref?, visibility, options, expiresIn}`; returns the link once (`token`, `path`) |
+| GET | `/shares`, DELETE `/shares/:id` | The owner's links (status, views) and revoke |
+| GET | `/r/:token` | Public, no sign-in, `no-store`; 404 for unknown, revoked and expired links |
+| GET | `/r/:token/og.png` | Public 1200x630 preview image; does not count a view |
+
+A scorecard needs a finished interview with a ready scorecard (409 otherwise); a contest result needs a finished contest the learner took part in; a readiness summary needs enough data.

@@ -1,0 +1,64 @@
+{
+  "slug": "algorithm-patterns",
+  "title": "Algorithm patterns",
+  "kind": "patterns",
+  "description": "The templates behind most interview problems: when to reach for each and what it costs.",
+  "cards": [
+    {
+      "front": "Sliding window: when do you use it?",
+      "back": "A contiguous subarray or substring with a condition on its contents (longest, shortest, count). Grow the right end, shrink the left while the window is invalid. O(n) because each index enters and leaves once."
+    },
+    {
+      "front": "Two pointers on a sorted array: what is the idea?",
+      "back": "Start at both ends (or at a slow and fast position) and move the pointer that can still improve the answer. Pair sum on a sorted array is O(n) instead of O(n^2). Sort first when order does not matter: O(n log n)."
+    },
+    {
+      "front": "Fast and slow pointers: what do they find?",
+      "back": "A cycle in a linked list (they meet if there is one), the middle of a list (slow is at the middle when fast reaches the end), and the start of the cycle (reset one pointer to the head, move both one step at a time)."
+    },
+    {
+      "type": "cloze",
+      "front": "Binary search needs a {{c1::monotonic}} yes/no question. It also solves \"minimum value that works\" problems (binary search on the {{c2::answer}}) in O(log range) checks."
+    },
+    {
+      "front": "Monotonic stack: which problems?",
+      "back": "\"Next greater/smaller element\", daily temperatures, largest rectangle in a histogram. Keep the stack ordered; each element is pushed and popped once, so O(n)."
+    },
+    {
+      "front": "BFS vs DFS: which gives the shortest path?",
+      "back": "BFS on an unweighted graph: the first time it reaches a node is by the fewest edges. DFS does not. For weighted edges use Dijkstra (non-negative weights) or Bellman-Ford."
+    },
+    {
+      "front": "Topological sort: when is it possible and how do you do it?",
+      "back": "Only on a directed acyclic graph. Kahn's algorithm: repeatedly take nodes with in-degree 0. If you cannot take all nodes, there is a cycle. O(V + E)."
+    },
+    {
+      "front": "Union-find (disjoint set union): what does it give you?",
+      "back": "Near-constant `find` and `union` with path compression and union by rank/size. Use it for connected components, cycle detection in undirected graphs, and Kruskal's minimum spanning tree."
+    },
+    {
+      "type": "cloze",
+      "front": "Prefix sums answer any range sum in {{c1::O(1)}} after {{c2::O(n)}} preprocessing: sum(l..r) = prefix[r+1] - prefix[l]."
+    },
+    {
+      "front": "Top K elements: which structure?",
+      "back": "A min-heap of size K (push, pop the smallest when it grows past K): O(n log K). Quickselect gives the K-th element in O(n) average. Sorting everything is O(n log n)."
+    },
+    {
+      "front": "How do you recognise dynamic programming?",
+      "back": "Overlapping subproblems and optimal substructure. Define the state (what the answer depends on), the transition (how states combine), the base cases, and the order of evaluation. Then see if you can drop a dimension."
+    },
+    {
+      "front": "Backtracking template",
+      "back": "choose -> explore -> un-choose. Build a partial answer, recurse, undo the choice. Prune as soon as a partial answer cannot lead to a valid one. Typical cost is exponential: permutations O(n!), subsets O(2^n)."
+    },
+    {
+      "front": "Trie: when is it better than a hash set of words?",
+      "back": "Prefix questions: autocomplete, \"does any word start with p\", longest common prefix, word search with pruning. Insert and lookup are O(length of the word), independent of how many words are stored."
+    },
+    {
+      "front": "Intervals: the standard first step",
+      "back": "Sort by start. Then sweep: merge when the next start is <= the current end. For \"minimum meeting rooms\" use a min-heap of end times, or sort starts and ends separately."
+    }
+  ]
+}

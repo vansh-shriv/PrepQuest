@@ -102,6 +102,9 @@ export const userSettings = pgTable(
     personalizedCallbacks: boolean("personalized_callbacks").notNull().default(true), // X5
     /** Most spaced-repetition reviews asked per day (D6). */
     reviewCap: smallint("review_cap").notNull().default(5),
+    /** Flashcard limits per day (X6): new cards and reviews. */
+    flashcardNewPerDay: smallint("flashcard_new_per_day").notNull().default(10),
+    flashcardReviewsPerDay: smallint("flashcard_reviews_per_day").notNull().default(60),
     ...timestamps,
   },
   (t) => [

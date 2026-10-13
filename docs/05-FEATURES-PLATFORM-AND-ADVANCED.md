@@ -309,3 +309,9 @@ Protect contest and interview integrity; also help users know how their behavior
 - **Test pyramid**: unit (80%+ for judge scoring logic), integration (API + DB), e2e (core flows), load tests (k6 for submit and WS), AI eval suite (golden transcripts, rubric consistency).
 - **Deployed demo**: public URL, seeded with 100+ problems, demo account, sample interview report, README with GIFs, architecture diagram, and a short Loom/GIF walkthrough.
 - Details: docs 15 and 16.
+
+## As built (Phase 13): X6 flashcards and U5 shareable reports
+
+**X6.** Decks (patterns, formulas, CS facts, behavioral, mistakes, custom), card types basic, cloze and code, SM-2 scheduling shared with solved-problem reviews, daily new and review limits, cram mode, JSON export and import, four starter decks, wrong quiz answers pushed into a "Quiz mistakes" deck. Reviews are sent through one idempotent sync endpoint; the web app queues them on the device and retries. Acceptance: a session started online keeps working offline and syncs with no lost or doubled reviews (API tests and `flashcards.spec.ts`). Not built: service worker and app-shell caching, IndexedDB, reversible and image cards, AI suggestions, cards from notes and interview moments, public deck links, swipe gestures.
+
+**U5.** Share an interview scorecard, a finished contest result or a readiness summary through an unlisted or public link with options (hide transcript quotes, code quotes, company, name), expiry (7 days, 30 days, never), revoke and a view counter. The page is a pixel report card with Open Graph and Twitter tags and a generated 1200x630 PNG; PDF export is the browser's print dialog. Acceptance: revoked links return 404 immediately (`no-store`, no cache to purge) and the payload carries only what was selected (unit and integration tests). Not built: sharing the streak badge or public profile, "report viewed" notifications, peer feedback reports.

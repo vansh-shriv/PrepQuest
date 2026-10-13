@@ -25,6 +25,7 @@ import { isRough, minutesLabel, scoreText } from "@/features/planning/plan-view"
 import { api, ApiError } from "@/lib/api";
 import { useSubmit } from "@/lib/use-submit";
 import { FormError } from "../auth/AuthCard";
+import { ShareButton } from "../share/ShareDialog";
 import { Bars, LineChart } from "./charts";
 
 function useLoad<T>(path: string) {
@@ -81,6 +82,11 @@ function ReadinessPanel() {
 
   return (
     <div className="grid gap-5" data-testid="readiness">
+      {data.score !== null && (
+        <div>
+          <ShareButton entityType="readiness" refId={target} label="Share my readiness" />
+        </div>
+      )}
       <Select
         label="Target"
         value={target}

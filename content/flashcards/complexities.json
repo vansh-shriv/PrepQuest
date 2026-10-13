@@ -1,0 +1,72 @@
+{
+  "slug": "big-o-cheat-sheet",
+  "title": "Big-O cheat sheet",
+  "kind": "formulas",
+  "description": "Time and space costs you are expected to know without thinking, as fill-in-the-blank cards.",
+  "cards": [
+    {
+      "type": "cloze",
+      "front": "Binary search on a sorted array takes {{c1::O(log n)}} time and {{c2::O(1)}} extra space (iterative)."
+    },
+    {
+      "type": "cloze",
+      "front": "Merge sort is {{c1::O(n log n)}} in the worst case and uses {{c2::O(n)}} extra space."
+    },
+    {
+      "type": "cloze",
+      "front": "Quicksort is {{c1::O(n log n)}} on average and {{c2::O(n^2)}} in the worst case (for example an already sorted array with a bad pivot)."
+    },
+    {
+      "type": "cloze",
+      "front": "Heapsort is {{c1::O(n log n)}} time and {{c2::O(1)}} extra space, but it is not {{c3::stable}}."
+    },
+    {
+      "type": "cloze",
+      "front": "Building a binary heap from n items with bottom-up heapify takes {{c1::O(n)}}; one push or pop takes {{c2::O(log n)}}."
+    },
+    {
+      "type": "cloze",
+      "front": "A hash map does insert, lookup and delete in {{c1::O(1)}} on average and {{c2::O(n)}} in the worst case (many collisions)."
+    },
+    {
+      "type": "cloze",
+      "front": "A balanced binary search tree (AVL, red-black) does search, insert and delete in {{c1::O(log n)}}; an unbalanced one degrades to {{c2::O(n)}}."
+    },
+    {
+      "type": "cloze",
+      "front": "BFS and DFS on a graph with V vertices and E edges, using an adjacency list, take {{c1::O(V + E)}} time."
+    },
+    {
+      "type": "cloze",
+      "front": "Dijkstra with a binary heap takes {{c1::O((V + E) log V)}}; it needs {{c2::non-negative}} edge weights."
+    },
+    {
+      "type": "cloze",
+      "front": "The number of subsets of n items is {{c1::2^n}}; the number of permutations is {{c2::n!}}."
+    },
+    {
+      "front": "Master theorem, T(n) = 2T(n/2) + O(n)",
+      "back": "O(n log n) (merge sort). The work per level is n and there are log n levels."
+    },
+    {
+      "front": "Master theorem, T(n) = T(n/2) + O(1)",
+      "back": "O(log n) (binary search)."
+    },
+    {
+      "front": "Naive recursive Fibonacci vs memoised",
+      "back": "Naive: T(n) = T(n-1) + T(n-2) is O(2^n) (more exactly O(phi^n)). With memoisation or a bottom-up loop: O(n) time, and O(1) space if you keep only the last two values."
+    },
+    {
+      "type": "cloze",
+      "front": "Recursion uses stack space proportional to its depth: DFS on a skewed tree of n nodes uses {{c1::O(n)}} stack, on a balanced tree {{c2::O(log n)}}."
+    },
+    {
+      "front": "Which is bigger for large n: n log n or n^2? Name a growth order list from small to large.",
+      "back": "n^2 is bigger. 1 < log n < sqrt(n) < n < n log n < n^2 < n^3 < 2^n < n!"
+    },
+    {
+      "front": "Why is looping over a string with `s += ch` often O(n^2)?",
+      "back": "In languages with immutable strings (Java, Python in the general case) each append copies the string. Use a list/StringBuilder and join once at the end: O(n)."
+    }
+  ]
+}

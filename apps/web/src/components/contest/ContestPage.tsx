@@ -23,6 +23,7 @@ import { api, ApiError } from "@/lib/api";
 import { useSubmit } from "@/lib/use-submit";
 import { FormError } from "../auth/AuthCard";
 import { Markdown } from "../problems/Markdown";
+import { ShareButton } from "../share/ShareDialog";
 
 const POLL_MS = 5000;
 
@@ -150,6 +151,9 @@ export function ContestPage() {
               <Button loading={virtual.pending} onClick={() => void virtual.run()}>
                 Start a virtual run
               </Button>
+            )}
+            {contest.phase === "past" && table?.me && (
+              <ShareButton entityType="contest" refId={contest.slug} label="Share my result" />
             )}
           </div>
           {contest.inviteCode && (

@@ -26,3 +26,13 @@
   --shadow-pixel-sm: 2px 2px 0 var(--shadow);
   --shadow-pixel-lg: 6px 6px 0 var(--shadow);
 }
+
+/* Printing a shared report (U5 PDF export): only the report, on white. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff !important;
+  }
+}

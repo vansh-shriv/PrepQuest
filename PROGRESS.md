@@ -17,8 +17,9 @@ Phase-by-phase build log. Plan source: `docs/18-ROADMAP-AND-SPRINTS.md`. Each ph
 | 9     | Analytics and planning: readiness, topic mastery v2, interview trends, time analysis, study plan, daily goals, diagnostic                   | M7        | Done                  |
 | 10    | Learning suite: spaced repetition, CS quizzes, roadmaps, company tracks                                                                     | M8 (part) | Done                  |
 | 11    | SQL practice runner, aptitude items and the online-assessment simulator                                                                     | M8        | Done                  |
-| 12    | Contests: ICPC and points scoring, private contests, live standings, virtual runs                                                           | M9 (part) | Done (pending commit) |
-| 13+   | Code review mode, complexity analyzer, flashcards, shareable reports, integrity, peer mocks, hardening                                      | M9-M12    | Planned               |
+| 12    | Contests: ICPC and points scoring, private contests, live standings, virtual runs                                                           | M9 (part) | Done                  |
+| 13    | Flashcards with offline review sync, shareable reports with preview images                                                                  | M9 (part) | Done (pending commit) |
+| 14+   | Code review mode, complexity analyzer, AI card suggestions, integrity, peer mocks, hardening                                                | M9-M12    | Planned               |
 
 ## Phase 0 - Foundation
 
@@ -412,3 +413,32 @@ Decisions / gotchas:
 Deferred:
 
 - Rating updates (Elo-like, P3), reminders by email or in-app, per-college and global leaderboards, similarity detection after a contest (X2), a certificate-style report card (U5), admin editing and cancelling of contests, contest-only first-failing-test feedback trimming, MCQ sections inside contests.
+
+## Phase 13 - Flashcards and shareable reports (milestone M9, second part)
+
+Sprint 9 is split in three. Phase 12 built contests (D7). This phase builds flashcards with offline sync (X6) and shareable reports with preview images (U5). Code review mode (X3), the complexity analyzer (X4) and AI card suggestions move to the next phase, because they share the language-model gateway and the judge.
+
+Done:
+
+- **Flashcard rules (`analytics-core/flashcards.ts`, pure):** card types basic, cloze (`{{c1::answer::hint}}`) and code; `renderCard` hides every deletion in the prompt and reveals them in the answer; `cardIssues` checks a card before it is saved; `studyQueue` serves due reviews first (longest overdue, weakest), then new cards up to the daily new limit, with a cram mode (every card, weakest first, capped at 100, no scheduling); `mergeOfflineReviews` applies a batch of reviews made on a device oldest first with the same SM-2 as solved-problem reviews, and a review not newer than the card's newest stored one only becomes history (last review wins). A device clock ahead of the server is clamped to the server's time plus five minutes.
+- **Flashcards:** decks with a kind (patterns, formulas, CS facts, behavioral, mistakes, custom), manual cards, edit, pause, delete, deck export and import as JSON, starter decks (4 decks, 54 cards in `content/flashcards`) that a learner copies once, and daily limits (new cards and reviews, account-wide). Wrong quiz answers become cards in a "Quiz mistakes" deck from the quiz result screen (once per question, with the correct answer and the explanation on the back).
+- **Offline:** every review goes through one endpoint, `POST /flashcards/sync`, whether the device is online or not. The web app writes each answer to this device first (`features/flashcards/offline.ts`), sends the queue in batches, and retries on load, when the connection returns, after each answer and every 20 s. Each answer has a `clientId` that the server stores once, so a repeated upload adds nothing. A study session keeps the day's cards on the device and carries on if the connection drops.
+- **Shared reports:** a learner shares an interview scorecard, a finished contest result or a readiness summary. Options: hide transcript quotes (default on), hide code quotes (on), hide the company (on, also scrubbed from the texts), hide the name (off), unlisted or public, expiry 7 days, 30 days or never. Emails, links and phone numbers are always removed. The payload is a filtered snapshot made when the link is created. The token is random (24 bytes) and only its SHA-256 is stored; the link is shown once. A revoked, expired or unknown link is the same 404, and pages and images are `no-store`, so a revoked link is gone at once. Views are counted when the page opens, not when the preview image is fetched. Unlisted links send `X-Robots-Tag: noindex` and the page sends `referrer: no-referrer`.
+- **Preview image:** `GET /v1/r/:token/og.png` draws a 1200x630 pixel-art report card with a built-in 5x7 font and encodes the PNG itself (no image library, no fonts).
+- **Web:** `/flashcards`, `/flashcards/[id]`, `/flashcards/study` (`?deck=`, `?cram=1`; keys: space flips, 1 to 4 answer), the Share button on the interview review, the contest page and the readiness tab, "Shared links" in Settings (views, status, revoke), and the public `/r/[token]` page with Open Graph and Twitter tags, a print layout and a "Save as PDF" button.
+- **API:** modules `flashcards` and `shares`. Public routes: `GET /r/:token`, `GET /r/:token/og.png` (60 requests a minute per IP).
+- **Database:** migrations 0024 (tables), 0025 (triggers), 0026 (`user_settings` flashcard limits): `flashcard_decks`, `flashcards`, `flashcard_reviews`, `shared_reports`.
+- **Tests:** analytics-core 17 new (168), API 45 new (565), web 14 new (82), content 3 new (46), e2e `flashcards.spec.ts` (7, including an offline session) and `shares.spec.ts` (4).
+
+Decisions / gotchas:
+
+- Offline storage is `localStorage` (the queue and the cached study set are small and read synchronously), not IndexedDB with Dexie, and there is no service worker: a session that was opened online keeps working and syncs later, but reloading the page while offline needs a service worker that caches the app shell, which is deferred. The "fully offline" acceptance criterion is met for sessions started online.
+- The share snapshot is made once, so a shared report does not change when the learner later edits or deletes the interview, and the privacy options cannot be loosened after the fact (make a new link).
+- Due dates are the learner's local days (`due_on`), not timestamps; the exact time of the newest review (`last_reviewed_at`) is the merge rule for offline reviews.
+- The preview image uses its own tiny renderer instead of satori: no wasm, no font files, same bytes for the same input.
+- PDF export is the browser's print dialog with a print stylesheet, not a server-rendered PDF.
+- Tests for shares must not delete the user whose token they hold: the account-deletion test uses its own user.
+
+Deferred:
+
+- Service worker and app-shell caching, IndexedDB storage, reversible and image cards, AI card suggestions (next phase with the gateway), cards from notes, editorials and interview moments (the API accepts the origin, the web has no shortcut yet), public deck links, spaced-repetition plan tasks for flashcards, shareable streak badge and public profile, "report viewed" notifications, peer feedback reports (X1).

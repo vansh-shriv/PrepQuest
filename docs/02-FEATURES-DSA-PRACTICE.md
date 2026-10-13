@@ -296,7 +296,7 @@ Three tiers (nudge, approach, pseudocode), cooldowns, XP penalty and the "clean 
 ## As built (Phase 10): D6 spaced repetition and C1 quizzes
 
 - **D6:** modified SM-2 as specified (1 day, 3 days, then interval x ease; a failure resets to 1 day and lowers the ease by 0.2, floor 1.3). Cards are created at the first accepted practice solve. Quality is derived from failed attempts, hints and time, plus the self-rating, or set with Again/Hard/Good/Easy; solving a due problem is graded automatically. The queue is capped (default 5, 1 to 30) and time-zone aware (local `due_on` dates). Pause, snooze and the week-ahead view are built. Not built: pattern-level reviews, review mode with its own timer, XP for reviews.
-- **C1 quizzes:** single choice, multiple choice, true/false, fill-in-the-blank and code-output questions; practice, timed, topic drill and weak-area modes; explanations carry an "in an interview" line. Not built: AI-graded short explanations, quiz sets, push-to-flashcard (X6), the SQL practice editor and the embedded and ML subjects (the schema allows them).
+- **C1 quizzes:** single choice, multiple choice, true/false, fill-in-the-blank and code-output questions; practice, timed, topic drill and weak-area modes; explanations carry an "in an interview" line. Not built: AI-graded short explanations, quiz sets, the SQL practice editor and the embedded and ML subjects (the schema allows them).
 - Acceptance: each answer stores its time; the answer key never reaches the browser during a timed test; the clock is server-side, so reopening the tab resumes the remaining time.
 
 ## As built (Phase 11): C1 SQL practice and C2 aptitude and OA

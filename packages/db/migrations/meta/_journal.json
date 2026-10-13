@@ -169,6 +169,27 @@
       "when": 1791881778540,
       "tag": "0023_triggers_phase12",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791911469257,
+      "tag": "0024_graceful_medusa",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791911476785,
+      "tag": "0025_triggers_phase13",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791911575846,
+      "tag": "0026_green_orphan",
+      "breakpoints": true
     }
   ]
 }

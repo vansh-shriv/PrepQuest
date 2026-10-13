@@ -1,0 +1,40 @@
+{
+  "slug": "behavioral-prompts",
+  "title": "Behavioral story prompts",
+  "kind": "behavioral",
+  "description": "The questions interviewers keep asking, with the shape of a strong answer. Write your own story on the back.",
+  "cards": [
+    {
+      "front": "Tell me about a time you disagreed with a teammate.",
+      "back": "Situation in one sentence. Both positions stated fairly. What you did to understand theirs (data, a prototype, a call). The outcome, and what you would do again. Avoid blaming; show you can disagree and still ship."
+    },
+    {
+      "front": "Tell me about a project you are proud of.",
+      "back": "Your role and the goal. The hard part and what YOU did (use \"I\" for your actions, \"we\" for the team). A number or a concrete result. What you learned."
+    },
+    {
+      "front": "Tell me about a time you failed.",
+      "back": "A real failure with real stakes, owned without excuses. What you changed afterwards (a habit, a check, a process), and a later moment where that change paid off."
+    },
+    {
+      "front": "Tell me about a time you had a tight deadline.",
+      "back": "What was at stake and how you scoped it: what you cut, what you protected, who you told. Result and how you kept quality. Show prioritisation, not heroics."
+    },
+    {
+      "front": "Tell me about a time you learned something quickly.",
+      "back": "The gap, your plan (docs, a mentor, a small experiment), how fast you became useful, and what you could do at the end that you could not at the start."
+    },
+    {
+      "front": "Tell me about a time you led without being the manager.",
+      "back": "How you got agreement: a clear goal, splitting the work, unblocking others, giving credit. Outcome for the team, not only for you."
+    },
+    {
+      "front": "Why this company and this role?",
+      "back": "Two specific things about the product or the team that you have actually looked at, how they connect to what you have built, and what you want to learn there. Avoid generic praise."
+    },
+    {
+      "front": "STAR: what does each letter need?",
+      "back": "Situation (context, brief). Task (your responsibility). Action (what you did, step by step: the longest part). Result (measurable outcome and the lesson). Aim for about two minutes."
+    }
+  ]
+}

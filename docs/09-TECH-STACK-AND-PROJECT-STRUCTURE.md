@@ -175,3 +175,7 @@ pnpm storybook
 - **API:** `modules/practice` (hints, editorial, give up, self-rating), `modules/progress` (XP ledger, badges, dashboard; `award.ts` runs inside the judge-result transaction), admin hint and editorial editors.
 - **Content tooling:** `editorial.json` and `hints/` per problem, known-wrong `solutions/mutants/*.py`, and `pnpm content:judge` (`apps/judge/src/content-judge.ts`) that runs references, editorial code and mutants through the real judge pipeline.
 - **UI:** `ActivityHeatmap`, plant and sunflower growth sprites in `packages/ui`; `HintsPanel`, `EditorialPanel`, rewards in `ResultPanel`, `components/dashboard/Dashboard`, admin `LearningTabs`.
+
+### As built (Phase 13)
+
+X6 uses a `localStorage` queue and cache with an injected storage interface instead of Dexie and Workbox (no service worker yet). U5 draws the preview image with a small dependency-free PNG renderer instead of satori / `@vercel/og`; PDF export is the browser's print dialog.
