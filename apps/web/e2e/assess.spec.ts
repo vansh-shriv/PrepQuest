@@ -75,7 +75,16 @@ test("a speed drill runs against a clock, saves answers and ends with a report",
   await expect(page.getByTestId("oa-section")).toBeVisible();
   await expect(page.getByTestId("oa-clock")).toHaveText(/^[0-5]:\d\d$/);
   // answer the first question, leave the rest blank
-  await page.getByTestId("oa-question").getByRole("radio").first().check();
+  // the paper is random: the first question may be a choice or a typed answer
+  const question = page.getByTestId("oa-question");
+  await expect(question).toBeVisible();
+  const radios = question.getByRole("radio");
+  if ((await radios.count()) > 0) {
+    await radios.first().check();
+  } else {
+    await question.getByLabel("Your answer").fill("13");
+    await question.getByLabel("Your answer").blur();
+  }
   await expect(page.getByText("1 of 10 answered")).toBeVisible();
 
   // the answer survives a reload because the server holds it
