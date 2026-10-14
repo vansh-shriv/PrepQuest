@@ -59,6 +59,8 @@ export interface InterviewTemplate {
   rubricId: string;
   /** The code editor (and judge) is part of this interview. */
   usesEditor: boolean;
+  /** A drawing board (the system design canvas) is part of this interview. */
+  usesCanvas?: boolean;
   /** Needs a confirmed resume to generate questions. */
   needsResume: boolean;
   /** Where questions come from. */

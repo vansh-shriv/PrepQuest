@@ -23,6 +23,7 @@ import { Chat } from "./Chat";
 import { MicCheck } from "./MicCheck";
 import { VoiceBar } from "./VoiceBar";
 import { CodePanel } from "./CodePanel";
+import { DesignBoard } from "./DesignBoard";
 
 const LIVE_STATES = new Set([
   "WARMUP",
@@ -182,14 +183,14 @@ export function InterviewRoom({ id }: { id: string }) {
           : ""}
       </span>
       <span className="ml-auto flex flex-wrap gap-2">
-        {session.type === "dsa" && (
+        {(session.type === "dsa" || session.usesCanvas) && (
           <span className="md:hidden">
             <Button
               size="sm"
               variant="ghost"
               onClick={() => setMobile((m) => (m === "left" ? "right" : "left"))}
             >
-              {mobile === "left" ? "Show code" : "Show chat"}
+              {mobile === "left" ? (session.usesCanvas ? "Show board" : "Show code") : "Show chat"}
             </Button>
           </span>
         )}
@@ -233,6 +234,18 @@ export function InterviewRoom({ id }: { id: string }) {
           right={
             <CodePanel sessionId={id} slug={slug} sendEvent={r.codeEvent} disabled={!enabled} />
           }
+        />
+      ) : session.usesCanvas ? (
+        <SplitPane
+          storageKey="pq:interview-board-split"
+          mobileView={mobile}
+          left={
+            <div className="flex min-h-0 flex-1 flex-col">
+              <ProjectFocus session={session} />
+              {chat}
+            </div>
+          }
+          right={<DesignBoard sessionId={id} sendEvent={r.codeEvent} disabled={!enabled} />}
         />
       ) : session.type === "dsa" ? (
         <div className="flex min-h-0 flex-1 flex-col">{chat}</div>
@@ -360,7 +373,9 @@ function Briefing({
                   ? "Tell real stories: what the situation was, what you did yourself, and the result."
                   : session.type === "cs"
                     ? "Short fundamentals questions. Explain simply, then give an example."
-                    : "A text-based design discussion. State requirements and trade-offs as you go."}
+                    : session.usesCanvas
+                      ? "A design discussion with a drawing board. The interviewer sees what you draw: state requirements, sketch the components and talk through the trade-offs."
+                      : "A text-based design discussion. State requirements and trade-offs as you go."}
           </li>
           <li>
             {session.realistic

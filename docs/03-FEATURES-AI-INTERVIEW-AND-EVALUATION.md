@@ -311,3 +311,7 @@ Other templates use their own dimensions (e.g., HLD: requirements, estimation, a
 ## As built (Phase 16): C3 system design practice
 
 Canvas with ten pixel component types, labelled arrows, snap to grid, undo and redo for 100 steps (met: `design.test.ts`), autosave with versions, export to PNG and JSON. Structured side panel with requirements, a capacity calculator, API list, data model and notes. Review: the canvas becomes a graph (types and edge direction preserved on 20 sample designs: met), automatic checks run without a model, and the model returns scores for the seven rubric areas, findings that cite components, and five probing questions. Reference designs in three layers (simple, scaled, global) for four prompts, opened after the learner's own attempt is reviewed. Not built: the interviewer asking about the drawing during the HLD interview, the after-session scorecard from a live interview, LLD mode.
+
+## As built (Phase 17): drawing board in the HLD interview
+
+The system design round has a drawing board beside the chat. The interviewer reads the drawing (components, arrows, automatic checks) on every turn, asks about it by component name and never draws for the candidate. The scorecard may quote the drawing as evidence (`ref: "design"`), verified against the drawing text; with an empty board it is told so. The review has a "Your drawing" tab with the final board and the checks. Not built: proactive reactions to drawing activity, a drawing replay, LLD diagrams.

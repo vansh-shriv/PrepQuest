@@ -225,7 +225,7 @@ describe("persona and context", () => {
     expect(call.context).toMatch(/<plan>/);
     expect(call.context).toMatch(/Never reveal/);
     expect(call.modelClass).toBe("interviewer");
-    expect(call.promptVersion).toBe("1.0.0");
+    expect(call.promptVersion).toBe("1.1.0");
     // the rubric and the standard are not in the interviewer's prompt: persona is style only
     expect(call.system).not.toMatch(/problem_solving|weight/);
   });
@@ -243,7 +243,7 @@ describe("persona and context", () => {
       "SELECT prompt_version, model_config FROM interview_sessions WHERE id = $1",
       [id],
     );
-    expect(s.rows[0].prompt_version).toMatch(/interviewer@1\.0\.0/);
+    expect(s.rows[0].prompt_version).toMatch(/interviewer@1\.1\.0/);
     expect(s.rows[0].model_config.interviewer).toBe("claude-sonnet-5-5");
   });
 

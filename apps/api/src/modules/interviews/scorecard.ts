@@ -31,8 +31,10 @@ import {
   buildScorecardPrompt,
   mmss,
 } from "@prepquest/prompts";
+import type { DesignCanvas } from "@prepquest/analytics-core";
 import type { AiContext } from "../ai-context.js";
 import type { InterviewBus } from "./bus.js";
+import { boardOutline, isBlank } from "./design-board.js";
 import { loadTurns } from "./context.js";
 import { generateExtras } from "./extras.js";
 import { elapsedMs, plannedMs, readPlan, readStateData } from "./state.js";
@@ -147,9 +149,19 @@ export async function generateScorecard(
       if (ev.kind === "paste") runLines.push(`- ${mmss(ev.offsetMs)} paste event`);
     }
     const finalCode = code.final ? code.final.split("\n").slice(0, 150).join("\n") : "";
-    const codeSummary = template.usesEditor
+    let codeSummary = template.usesEditor
       ? `${runLines.join("\n") || "- (no runs)"}\n\nFINAL CODE (ref "final"):\n${finalCode || "(none)"}`
       : "";
+    // the final drawing of a design interview, quotable as ref "design"
+    if (template.usesCanvas) {
+      const drawn = sd.lastCanvas?.canvas as DesignCanvas | undefined;
+      if (drawn && !isBlank(drawn)) {
+        code.design = boardOutline(drawn);
+        codeSummary = `FINAL DRAWING (ref "design"):\n${code.design}`;
+      } else {
+        codeSummary = "The candidate drew nothing on the drawing board.";
+      }
+    }
 
     const problemIds = plan.questions.flatMap((q) => (q.kind === "problem" ? [q.problemId] : []));
     const judge = template.usesEditor

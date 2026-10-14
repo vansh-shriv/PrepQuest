@@ -87,6 +87,8 @@ import {
   type StateData,
 } from "./state.js";
 import { createHash } from "node:crypto";
+import { validateCanvas, type DesignCanvas } from "@prepquest/analytics-core";
+import { boardOutline, isBlank } from "./design-board.js";
 import { z } from "zod";
 
 const reactionDecisionSchema = z.object({
@@ -505,6 +507,11 @@ export class InterviewEngine {
       const e = elapsedMs(s, now);
       const sd = readStateData(s);
       const template = getTemplate(s.templateKey);
+      if (ev.kind === "canvas") {
+        if (!template?.usesCanvas)
+          throw new AppError("VALIDATION_FAILED", 422, "This interview has no drawing board");
+        return this.canvasEvent(id, sd, e, ev.canvas as DesignCanvas | null | undefined);
+      }
       if (!template?.usesEditor)
         throw new AppError("VALIDATION_FAILED", 422, "This interview has no editor");
 
@@ -615,6 +622,26 @@ export class InterviewEngine {
     });
   }
 
+  /** The drawing changed: keep what the interviewer will see, and log it for the review and the scorecard. */
+  private async canvasEvent(
+    id: string,
+    sd: StateData,
+    e: number,
+    canvas: DesignCanvas | null | undefined,
+  ): Promise<{ ok: true }> {
+    if (!canvas) throw new AppError("VALIDATION_FAILED", 422, "canvas is required");
+    const problems = validateCanvas(canvas);
+    if (problems.length > 0)
+      throw new AppError("VALIDATION_FAILED", 422, "The drawing is not valid", { problems });
+    const hash = createHash("sha256").update(JSON.stringify(canvas)).digest("hex");
+    if (sd.lastCanvas?.hash === hash || (!sd.lastCanvas && isBlank(canvas))) return { ok: true };
+    sd.lastCanvas = { canvas, hash };
+    sd.lastActivityMs = e;
+    await this.logEvent(id, e, "canvas_snapshot", { canvas });
+    await this.save(this.ctx.db, id, { stateData: sd });
+    return { ok: true };
+  }
+
   // ------------------------------------------------------------------ the turn
 
   private async problemContext(s: SessionRow): Promise<ProblemContext> {
@@ -691,6 +718,10 @@ export class InterviewEngine {
       ["CODING", "TESTING", "OPTIMIZE", "FOLLOWUP"].includes(state)
         ? sd.lastCode.code.split("\n").slice(0, 150).join("\n")
         : null;
+    const design =
+      template.usesCanvas && sd.lastCanvas && !isBlank(sd.lastCanvas.canvas as DesignCanvas)
+        ? boardOutline(sd.lastCanvas.canvas as DesignCanvas)
+        : null;
     const keys = plan.questions.map((x) => x.segmentKey);
     const extra = [...(note ? [`note=${note}`] : []), ...(sd.nudge ? [`nudge=${sd.nudge}`] : [])];
     const turnMessage = buildTurnMessage({
@@ -713,6 +744,7 @@ export class InterviewEngine {
       memory: plan.callbacks ?? [],
       summary: s.rollingSummary,
       code,
+      design,
     });
     push("user", regen ? `${turnMessage}\n${regen}` : turnMessage);
 

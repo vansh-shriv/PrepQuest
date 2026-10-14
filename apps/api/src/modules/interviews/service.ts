@@ -20,6 +20,7 @@ import {
   withWeights,
   type InterviewPlan,
 } from "@prepquest/interview-core";
+import { analyzeDesign, type DesignCanvas } from "@prepquest/analytics-core";
 import { PROMPT_VERSIONS, mmss } from "@prepquest/prompts";
 import { AppError, type CreateInterviewInput, type InterviewSessionDto } from "@prepquest/shared";
 import type { AiContext } from "../ai-context.js";
@@ -70,6 +71,7 @@ export function toSessionDto(s: SessionRow, now: Date): InterviewSessionDto {
     type: s.type as InterviewSessionDto["type"],
     title: template?.title ?? s.type,
     usesEditor: template?.usesEditor ?? false,
+    usesCanvas: template?.usesCanvas ?? false,
     state: s.state,
     persona: s.persona,
     level: s.level,
@@ -115,6 +117,7 @@ export function templatesDto() {
     maxMinutes: t.maxMinutes,
     segments: t.segments.map((x) => ({ name: x.name, minutes: x.minutes, kind: x.kind })),
     usesEditor: t.usesEditor,
+    usesCanvas: t.usesCanvas ?? false,
     needsResume: t.needsResume,
   }));
 }
@@ -499,6 +502,32 @@ export async function getEvents(
     )
     .orderBy(asc(interviewEvents.offsetMs), asc(interviewEvents.id));
   return rows.map((r) => ({ id: r.id, offsetMs: r.offsetMs, kind: r.kind, payload: r.payload }));
+}
+
+/** The latest drawing of a design interview and the automatic checks on it (a blank board when none was made). */
+export async function getDesign(db: Database, sessionId: string) {
+  const [row] = await db
+    .select({ payload: interviewEvents.payload, offsetMs: interviewEvents.offsetMs })
+    .from(interviewEvents)
+    .where(
+      and(eq(interviewEvents.sessionId, sessionId), eq(interviewEvents.kind, "canvas_snapshot")),
+    )
+    .orderBy(desc(interviewEvents.offsetMs), desc(interviewEvents.id))
+    .limit(1);
+  const canvas = (row?.payload as { canvas?: DesignCanvas } | undefined)?.canvas ?? {
+    nodes: [],
+    edges: [],
+  };
+  return {
+    canvas,
+    offsetMs: row?.offsetMs ?? null,
+    findings: analyzeDesign(canvas).map((f) => ({
+      code: f.code,
+      severity: f.severity,
+      message: f.message,
+      nodeIds: f.nodeIds,
+    })),
+  };
 }
 
 export async function retryScorecard(db: Database, sessionId: string) {

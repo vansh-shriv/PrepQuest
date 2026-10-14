@@ -24,6 +24,7 @@ import {
 import { api, apiDownload, ApiError } from "@/lib/api";
 import { ShareButton } from "../share/ShareDialog";
 import { CodeReplay } from "./CodeReplay";
+import { DrawingReview } from "./DrawingReview";
 import { IdealAnswers, SpeechPanel, StarScores } from "./ReviewExtras";
 import { useSubmit } from "@/lib/use-submit";
 
@@ -189,6 +190,15 @@ function Loaded({
                   id: "replay",
                   label: "Code replay",
                   content: <CodeReplay sessionId={session.id} durationMs={session.elapsedMs} />,
+                },
+              ]
+            : []),
+          ...(session.usesCanvas
+            ? [
+                {
+                  id: "drawing",
+                  label: "Your drawing",
+                  content: <DrawingReview sessionId={session.id} />,
                 },
               ]
             : []),

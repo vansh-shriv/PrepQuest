@@ -156,7 +156,7 @@ export const HLD_TEMPLATE: InterviewTemplate = {
   type: "hld",
   title: "High-level design",
   description:
-    "Requirements, estimates, APIs, data model, scaling and trade-offs, talked through in text.",
+    "Requirements, estimates, APIs, data model, scaling and trade-offs, with a drawing board the interviewer can see.",
   defaultMinutes: 60,
   minMinutes: 40,
   maxMinutes: 75,
@@ -167,6 +167,7 @@ export const HLD_TEMPLATE: InterviewTemplate = {
   ],
   rubricId: "hld",
   usesEditor: false,
+  usesCanvas: true,
   needsResume: false,
   source: "bank",
   bankCategory: "hld",

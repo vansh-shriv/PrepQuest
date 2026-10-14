@@ -131,6 +131,7 @@ const FORGEABLE_TAGS = [
   "resume_data",
   "jd_data",
   "code",
+  "design",
   "plan",
   "memory",
   "signals",

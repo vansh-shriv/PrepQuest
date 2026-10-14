@@ -177,3 +177,5 @@ Bug bash, content improvements, user-requested features, portfolio write-up/blog
 **Status:** Sprint 10 is delivered in two phases. Phase 15 finished plagiarism and behaviour review (X2) with a review queue and appeals. The system design canvas (C3) is next.
 
 **Status:** Sprint 10 is finished. Phase 16 built system design practice (C3): canvas, side panel, AI review and layered reference designs. Using the canvas inside the HLD interview and LLD mode are still to do.
+
+**Status:** Sprint 10 is complete. Phase 17 added the drawing board to the HLD interview (interviewer sees it, scorecard cites it, review shows it). Next: peer mocks (Sprint 11) or the remaining small items (AI card suggestions).

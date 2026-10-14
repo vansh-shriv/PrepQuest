@@ -26,7 +26,7 @@ export interface ScorecardPromptInput {
   persona: string;
   difficulty: number;
   turns: readonly TranscriptTurn[];
-  /** Code history summary (final code, runs with verdicts). Empty for non-coding interviews. */
+  /** Code history summary (final code, runs with verdicts) or the drawing of a design interview. Empty otherwise. */
   codeSummary: string;
   hintsGiven: number;
   hintBudget: number;
@@ -60,7 +60,7 @@ ${dims}
 
 RULES
 - score is an integer 1-5, or null when there is no evidence ("insufficient evidence" in justification).
-- Every non-null score needs 1-3 evidence items: {"type":"turn","ref":<seq number from the [n] prefix>,"quote":"<=25 words copied verbatim from that turn"} or {"type":"code","ref":"final","quote":"<=25 words copied from the code"}.
+- Every non-null score needs 1-3 evidence items: {"type":"turn","ref":<seq number from the [n] prefix>,"quote":"<=25 words copied verbatim from that turn"} or {"type":"code","ref":"final","quote":"<=25 words copied from the code"} or, when the CODE EVENTS section holds the candidate's drawing, {"type":"code","ref":"design","quote":"<=25 words copied from the drawing text, such as a component label"}.
 - Never invent or paraphrase quotes. Evidence may come from interviewer turns only to show a hint was needed.
 - strengths: 3-5 items, each with evidence. red_flags: 0-5 items {category: technical|process|communication|professionalism|integrity, severity: low|medium|high, text, evidence[], remedy}. Every red flag needs evidence and a remedy.
 - next_actions: exactly 3 items {kind: problem|topic|quiz|roadmap_node|flashcards|mock, ref: a short slug or topic name, title, why}.

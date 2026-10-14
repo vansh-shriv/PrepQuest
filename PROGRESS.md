@@ -20,8 +20,10 @@ Phase-by-phase build log. Plan source: `docs/18-ROADMAP-AND-SPRINTS.md`. Each ph
 | 12    | Contests: ICPC and points scoring, private contests, live standings, virtual runs                                                           | M9 (part)  | Done                  |
 | 13    | Flashcards with offline review sync, shareable reports with preview images                                                                  | M9 (part)  | Done                  |
 | 14    | Code review mode, complexity analyzer                                                                                                       | M9 (part)  | Done                  |
-| 15    | Integrity: similarity and behaviour review with appeals                                                                                     | M10 (part) | Done (pending commit) |
-| 16+   | System design canvas, AI card suggestions, peer mocks, hardening                                                                            | M10-M12    | Planned               |
+| 15    | Integrity: similarity and behaviour review with appeals                                                                                     | M10 (part) | Done                  |
+| 16    | System design canvas with AI review and reference designs                                                                                   | M10 (part) | Done                  |
+| 17    | Drawing board in the system design interview                                                                                                | M10        | Done (pending commit) |
+| 18+   | AI card suggestions, peer mocks, hardening                                                                                                  | M11-M12    | Planned               |
 
 ## Phase 0 - Foundation
 
@@ -530,3 +532,27 @@ Decisions / gotchas:
 Deferred:
 
 - The HLD interview using the canvas (the interviewer asking about the drawing and the scorecard citing it): `design_canvases.session_id` exists but nothing sets it; LLD mode (UML-lite and SOLID review); prompts beyond the four; grouping, zoom and free-hand shapes; sharing a design.
+
+## Phase 17 - Drawing board in the system design interview (milestone M10 closed)
+
+The HLD interview can now be run with the Phase 16 canvas: the interviewer sees the drawing, the scorecard can quote it and the review shows the final board. Sprint 10 is complete.
+
+Done:
+
+- **Template:** `InterviewTemplate.usesCanvas` (true only for `hld`; the code editor stays off). Session and template DTOs carry `usesCanvas`.
+- **Event:** the existing `POST /interviews/:id/events` takes `kind: "canvas"` with a validated canvas (same schema and limits as Phase 16, `validateCanvas` in code). A blank first board and an unchanged board are ignored; each change is logged once as `canvas_snapshot` and kept in `state_data.lastCanvas`. A round without a board answers 422.
+- **Interviewer:** `buildTurnMessage` adds a `<design>` block (components and arrows with ids from `describeGraph`, plus the automatic checks as facts, built in `modules/interviews/design-board.ts`). `design` is now a forgeable tag, so a component label cannot close the block (`neutralizeTags`). The HLD guide tells the interviewer to refer to components by name, ask why, and never draw for the candidate. Interviewer and scorecard prompt versions are 1.1.0.
+- **Scorecard:** the final drawing is quotable evidence: `{"type":"code","ref":"design","quote":...}` is verified against the drawing text like a code quote; a quote that is not on the drawing goes back through the repair loop. With nothing drawn the prompt says so, so the model cannot score the drawing it never saw.
+- **API:** `GET /interviews/:id/design` returns the latest drawing, when it was last changed and the automatic checks (404 for a round without a board or for someone else's session).
+- **Web:** `DesignBoard` beside the chat in the interview room (undo and redo, Ctrl+Z / Ctrl+Y, a snapshot every 2.5 s only when the board changed and when the tab is hidden, the last drawing restored after a reload); `DrawingReview` is the review's "Your drawing" tab (read-only board and the checks, with "Show on the drawing"). Mobile gets a "Show board / Show chat" switch.
+- **Tests:** API 9 new (`interviews-design.test.ts`), interview-core 2 new, e2e `interview-design.spec.ts` (4: board opens, drawing reaches the server and survives a reload, review shows the drawing and the replica check).
+
+Decisions / gotchas:
+
+- The interview canvas lives in interview events, not in `design_canvases`: a design interview has no catalogue prompt (its question comes from the question bank), and `design_canvases.prompt_id` is required. `design_canvases.session_id` stays unused.
+- The interviewer only reads the drawing when the candidate speaks or a timer turn runs; there are no proactive reactions to drawing activity yet.
+- Labels are at most 40 characters and the outline is cut at 6000 characters before it reaches a prompt.
+
+Deferred:
+
+- Proactive drawing reactions (the interviewer asking about a new component unprompted), a drawing replay slider, LLD mode with its own diagram, sharing a design, and everything listed under Phase 16 that is not about the interview.

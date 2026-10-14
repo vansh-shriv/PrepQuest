@@ -1,4 +1,4 @@
-import type { interviewSessions } from "@prepquest/db";
+import type { interviewSessions, StoredCanvas } from "@prepquest/db";
 import type {
   InterviewPlan,
   InterviewState,
@@ -37,6 +37,8 @@ export interface StateData {
   idlePrompts: number;
   lastRun: string | null;
   lastCode: { language: string; code: string; hash: string } | null;
+  /** The drawing of a design interview as the interviewer last saw it. */
+  lastCanvas?: { canvas: StoredCanvas; hash: string } | null;
   questions: QuestionLog[];
   difficulty: number;
   summaryUpTo: number;

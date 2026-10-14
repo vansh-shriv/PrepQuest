@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { designCanvasSchema } from "./design.js";
 
 // Contracts for resumes, job descriptions and interviews (docs 03, 11 §7-8), shared by API and web.
 
@@ -169,10 +170,12 @@ export const interviewFeedbackSchema = z.object({
 });
 
 export const interviewCodeEventSchema = z.object({
-  kind: z.enum(["snapshot", "run", "submit", "paste", "focus_lost"]),
+  kind: z.enum(["snapshot", "run", "submit", "paste", "focus_lost", "canvas"]),
   language: str(20).nullish(),
   code: z.string().max(60_000).nullish(),
   submissionId: z.string().uuid().nullish(),
+  /** The drawing of a design interview (kind `canvas`). */
+  canvas: designCanvasSchema.nullish(),
   meta: z.record(z.string(), z.unknown()).nullish(),
 });
 export type InterviewCodeEventInput = z.infer<typeof interviewCodeEventSchema>;
@@ -228,6 +231,7 @@ export interface InterviewSessionDto {
   type: InterviewTypeValue;
   title: string;
   usesEditor: boolean;
+  usesCanvas: boolean;
   state: InterviewStateName;
   persona: string;
   level: string;
@@ -277,6 +281,7 @@ export interface InterviewTemplateDto {
   maxMinutes: number;
   segments: { name: string; minutes: number; kind: string }[];
   usesEditor: boolean;
+  usesCanvas: boolean;
   needsResume: boolean;
 }
 

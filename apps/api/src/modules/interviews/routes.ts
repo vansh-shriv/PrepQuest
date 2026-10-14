@@ -9,6 +9,7 @@ import {
   interviewFeedbackSchema,
   interviewMessageSchema,
 } from "@prepquest/shared";
+import { getTemplate } from "@prepquest/interview-core";
 import { parse } from "../../lib/validate.js";
 import type { Kv } from "../../lib/kv.js";
 import type { AiContext } from "../ai-context.js";
@@ -141,6 +142,14 @@ export const interviewRoutes: FastifyPluginAsync<{
       req.query,
     );
     return { items: await svc.getEvents(ctx.db, id, q.from, q.to) };
+  });
+
+  app.get("/interviews/:id/design", async (req) => {
+    const { id } = parse(idParams, req.params);
+    const s = await engine.getSession(id, uid(req));
+    if (!getTemplate(s.templateKey)?.usesCanvas)
+      throw new AppError("NOT_FOUND", 404, "This interview has no drawing board.");
+    return svc.getDesign(ctx.db, id);
   });
 
   app.get("/interviews/:id/review", async (req, reply) => {

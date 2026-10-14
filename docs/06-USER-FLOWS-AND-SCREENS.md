@@ -279,3 +279,5 @@ Split editor: markdown + live preview, tabs (Meta, Tests, Checker, Hints, Editor
 In-app bell + optional email/push: contest reminders, SRS due, goal reminders, scorecard ready, plan updated, peer match, report viewed (U5), admin integrity decision.
 
 Phase 16 note: the system design workspace is at `/system-design/:id` (the list at `/system-design`), because `/design` is the UI showcase page.
+
+Phase 17 note: the interview room of a system design round is a split view, chat on the left and the drawing board on the right (a switch on mobile); the review of that round has a "Your drawing" tab.
