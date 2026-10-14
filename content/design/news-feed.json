@@ -1,0 +1,370 @@
+{
+  "slug": "news-feed",
+  "title": "Design a news feed",
+  "kind": "hld",
+  "difficulty": 2,
+  "tags": ["fan-out", "caching", "ranking"],
+  "statementMd": "Design the home feed of a social network: users follow others and see a ranked list of recent posts.\n\nThink about whether to build feeds when someone posts (fan-out on write) or when someone reads (fan-out on read), and what to do about accounts with millions of followers.",
+  "requirementHints": {
+    "functional": [
+      "Publish a post",
+      "Follow and unfollow",
+      "Read a feed of recent posts from people you follow"
+    ],
+    "nonFunctional": [
+      "Reading the feed is fast (under 200 ms)",
+      "A new post shows up within a few seconds",
+      "Celebrity accounts must not melt the system"
+    ]
+  },
+  "reference": {
+    "v1": {
+      "title": "Version 1: it works",
+      "description": "On every read, look up who the user follows and merge their posts.",
+      "canvas": {
+        "nodes": [
+          {
+            "id": "c",
+            "type": "client",
+            "label": "App",
+            "x": 40,
+            "y": 160
+          },
+          {
+            "id": "s",
+            "type": "service",
+            "label": "Feed service",
+            "x": 260,
+            "y": 160
+          },
+          {
+            "id": "d",
+            "type": "database",
+            "label": "Posts and follows",
+            "x": 480,
+            "y": 160
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": "c",
+            "to": "s",
+            "label": "GET /feed, POST /posts"
+          },
+          {
+            "id": "e2",
+            "from": "s",
+            "to": "d",
+            "label": "query follows and posts"
+          }
+        ]
+      }
+    },
+    "v2": {
+      "title": "Version 2: scaled",
+      "description": "Fan-out on write: a worker pushes each new post id into a precomputed feed for every follower, kept in a cache; reads become one cache lookup.",
+      "canvas": {
+        "nodes": [
+          {
+            "id": "c",
+            "type": "client",
+            "label": "App",
+            "x": 40,
+            "y": 160
+          },
+          {
+            "id": "lb",
+            "type": "load_balancer",
+            "label": "Load balancer",
+            "x": 260,
+            "y": 160
+          },
+          {
+            "id": "p",
+            "type": "service",
+            "label": "Post service",
+            "x": 480,
+            "y": 40
+          },
+          {
+            "id": "f",
+            "type": "service",
+            "label": "Feed service",
+            "x": 480,
+            "y": 280
+          },
+          {
+            "id": "q",
+            "type": "queue",
+            "label": "Fan-out queue",
+            "x": 700,
+            "y": 40
+          },
+          {
+            "id": "w",
+            "type": "service",
+            "label": "Fan-out worker",
+            "x": 920,
+            "y": 40
+          },
+          {
+            "id": "fc",
+            "type": "cache",
+            "label": "Feed cache (per user)",
+            "x": 920,
+            "y": 280
+          },
+          {
+            "id": "d",
+            "type": "database",
+            "label": "Posts database (primary)",
+            "x": 1140,
+            "y": 160
+          },
+          {
+            "id": "r",
+            "type": "database",
+            "label": "Posts database (replica)",
+            "x": 1140,
+            "y": 280
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": "c",
+            "to": "lb",
+            "label": "HTTPS"
+          },
+          {
+            "id": "e2",
+            "from": "lb",
+            "to": "p",
+            "label": "POST /posts"
+          },
+          {
+            "id": "e3",
+            "from": "lb",
+            "to": "f",
+            "label": "GET /feed"
+          },
+          {
+            "id": "e4",
+            "from": "p",
+            "to": "d",
+            "label": "store post"
+          },
+          {
+            "id": "e5",
+            "from": "d",
+            "to": "r",
+            "label": "replication"
+          },
+          {
+            "id": "e6",
+            "from": "p",
+            "to": "q",
+            "label": "new post event"
+          },
+          {
+            "id": "e7",
+            "from": "q",
+            "to": "w",
+            "label": "consume"
+          },
+          {
+            "id": "e8",
+            "from": "w",
+            "to": "fc",
+            "label": "push post id to follower feeds"
+          },
+          {
+            "id": "e9",
+            "from": "f",
+            "to": "fc",
+            "label": "read feed"
+          },
+          {
+            "id": "e10",
+            "from": "f",
+            "to": "d",
+            "label": "hydrate posts"
+          }
+        ]
+      }
+    },
+    "v3": {
+      "title": "Version 3: global",
+      "description": "Hybrid fan-out: accounts with huge audiences are merged in at read time instead of pushed; a ranking service orders the candidates; media comes from a CDN.",
+      "canvas": {
+        "nodes": [
+          {
+            "id": "c",
+            "type": "client",
+            "label": "App",
+            "x": 40,
+            "y": 160
+          },
+          {
+            "id": "cdn",
+            "type": "cdn",
+            "label": "CDN for media",
+            "x": 260,
+            "y": 400
+          },
+          {
+            "id": "lb",
+            "type": "load_balancer",
+            "label": "Load balancer",
+            "x": 260,
+            "y": 160
+          },
+          {
+            "id": "p",
+            "type": "service",
+            "label": "Post service",
+            "x": 480,
+            "y": 40
+          },
+          {
+            "id": "f",
+            "type": "service",
+            "label": "Feed service",
+            "x": 480,
+            "y": 280
+          },
+          {
+            "id": "rk",
+            "type": "service",
+            "label": "Ranking service",
+            "x": 700,
+            "y": 280
+          },
+          {
+            "id": "q",
+            "type": "queue",
+            "label": "Fan-out queue",
+            "x": 700,
+            "y": 40
+          },
+          {
+            "id": "w",
+            "type": "service",
+            "label": "Fan-out worker (skips celebrities)",
+            "x": 920,
+            "y": 40
+          },
+          {
+            "id": "fc",
+            "type": "cache",
+            "label": "Feed cache (per user)",
+            "x": 920,
+            "y": 280
+          },
+          {
+            "id": "d",
+            "type": "database",
+            "label": "Posts shards (primary)",
+            "x": 1140,
+            "y": 160
+          },
+          {
+            "id": "r",
+            "type": "database",
+            "label": "Posts shards (replica)",
+            "x": 1140,
+            "y": 280
+          },
+          {
+            "id": "o",
+            "type": "storage",
+            "label": "Media object storage",
+            "x": 480,
+            "y": 400
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": "c",
+            "to": "lb",
+            "label": "HTTPS"
+          },
+          {
+            "id": "e2",
+            "from": "c",
+            "to": "cdn",
+            "label": "media"
+          },
+          {
+            "id": "e3",
+            "from": "cdn",
+            "to": "o",
+            "label": "origin"
+          },
+          {
+            "id": "e4",
+            "from": "lb",
+            "to": "p",
+            "label": "POST /posts"
+          },
+          {
+            "id": "e5",
+            "from": "lb",
+            "to": "f",
+            "label": "GET /feed"
+          },
+          {
+            "id": "e6",
+            "from": "p",
+            "to": "d",
+            "label": "store post"
+          },
+          {
+            "id": "e7",
+            "from": "d",
+            "to": "r",
+            "label": "replication"
+          },
+          {
+            "id": "e8",
+            "from": "p",
+            "to": "q",
+            "label": "event"
+          },
+          {
+            "id": "e9",
+            "from": "q",
+            "to": "w",
+            "label": "consume"
+          },
+          {
+            "id": "e10",
+            "from": "w",
+            "to": "fc",
+            "label": "push to follower feeds"
+          },
+          {
+            "id": "e11",
+            "from": "f",
+            "to": "fc",
+            "label": "read"
+          },
+          {
+            "id": "e12",
+            "from": "f",
+            "to": "rk",
+            "label": "order candidates"
+          },
+          {
+            "id": "e13",
+            "from": "f",
+            "to": "d",
+            "label": "merge celebrity posts"
+          }
+        ]
+      }
+    }
+  }
+}

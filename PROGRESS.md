@@ -499,3 +499,34 @@ Decisions / gotchas:
 Deferred:
 
 - Automatic scan after a contest, comparison against known public solutions, interview-mode signals, moderator account suspension from a confirmed flag, appeal notifications by email, a contest rules page with the same text as the in-contest note.
+
+## Phase 16 - System design canvas (milestone M10, second part)
+
+Sprint 10 is finished across Phases 15 and 16. This phase builds system design practice with a canvas, a structured side panel, an AI review and layered reference designs (C3, high-level design). Live interviewer integration and LLD mode are deferred.
+
+Done:
+
+- **Canvas model (`analytics-core/design.ts`, pure):** ten component types (client, load balancer, service, cache, database, queue, CDN, object storage, external system, note), connections with a direction and a label, snap to a 20 px grid, limits (60 components, 120 connections), `validateCanvas`, editing operations (`addNode`, `moveNode`, `connect`, `reverseEdge`, `removeNode` which also removes its connections, relabel), and `History` with 100 steps of undo and redo.
+- **Graph for the model:** `canvasToGraph` keeps every component type and the direction of every connection (checked on 20 designs: the 12 reference layers plus 10 generated ones); `describeGraph` writes components and connections with ids the review can cite.
+- **Automatic checks (`analyzeDesign`):** facts about the drawing, not opinions: empty canvas, no client, unconnected components, several services with no load balancer, a database with no replica (a label with replica, standby, shard or cluster, or a second database, counts), services reading straight from the database with no cache, mostly unlabeled connections, a queue with no producer or consumer.
+- **Capacity calculator (`estimateLoad`):** daily users, actions, read to write ratio, item and response sizes, retention and peak factor give average and peak requests per second, read and write rates, storage per day and in total, and peak outgoing bandwidth.
+- **Content:** `content/design/<slug>.json`: a statement, requirement questions and three reference layers (v1 it works, v2 scaled, v3 global) as real canvases for four prompts (URL shortener, chat application, news feed, file storage and sync). `content:validate` checks every canvas and requires each v3 to pass the automatic checks with nothing important.
+- **Review:** `POST /design/canvases/:id/review` (verified email, 3 a minute and 10 a day) sends the graph, the requirements, API, data model, notes, the computed capacity numbers and the automatic checks to the model, which returns a summary, 1 to 5 scores for seven areas (requirements, estimation, architecture, data model, scalability, trade-offs, communication), up to 14 findings (missing components, single points of failure, bottlenecks, consistency, partitioning, caching, failure handling, cost, security, observability) and exactly five probing questions. Code checks that every cited component id is on the canvas and asks the model to fix the reply otherwise. It runs in the background and the page polls; a review pending for over 5 minutes is reported failed so it can be retried. The review records which version of the canvas it read.
+- **Reference designs:** the three layers open (`GET /design/prompts/:slug/reference`) only after the learner has a reviewed attempt at that prompt; otherwise `REFERENCE_LOCKED`.
+- **Autosave:** each save carries the version it started from; another tab saving first gives `VERSION_CONFLICT` with the stored version and the page offers to reload.
+- **Web (`/system-design`, `/system-design/[id]`):** a pixel SVG canvas (drag, arrow keys, Delete, C to connect, Ctrl+Z / Ctrl+Y, an inspector for names and connection labels, a toolbar to add components), a text outline of the design for screen readers, the side panel with the calculator, quick checks, the review with "show on the canvas" (marks the cited components), reference tabs and export to JSON and PNG. The page route is `/system-design` because `/design` is the UI showcase page.
+- **API:** module `design`: `GET /design/prompts`, `GET /design/prompts/:slug`, `GET /design/prompts/:slug/reference`, `GET/POST /design/canvases`, `GET/PUT/DELETE /design/canvases/:id`, `POST /design/canvases/:id/review`. A learner may keep 20 designs.
+- **Database:** migrations 0031 and 0032 (triggers): `system_design_prompts`, `design_canvases`.
+- **Tests:** analytics-core 19 new (239), API 18 new (623), content 3 new (49), web 10 new (109), e2e `design.spec.ts` (9: draw, connect, label, checks, autosave and reload, undo and redo, keyboard delete, capacity numbers kept, reference locked then open, review, export, delete).
+
+Decisions / gotchas:
+
+- The canvas is a small SVG editor built here instead of tldraw: no heavy dependency, same pixel look, and the whole model is pure and tested. It has no free-hand drawing, grouping or zoom.
+- The mock reviewer scores from how much is filled in and turns the automatic checks into findings, so the flow is tested end to end but the quality of a real review needs a key (`DESIGN_REVIEW_PROMPT_VERSION`).
+- A live canvas cannot be "undone" past a reload: history is per page load; the saved version is the truth.
+- The component types are listed in `analytics-core` and in `shared`; an API test keeps them equal.
+- Tests that age a row must disable its `updated_at` trigger first.
+
+Deferred:
+
+- The HLD interview using the canvas (the interviewer asking about the drawing and the scorecard citing it): `design_canvases.session_id` exists but nothing sets it; LLD mode (UML-lite and SOLID review); prompts beyond the four; grouping, zoom and free-hand shapes; sharing a design.

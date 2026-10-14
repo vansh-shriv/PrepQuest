@@ -627,3 +627,10 @@ A scorecard needs a finished interview with a ready scorecard (409 otherwise); a
 - `PATCH /admin/integrity/flags/:id` `{decision: confirm|dismiss|escalate, note}`: audited; 403 when a non-admin decides an escalated flag, 409 when escalating a decided flag.
 - `GET /me/integrity`: the learner's decided flags (outcome, reason, `canAppeal`), no evidence.
 - `POST /me/integrity/:id/appeal` `{text}`: once, for a confirmed flag of one's own.
+
+## Phase 16 additions (as built)
+
+- `GET /design/prompts`, `GET /design/prompts/:slug`: prompts and the requirement questions; never the reference.
+- `GET /design/prompts/:slug/reference`: the three layers; 403 `REFERENCE_LOCKED` until the learner has a reviewed canvas for that prompt.
+- `GET|POST /design/canvases`, `GET|PUT|DELETE /design/canvases/:id`: a learner keeps up to 20; `PUT {canvas, panel, baseVersion}` returns the new version and the automatic checks, 409 `VERSION_CONFLICT` (with the stored version) when the base is stale, 422 when the drawing is invalid.
+- `POST /design/canvases/:id/review`: verified email; 202 with the canvas (`reviewStatus: pending`); 422 with fewer than two components; 429 over 3 a minute or 10 a day.

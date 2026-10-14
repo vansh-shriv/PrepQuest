@@ -39,6 +39,7 @@ import { trackRoutes } from "./modules/tracks/routes.js";
 import { reviewRoutes } from "./modules/reviews/routes.js";
 import { codeReviewRoutes } from "./modules/codereview/routes.js";
 import { integrityRoutes } from "./modules/integrity/routes.js";
+import { designRoutes } from "./modules/design/routes.js";
 import { flashcardRoutes } from "./modules/flashcards/routes.js";
 import { shareRoutes } from "./modules/shares/routes.js";
 import { progressRoutes } from "./modules/progress/routes.js";
@@ -239,6 +240,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(reviewRoutes, { prefix: "/v1", ctx: ai });
   await app.register(flashcardRoutes, { prefix: "/v1", ctx: ai });
   await app.register(shareRoutes, { prefix: "/v1", ctx: ai });
+  await app.register(designRoutes, { prefix: "/v1", ctx: ai });
   await app.register(integrityRoutes, { prefix: "/v1", ctx: ai });
   await app.register(codeReviewRoutes, {
     prefix: "/v1",

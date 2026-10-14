@@ -1,0 +1,382 @@
+{
+  "slug": "chat-app",
+  "title": "Design a chat application",
+  "kind": "hld",
+  "difficulty": 2,
+  "tags": ["realtime", "queues", "storage"],
+  "statementMd": "Design a messaging app for one-to-one and group chats. Messages arrive in real time when the recipient is online and are delivered later when they are not.\n\nThink about connections, ordering, delivery guarantees, message history and presence.",
+  "requirementHints": {
+    "functional": [
+      "Send and receive messages in real time",
+      "Group chats up to 500 people",
+      "Message history and offline delivery"
+    ],
+    "nonFunctional": [
+      "Low latency delivery (under a second when online)",
+      "Messages are never lost; order is kept inside a chat",
+      "Millions of concurrent connections"
+    ]
+  },
+  "reference": {
+    "v1": {
+      "title": "Version 1: it works",
+      "description": "Clients poll one server that stores messages.",
+      "canvas": {
+        "nodes": [
+          {
+            "id": "c",
+            "type": "client",
+            "label": "Mobile app",
+            "x": 40,
+            "y": 160
+          },
+          {
+            "id": "s",
+            "type": "service",
+            "label": "Chat server",
+            "x": 260,
+            "y": 160
+          },
+          {
+            "id": "d",
+            "type": "database",
+            "label": "Messages database",
+            "x": 480,
+            "y": 160
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": "c",
+            "to": "s",
+            "label": "send, poll for new"
+          },
+          {
+            "id": "e2",
+            "from": "s",
+            "to": "d",
+            "label": "store and read messages"
+          }
+        ]
+      }
+    },
+    "v2": {
+      "title": "Version 2: scaled",
+      "description": "Long-lived WebSocket gateways keep the connections; a message service stores and routes through a queue; a presence cache knows which gateway holds each user.",
+      "canvas": {
+        "nodes": [
+          {
+            "id": "c",
+            "type": "client",
+            "label": "Mobile app",
+            "x": 40,
+            "y": 160
+          },
+          {
+            "id": "lb",
+            "type": "load_balancer",
+            "label": "Load balancer",
+            "x": 260,
+            "y": 160
+          },
+          {
+            "id": "g1",
+            "type": "service",
+            "label": "WebSocket gateway A",
+            "x": 480,
+            "y": 40
+          },
+          {
+            "id": "g2",
+            "type": "service",
+            "label": "WebSocket gateway B",
+            "x": 480,
+            "y": 280
+          },
+          {
+            "id": "q",
+            "type": "queue",
+            "label": "Message queue",
+            "x": 700,
+            "y": 160
+          },
+          {
+            "id": "m",
+            "type": "service",
+            "label": "Message service",
+            "x": 920,
+            "y": 160
+          },
+          {
+            "id": "p",
+            "type": "cache",
+            "label": "Presence cache",
+            "x": 700,
+            "y": 400
+          },
+          {
+            "id": "d",
+            "type": "database",
+            "label": "Messages (primary)",
+            "x": 1140,
+            "y": 40
+          },
+          {
+            "id": "r",
+            "type": "database",
+            "label": "Messages (replica)",
+            "x": 1140,
+            "y": 280
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": "c",
+            "to": "lb",
+            "label": "WebSocket"
+          },
+          {
+            "id": "e2",
+            "from": "lb",
+            "to": "g1",
+            "label": "sticky connection"
+          },
+          {
+            "id": "e3",
+            "from": "lb",
+            "to": "g2",
+            "label": "sticky connection"
+          },
+          {
+            "id": "e4",
+            "from": "g1",
+            "to": "q",
+            "label": "publish message"
+          },
+          {
+            "id": "e5",
+            "from": "g2",
+            "to": "q",
+            "label": "publish message"
+          },
+          {
+            "id": "e6",
+            "from": "q",
+            "to": "m",
+            "label": "consume in order per chat"
+          },
+          {
+            "id": "e7",
+            "from": "m",
+            "to": "d",
+            "label": "append message"
+          },
+          {
+            "id": "e8",
+            "from": "d",
+            "to": "r",
+            "label": "replication"
+          },
+          {
+            "id": "e9",
+            "from": "m",
+            "to": "p",
+            "label": "find recipient gateway"
+          },
+          {
+            "id": "e10",
+            "from": "m",
+            "to": "g1",
+            "label": "push to recipient"
+          },
+          {
+            "id": "e11",
+            "from": "m",
+            "to": "g2",
+            "label": "push to recipient"
+          }
+        ]
+      }
+    },
+    "v3": {
+      "title": "Version 3: global",
+      "description": "Regional clusters, messages partitioned by chat id so order holds inside a chat, push notifications for offline users and object storage for media.",
+      "canvas": {
+        "nodes": [
+          {
+            "id": "c",
+            "type": "client",
+            "label": "Mobile app",
+            "x": 40,
+            "y": 160
+          },
+          {
+            "id": "lb",
+            "type": "load_balancer",
+            "label": "Regional load balancer",
+            "x": 260,
+            "y": 160
+          },
+          {
+            "id": "g1",
+            "type": "service",
+            "label": "WebSocket gateway A",
+            "x": 480,
+            "y": 40
+          },
+          {
+            "id": "g2",
+            "type": "service",
+            "label": "WebSocket gateway B",
+            "x": 480,
+            "y": 280
+          },
+          {
+            "id": "q",
+            "type": "queue",
+            "label": "Message log (partitioned by chat)",
+            "x": 700,
+            "y": 160
+          },
+          {
+            "id": "m",
+            "type": "service",
+            "label": "Message service",
+            "x": 920,
+            "y": 160
+          },
+          {
+            "id": "p",
+            "type": "cache",
+            "label": "Presence cache",
+            "x": 700,
+            "y": 400
+          },
+          {
+            "id": "d",
+            "type": "database",
+            "label": "Messages shards (primary)",
+            "x": 1140,
+            "y": 40
+          },
+          {
+            "id": "r",
+            "type": "database",
+            "label": "Messages shards (replica)",
+            "x": 1140,
+            "y": 280
+          },
+          {
+            "id": "n",
+            "type": "external",
+            "label": "Push notification provider",
+            "x": 1140,
+            "y": 400
+          },
+          {
+            "id": "o",
+            "type": "storage",
+            "label": "Media object storage",
+            "x": 920,
+            "y": 400
+          },
+          {
+            "id": "cdn",
+            "type": "cdn",
+            "label": "CDN for media",
+            "x": 700,
+            "y": 520
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": "c",
+            "to": "lb",
+            "label": "WebSocket"
+          },
+          {
+            "id": "e2",
+            "from": "lb",
+            "to": "g1",
+            "label": "sticky connection"
+          },
+          {
+            "id": "e3",
+            "from": "lb",
+            "to": "g2",
+            "label": "sticky connection"
+          },
+          {
+            "id": "e4",
+            "from": "g1",
+            "to": "q",
+            "label": "publish"
+          },
+          {
+            "id": "e5",
+            "from": "g2",
+            "to": "q",
+            "label": "publish"
+          },
+          {
+            "id": "e6",
+            "from": "q",
+            "to": "m",
+            "label": "consume"
+          },
+          {
+            "id": "e7",
+            "from": "m",
+            "to": "d",
+            "label": "append"
+          },
+          {
+            "id": "e8",
+            "from": "d",
+            "to": "r",
+            "label": "replication"
+          },
+          {
+            "id": "e9",
+            "from": "m",
+            "to": "p",
+            "label": "lookup"
+          },
+          {
+            "id": "e10",
+            "from": "m",
+            "to": "g1",
+            "label": "push"
+          },
+          {
+            "id": "e11",
+            "from": "m",
+            "to": "g2",
+            "label": "push"
+          },
+          {
+            "id": "e12",
+            "from": "m",
+            "to": "n",
+            "label": "offline users"
+          },
+          {
+            "id": "e13",
+            "from": "c",
+            "to": "o",
+            "label": "upload media"
+          },
+          {
+            "id": "e14",
+            "from": "o",
+            "to": "cdn",
+            "label": "origin"
+          }
+        ]
+      }
+    }
+  }
+}

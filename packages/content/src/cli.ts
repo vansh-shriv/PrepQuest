@@ -6,6 +6,7 @@ import { createObjectStore } from "@prepquest/storage";
 import { importBank, loadBank, validateBank } from "./bank.js";
 import { importAssess, loadAssess, validateAssess } from "./assess.js";
 import { importLearning, loadLearning, validateLearning } from "./learning.js";
+import { importDesign, loadDesign, validateDesign } from "./design.js";
 import { importFlashcards, loadFlashcards, validateFlashcards } from "./flashcards.js";
 import { buildTests, verifyTests } from "./build-tests.js";
 import { importProblem, importSheet, linkRelatedEditorials } from "./import.js";
@@ -201,12 +202,14 @@ async function main() {
 
   const cards = await loadFlashcards(root);
   issues.push(...cards.issues, ...validateFlashcards(cards));
+  const design = await loadDesign(root);
+  issues.push(...design.issues, ...validateDesign(design));
 
   print(issues);
   const errors = issues.filter((i) => i.level === "error").length;
   const warnings = issues.length - errors;
   console.log(
-    `${bundles.length} problem(s), ${sheets.length} sheet(s), ${bank.questions.length} question(s), ${bank.packs.length} pack(s), ${learning.quizzes.length} quiz question(s), ${learning.roadmaps.length} roadmap(s), ${assess.datasets.reduce((a, d) => a + d.problems.length, 0)} SQL problem(s), ${assess.aptitude.length} aptitude item(s), ${assess.templates.length} test template(s), ${cards.decks.length} starter deck(s): ${errors} error(s), ${warnings} warning(s)`,
+    `${bundles.length} problem(s), ${sheets.length} sheet(s), ${bank.questions.length} question(s), ${bank.packs.length} pack(s), ${learning.quizzes.length} quiz question(s), ${learning.roadmaps.length} roadmap(s), ${assess.datasets.reduce((a, d) => a + d.problems.length, 0)} SQL problem(s), ${assess.aptitude.length} aptitude item(s), ${assess.templates.length} test template(s), ${cards.decks.length} starter deck(s), ${design.prompts.length} design prompt(s): ${errors} error(s), ${warnings} warning(s)`,
   );
   if (errors) {
     process.exitCode = 1;
@@ -252,6 +255,8 @@ async function main() {
       );
       const fc = await importFlashcards(db, cards);
       console.log(`flashcards ${fc.decks} starter deck(s), ${fc.cards} card(s)`);
+      const ds = await importDesign(db, design);
+      console.log(`design    ${ds.prompts} prompt(s)`);
       for (const sheet of sheets) {
         const r = await importSheet(db, sheet);
         console.log(`sheet     ${r.slug} (${r.problems} problems)`);

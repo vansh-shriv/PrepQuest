@@ -277,3 +277,5 @@ Split editor: markdown + live preview, tabs (Meta, Tests, Checker, Hints, Editor
 ## 6. Notifications
 
 In-app bell + optional email/push: contest reminders, SRS due, goal reminders, scorecard ready, plan updated, peer match, report viewed (U5), admin integrity decision.
+
+Phase 16 note: the system design workspace is at `/system-design/:id` (the list at `/system-design`), because `/design` is the UI showcase page.

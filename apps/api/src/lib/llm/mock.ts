@@ -595,6 +595,82 @@ function codeReview(req: LlmRequest) {
   };
 }
 
+const DESIGN_AREA: Record<string, string> = {
+  "single-database": "spof",
+  "no-cache": "caching",
+  "no-load-balancer": "bottleneck",
+  "one-sided-queue": "failure_handling",
+  disconnected: "missing_components",
+  "no-client": "missing_components",
+  "unlabeled-connections": "missing_components",
+  empty: "missing_components",
+};
+
+/** A deterministic design review: scores from how much is filled in, findings from the automatic checks. */
+function designReview(req: LlmRequest) {
+  const user = firstUser(req);
+  const section = (title: string, next: string) =>
+    new RegExp(`${title}:\\n([\\s\\S]*?)\\n${next}`).exec(user)?.[1] ?? "";
+  const bullets = (t: string) =>
+    t.split("\n").filter((l) => l.startsWith("- ") && !l.includes("(empty)"));
+  const functional = bullets(
+    section("FUNCTIONAL REQUIREMENTS", "NON-FUNCTIONAL REQUIREMENTS"),
+  ).length;
+  const nonFunctional = bullets(section("NON-FUNCTIONAL REQUIREMENTS", "API")).length;
+  const apis = bullets(section("API", "DATA MODEL")).length;
+  const dataModel = section("DATA MODEL", "CAPACITY ESTIMATE").trim();
+  const estimate = bullets(section("CAPACITY ESTIMATE", "NOTES")).filter(
+    (l) => !l.includes("not filled in"),
+  ).length;
+  const notes = (/NOTES:\n([\s\S]*?)\n<\/panel>/.exec(user)?.[1] ?? "").trim();
+  const components = [...user.matchAll(/^- \[([^\]]+)\] (\w+): /gm)].map((m) => ({
+    id: m[1]!,
+    type: m[2]!,
+  }));
+  const has = (t: string) => components.some((c) => c.type === t);
+  const clamp = (n: number) => Math.max(1, Math.min(5, Math.round(n)));
+  const checks = [...user.matchAll(/^- ([a-z-]+) :: (.*) :: ids=(.*)$/gm)].map((m) => ({
+    code: m[1]!,
+    message: m[2]!,
+    ids: (m[3] ?? "").split(",").filter(Boolean),
+  }));
+  return {
+    summary:
+      components.length === 0
+        ? "There is nothing on the canvas yet. Start with who uses the system and the first request."
+        : `The design has ${components.length} components. ${checks.length > 0 ? "Start with the automatic checks below: they point at the weakest parts." : "The structure holds together; now state the trade-offs you chose."}`,
+    scores: {
+      requirements: clamp(1 + functional * 0.7 + nonFunctional * 0.7),
+      estimation: clamp(1 + estimate * 0.8),
+      architecture: clamp(1 + components.length / 3),
+      data: clamp(1 + dataModel.length / 80 + apis * 0.3),
+      scalability: clamp(
+        1 +
+          (has("load_balancer") ? 1 : 0) +
+          (has("cache") ? 1 : 0) +
+          (has("queue") ? 1 : 0) +
+          (has("cdn") ? 0.5 : 0),
+      ),
+      tradeoffs: clamp(1 + notes.length / 120),
+      communication: clamp(1 + (components.length > 0 ? 1 : 0) + (notes.length > 0 ? 1 : 0)),
+    },
+    findings: checks.slice(0, 14).map((c) => ({
+      area: DESIGN_AREA[c.code] ?? "missing_components",
+      severity:
+        c.code === "no-cache" || c.code === "unlabeled-connections" ? "suggestion" : "important",
+      message: c.message,
+      nodeIds: c.ids.filter((id) => components.some((n) => n.id === id)),
+    })),
+    questions: [
+      "What happens to requests in flight when one instance of your busiest service dies?",
+      "How does the design behave when traffic doubles in an hour?",
+      "Which component would you shard first, and by what key?",
+      "What do you do when a dependency is slow instead of down?",
+      "How would you know in production that this design is failing?",
+    ],
+  };
+}
+
 export class MockProvider implements LlmProvider {
   /** Test hook: replaces the reply for the next call(s) of a task. */
   readonly overrides = new Map<string, string[]>();
@@ -623,6 +699,7 @@ export class MockProvider implements LlmProvider {
     else if (req.task === "scorecard") text = JSON.stringify(scorecard(req));
     else if (req.task === "annotations") text = JSON.stringify(annotations(req));
     else if (req.task === "code_review") text = JSON.stringify(codeReview(req));
+    else if (req.task === "design_review") text = JSON.stringify(designReview(req));
     else text = words(lastUser(req).replace(/<[^>]+>/g, " "), 120);
     if (opts.onDelta) {
       for (let i = 0; i < text.length; i += 12) opts.onDelta(text.slice(i, i + 12));

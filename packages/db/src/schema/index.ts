@@ -13,3 +13,4 @@ export * from "./contests.js";
 export * from "./flashcards.js";
 export * from "./code-review.js";
 export * from "./integrity.js";
+export * from "./design.js";

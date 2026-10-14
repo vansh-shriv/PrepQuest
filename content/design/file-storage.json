@@ -1,0 +1,357 @@
+{
+  "slug": "file-storage",
+  "title": "Design a file storage and sync service",
+  "kind": "hld",
+  "difficulty": 3,
+  "tags": ["storage", "consistency", "sync"],
+  "statementMd": "Design a service like Dropbox: users keep files in the cloud, edit them on several devices and see changes everywhere.\n\nThink about large files, chunking, deduplication, conflicts when two devices edit the same file, and how devices learn about changes.",
+  "requirementHints": {
+    "functional": [
+      "Upload and download files of any size",
+      "Sync changes across devices",
+      "Share files and folders"
+    ],
+    "nonFunctional": [
+      "Never lose a file: durability above all",
+      "Efficient: upload only what changed",
+      "Resolve edit conflicts without losing either version"
+    ]
+  },
+  "reference": {
+    "v1": {
+      "title": "Version 1: it works",
+      "description": "Upload whole files to one server's disk.",
+      "canvas": {
+        "nodes": [
+          {
+            "id": "c",
+            "type": "client",
+            "label": "Desktop app",
+            "x": 40,
+            "y": 160
+          },
+          {
+            "id": "s",
+            "type": "service",
+            "label": "File server",
+            "x": 260,
+            "y": 160
+          },
+          {
+            "id": "o",
+            "type": "storage",
+            "label": "Local disk",
+            "x": 480,
+            "y": 160
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": "c",
+            "to": "s",
+            "label": "upload, download"
+          },
+          {
+            "id": "e2",
+            "from": "s",
+            "to": "o",
+            "label": "write files"
+          }
+        ]
+      }
+    },
+    "v2": {
+      "title": "Version 2: scaled",
+      "description": "Files are cut into chunks stored in object storage (deduplicated by hash); a metadata service and database track versions; a notification channel tells other devices to sync.",
+      "canvas": {
+        "nodes": [
+          {
+            "id": "c",
+            "type": "client",
+            "label": "Desktop app",
+            "x": 40,
+            "y": 160
+          },
+          {
+            "id": "lb",
+            "type": "load_balancer",
+            "label": "Load balancer",
+            "x": 260,
+            "y": 160
+          },
+          {
+            "id": "u",
+            "type": "service",
+            "label": "Chunk upload service",
+            "x": 480,
+            "y": 40
+          },
+          {
+            "id": "m",
+            "type": "service",
+            "label": "Metadata service",
+            "x": 480,
+            "y": 280
+          },
+          {
+            "id": "o",
+            "type": "storage",
+            "label": "Chunk object storage",
+            "x": 700,
+            "y": 40
+          },
+          {
+            "id": "d",
+            "type": "database",
+            "label": "Metadata database (primary)",
+            "x": 700,
+            "y": 280
+          },
+          {
+            "id": "r",
+            "type": "database",
+            "label": "Metadata database (replica)",
+            "x": 700,
+            "y": 400
+          },
+          {
+            "id": "q",
+            "type": "queue",
+            "label": "Change notifications",
+            "x": 920,
+            "y": 280
+          },
+          {
+            "id": "n",
+            "type": "service",
+            "label": "Notification service",
+            "x": 1140,
+            "y": 280
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": "c",
+            "to": "lb",
+            "label": "HTTPS"
+          },
+          {
+            "id": "e2",
+            "from": "lb",
+            "to": "u",
+            "label": "upload chunks"
+          },
+          {
+            "id": "e3",
+            "from": "lb",
+            "to": "m",
+            "label": "list and commit versions"
+          },
+          {
+            "id": "e4",
+            "from": "u",
+            "to": "o",
+            "label": "store chunk by hash"
+          },
+          {
+            "id": "e5",
+            "from": "m",
+            "to": "d",
+            "label": "file versions"
+          },
+          {
+            "id": "e6",
+            "from": "d",
+            "to": "r",
+            "label": "replication"
+          },
+          {
+            "id": "e7",
+            "from": "m",
+            "to": "q",
+            "label": "file changed"
+          },
+          {
+            "id": "e8",
+            "from": "q",
+            "to": "n",
+            "label": "consume"
+          },
+          {
+            "id": "e9",
+            "from": "n",
+            "to": "c",
+            "label": "tell devices to sync"
+          }
+        ]
+      }
+    },
+    "v3": {
+      "title": "Version 3: global",
+      "description": "Chunks replicated across regions, metadata sharded by user, a CDN serves shared downloads and an antivirus scan runs asynchronously on new uploads.",
+      "canvas": {
+        "nodes": [
+          {
+            "id": "c",
+            "type": "client",
+            "label": "Desktop app",
+            "x": 40,
+            "y": 160
+          },
+          {
+            "id": "cdn",
+            "type": "cdn",
+            "label": "CDN for shared downloads",
+            "x": 260,
+            "y": 400
+          },
+          {
+            "id": "lb",
+            "type": "load_balancer",
+            "label": "Regional load balancer",
+            "x": 260,
+            "y": 160
+          },
+          {
+            "id": "u",
+            "type": "service",
+            "label": "Chunk upload service",
+            "x": 480,
+            "y": 40
+          },
+          {
+            "id": "m",
+            "type": "service",
+            "label": "Metadata service",
+            "x": 480,
+            "y": 280
+          },
+          {
+            "id": "o",
+            "type": "storage",
+            "label": "Chunk storage (multi-region)",
+            "x": 700,
+            "y": 40
+          },
+          {
+            "id": "d",
+            "type": "database",
+            "label": "Metadata shards (primary)",
+            "x": 700,
+            "y": 280
+          },
+          {
+            "id": "r",
+            "type": "database",
+            "label": "Metadata shards (replica)",
+            "x": 700,
+            "y": 400
+          },
+          {
+            "id": "q",
+            "type": "queue",
+            "label": "Change and scan events",
+            "x": 920,
+            "y": 160
+          },
+          {
+            "id": "n",
+            "type": "service",
+            "label": "Notification service",
+            "x": 1140,
+            "y": 280
+          },
+          {
+            "id": "v",
+            "type": "service",
+            "label": "Antivirus scanner",
+            "x": 1140,
+            "y": 40
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": "c",
+            "to": "lb",
+            "label": "HTTPS"
+          },
+          {
+            "id": "e2",
+            "from": "c",
+            "to": "cdn",
+            "label": "shared downloads"
+          },
+          {
+            "id": "e3",
+            "from": "cdn",
+            "to": "o",
+            "label": "origin"
+          },
+          {
+            "id": "e4",
+            "from": "lb",
+            "to": "u",
+            "label": "upload chunks"
+          },
+          {
+            "id": "e5",
+            "from": "lb",
+            "to": "m",
+            "label": "commit versions"
+          },
+          {
+            "id": "e6",
+            "from": "u",
+            "to": "o",
+            "label": "store chunk"
+          },
+          {
+            "id": "e7",
+            "from": "m",
+            "to": "d",
+            "label": "versions"
+          },
+          {
+            "id": "e8",
+            "from": "d",
+            "to": "r",
+            "label": "replication"
+          },
+          {
+            "id": "e9",
+            "from": "m",
+            "to": "q",
+            "label": "file changed"
+          },
+          {
+            "id": "e10",
+            "from": "u",
+            "to": "q",
+            "label": "new chunk"
+          },
+          {
+            "id": "e11",
+            "from": "q",
+            "to": "n",
+            "label": "consume"
+          },
+          {
+            "id": "e12",
+            "from": "q",
+            "to": "v",
+            "label": "scan"
+          },
+          {
+            "id": "e13",
+            "from": "n",
+            "to": "c",
+            "label": "notify devices"
+          }
+        ]
+      }
+    }
+  }
+}

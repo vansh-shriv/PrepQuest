@@ -13,3 +13,4 @@ export * from "./starter.js";
 export * from "./types.js";
 export * from "./validate.js";
 export * from "./assess.js";
+export * from "./design.js";

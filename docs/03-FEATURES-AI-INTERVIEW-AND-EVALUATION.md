@@ -307,3 +307,7 @@ Other templates use their own dimensions (e.g., HLD: requirements, estimation, a
 
 - Canvas autosaves and restores; undo/redo works for 100 steps.
 - Canvas to graph conversion preserves node types and edge direction on 20 sample designs.
+
+## As built (Phase 16): C3 system design practice
+
+Canvas with ten pixel component types, labelled arrows, snap to grid, undo and redo for 100 steps (met: `design.test.ts`), autosave with versions, export to PNG and JSON. Structured side panel with requirements, a capacity calculator, API list, data model and notes. Review: the canvas becomes a graph (types and edge direction preserved on 20 sample designs: met), automatic checks run without a model, and the model returns scores for the seven rubric areas, findings that cite components, and five probing questions. Reference designs in three layers (simple, scaled, global) for four prompts, opened after the learner's own attempt is reviewed. Not built: the interviewer asking about the drawing during the HLD interview, the after-session scorecard from a live interview, LLD mode.

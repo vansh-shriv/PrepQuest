@@ -253,3 +253,5 @@ Phase 13: `pnpm db:migrate` applies migrations 0024 to 0026 (flashcards, shared 
 Phase 14: `pnpm db:migrate` applies migrations 0027 and 0028 (code reviews, complexity analyses, review strictness, `problems.scale`). Run `pnpm content:import --publish` to load the `scale.json` files. No new environment variables. Code review uses the evaluator model class; with `LLM_MODE=mock` a deterministic reviewer answers. The complexity check needs a running judge worker; timings from the development process sandbox are noisy, so use the isolate sandbox for realistic confidence.
 
 Phase 15: `pnpm db:migrate` applies migrations 0029 and 0030 (`integrity_flags`, `contest_participants.disqualified_at`). No new environment variables or content. To try it, sign in as `reviewer@prepquest.dev` (seed, no two-factor needed for reviewers), open `/integrity`, enter a contest slug and scan.
+
+Phase 16: `pnpm db:migrate` applies migrations 0031 and 0032 (`system_design_prompts`, `design_canvases`); run `pnpm content:import --publish` to load the four prompts. No new environment variables. Reviews use the evaluator model class; with `LLM_MODE=mock` a deterministic reviewer answers.

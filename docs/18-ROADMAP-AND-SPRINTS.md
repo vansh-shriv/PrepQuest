@@ -175,3 +175,5 @@ Bug bash, content improvements, user-requested features, portfolio write-up/blog
 **Status:** Sprint 9 is finished across Phases 12 to 14. Phase 14 built code review mode (X3) and the complexity analyzer (X4). AI flashcard suggestions move to the next phase with the other gateway features.
 
 **Status:** Sprint 10 is delivered in two phases. Phase 15 finished plagiarism and behaviour review (X2) with a review queue and appeals. The system design canvas (C3) is next.
+
+**Status:** Sprint 10 is finished. Phase 16 built system design practice (C3): canvas, side panel, AI review and layered reference designs. Using the canvas inside the HLD interview and LLD mode are still to do.

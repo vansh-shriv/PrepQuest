@@ -670,3 +670,7 @@ New tables: `question_bank` (slug, category cs/behavioral/hld/lld, topic, compet
 ## Phase 15 additions (as built)
 
 `integrity_flags`: `subject_type` (`contest_participant`) and `subject_id` with `kind` similarity|paste|focus unique together, `user_id`, `contest_id`, `severity` low|medium|high, `score`, `evidence` jsonb (matches with token ranges, counts, weak style markers, aggravating reasons), `status` open|confirmed|dismissed|escalated|appealed, `reviewed_by`, `reviewed_at`, `decision_note`, `appeal_text`, `appealed_at`; updated_at trigger in migration 0030. `contest_participants.disqualified_at` is set while a confirmed flag stands. `code_fingerprints` was not created: fingerprints are computed at scan time from the stored submissions.
+
+## Phase 16 additions (as built)
+
+`system_design_prompts` (`slug` unique, `kind` hld|lld, `title`, `statement_md`, `requirement_hints` jsonb, `reference` jsonb with layers v1 to v3 each holding a title, a description and a canvas, `difficulty` 1 to 3, `tags`, `status`). `design_canvases` (`user_id`, `prompt_id`, `session_id` unused so far, `canvas` jsonb of components and connections, `panel` jsonb of requirements, API, data model, notes and calculator inputs, `version` bumped on every save, `review_status` none|pending|ready|failed, `ai_review` jsonb with the version it read, `review_error`). Both have `updated_at` triggers (migration 0032).

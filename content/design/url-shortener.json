@@ -1,0 +1,337 @@
+{
+  "slug": "url-shortener",
+  "title": "Design a URL shortener",
+  "kind": "hld",
+  "difficulty": 1,
+  "tags": ["storage", "caching", "hashing"],
+  "statementMd": "Design a service like bit.ly. A user pastes a long URL and gets a short link. Opening the short link sends the browser to the long URL.\n\nStart by asking what matters: how many links per day, how long they live, whether people can pick their own alias, and whether you need click statistics.",
+  "requirementHints": {
+    "functional": [
+      "Create a short link for a long URL",
+      "Redirect a short link to the long URL",
+      "Optional custom alias and expiry"
+    ],
+    "nonFunctional": [
+      "Redirects are very fast (read-heavy, about 100 reads per write)",
+      "Highly available: a dead link is a broken promise",
+      "Short codes are unique and hard to guess"
+    ]
+  },
+  "reference": {
+    "v1": {
+      "title": "Version 1: it works",
+      "description": "One service, one database. Fine for a demo; any failure takes everything down.",
+      "canvas": {
+        "nodes": [
+          {
+            "id": "c",
+            "type": "client",
+            "label": "Browser",
+            "x": 40,
+            "y": 160
+          },
+          {
+            "id": "s",
+            "type": "service",
+            "label": "Shortener service",
+            "x": 260,
+            "y": 160
+          },
+          {
+            "id": "d",
+            "type": "database",
+            "label": "Links database",
+            "x": 480,
+            "y": 160
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": "c",
+            "to": "s",
+            "label": "POST /links, GET /{code}"
+          },
+          {
+            "id": "e2",
+            "from": "s",
+            "to": "d",
+            "label": "read and write links"
+          }
+        ]
+      }
+    },
+    "v2": {
+      "title": "Version 2: scaled",
+      "description": "Several stateless service instances behind a load balancer, a cache for hot links (most traffic is reads), a replica for the database and a separate key generator so two instances never hand out the same code.",
+      "canvas": {
+        "nodes": [
+          {
+            "id": "c",
+            "type": "client",
+            "label": "Browser",
+            "x": 40,
+            "y": 160
+          },
+          {
+            "id": "lb",
+            "type": "load_balancer",
+            "label": "Load balancer",
+            "x": 260,
+            "y": 160
+          },
+          {
+            "id": "s1",
+            "type": "service",
+            "label": "Shortener service A",
+            "x": 480,
+            "y": 40
+          },
+          {
+            "id": "s2",
+            "type": "service",
+            "label": "Shortener service B",
+            "x": 480,
+            "y": 280
+          },
+          {
+            "id": "k",
+            "type": "service",
+            "label": "Key generator",
+            "x": 700,
+            "y": 40
+          },
+          {
+            "id": "ca",
+            "type": "cache",
+            "label": "Redis cache",
+            "x": 700,
+            "y": 160
+          },
+          {
+            "id": "d",
+            "type": "database",
+            "label": "Links database (primary)",
+            "x": 920,
+            "y": 160
+          },
+          {
+            "id": "r",
+            "type": "database",
+            "label": "Links database (replica)",
+            "x": 920,
+            "y": 280
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": "c",
+            "to": "lb",
+            "label": "HTTPS"
+          },
+          {
+            "id": "e2",
+            "from": "lb",
+            "to": "s1",
+            "label": "round robin"
+          },
+          {
+            "id": "e3",
+            "from": "lb",
+            "to": "s2",
+            "label": "round robin"
+          },
+          {
+            "id": "e4",
+            "from": "s1",
+            "to": "k",
+            "label": "take a unused code"
+          },
+          {
+            "id": "e5",
+            "from": "s1",
+            "to": "ca",
+            "label": "read hot links"
+          },
+          {
+            "id": "e6",
+            "from": "s2",
+            "to": "ca",
+            "label": "read hot links"
+          },
+          {
+            "id": "e7",
+            "from": "s1",
+            "to": "d",
+            "label": "write links"
+          },
+          {
+            "id": "e8",
+            "from": "s2",
+            "to": "d",
+            "label": "write links"
+          },
+          {
+            "id": "e9",
+            "from": "d",
+            "to": "r",
+            "label": "replication"
+          }
+        ]
+      }
+    },
+    "v3": {
+      "title": "Version 3: global",
+      "description": "A CDN answers popular redirects at the edge, links are sharded by code across regions, clicks are counted asynchronously through a queue so a redirect never waits for analytics.",
+      "canvas": {
+        "nodes": [
+          {
+            "id": "c",
+            "type": "client",
+            "label": "Browser",
+            "x": 40,
+            "y": 160
+          },
+          {
+            "id": "cdn",
+            "type": "cdn",
+            "label": "CDN (edge redirects)",
+            "x": 260,
+            "y": 160
+          },
+          {
+            "id": "lb",
+            "type": "load_balancer",
+            "label": "Regional load balancer",
+            "x": 480,
+            "y": 160
+          },
+          {
+            "id": "s1",
+            "type": "service",
+            "label": "Redirect service A",
+            "x": 700,
+            "y": 40
+          },
+          {
+            "id": "s2",
+            "type": "service",
+            "label": "Redirect service B",
+            "x": 700,
+            "y": 280
+          },
+          {
+            "id": "ca",
+            "type": "cache",
+            "label": "Redis cache",
+            "x": 920,
+            "y": 160
+          },
+          {
+            "id": "d",
+            "type": "database",
+            "label": "Link shards (primary)",
+            "x": 1140,
+            "y": 160
+          },
+          {
+            "id": "r",
+            "type": "database",
+            "label": "Link shards (replica)",
+            "x": 1140,
+            "y": 280
+          },
+          {
+            "id": "q",
+            "type": "queue",
+            "label": "Click events queue",
+            "x": 920,
+            "y": 400
+          },
+          {
+            "id": "a",
+            "type": "service",
+            "label": "Analytics consumer",
+            "x": 1140,
+            "y": 400
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": "c",
+            "to": "cdn",
+            "label": "HTTPS"
+          },
+          {
+            "id": "e2",
+            "from": "cdn",
+            "to": "lb",
+            "label": "cache miss"
+          },
+          {
+            "id": "e3",
+            "from": "lb",
+            "to": "s1",
+            "label": "round robin"
+          },
+          {
+            "id": "e4",
+            "from": "lb",
+            "to": "s2",
+            "label": "round robin"
+          },
+          {
+            "id": "e5",
+            "from": "s1",
+            "to": "ca",
+            "label": "read"
+          },
+          {
+            "id": "e6",
+            "from": "s2",
+            "to": "ca",
+            "label": "read"
+          },
+          {
+            "id": "e7",
+            "from": "s1",
+            "to": "d",
+            "label": "read and write"
+          },
+          {
+            "id": "e8",
+            "from": "s2",
+            "to": "d",
+            "label": "read and write"
+          },
+          {
+            "id": "e9",
+            "from": "d",
+            "to": "r",
+            "label": "replication"
+          },
+          {
+            "id": "e10",
+            "from": "s1",
+            "to": "q",
+            "label": "click event"
+          },
+          {
+            "id": "e11",
+            "from": "s2",
+            "to": "q",
+            "label": "click event"
+          },
+          {
+            "id": "e12",
+            "from": "q",
+            "to": "a",
+            "label": "consume"
+          }
+        ]
+      }
+    }
+  }
+}
