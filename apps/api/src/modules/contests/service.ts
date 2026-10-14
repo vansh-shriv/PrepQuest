@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { and, asc, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
 import {
   contestParticipants,
   contestProblems,
@@ -527,7 +527,14 @@ export async function standings(
     })
     .from(contestParticipants)
     .innerJoin(profiles, eq(profiles.userId, contestParticipants.userId))
-    .where(and(eq(contestParticipants.contestId, c.id), eq(contestParticipants.kind, "live")));
+    .where(
+      and(
+        eq(contestParticipants.contestId, c.id),
+        eq(contestParticipants.kind, "live"),
+        // a confirmed integrity flag takes a participant out of the table (X2)
+        isNull(contestParticipants.disqualifiedAt),
+      ),
+    );
   const ids = participants.map((p) => p.userId);
   const attempts =
     phase === "upcoming"

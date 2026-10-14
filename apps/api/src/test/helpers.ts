@@ -10,7 +10,7 @@ import { buildApp } from "../app.js";
 import { NoopBreachChecker, type BreachChecker } from "../lib/breach.js";
 import { MemoryKv, type Kv } from "../lib/kv.js";
 import { MemoryMailer } from "../lib/mailer.js";
-import { loadJwtKeys } from "../modules/auth/keys.js";
+import { loadJwtKeys, type JwtKeys } from "../modules/auth/keys.js";
 import { createLlmGateway, MockProvider, type LlmProvider } from "../lib/llm/index.js";
 import { MemoryJudgeQueue } from "../modules/submissions/queue.js";
 import { REFRESH_COOKIE } from "../modules/auth/routes.js";
@@ -31,6 +31,8 @@ export interface TestApp {
   /** Await background jobs (resume parsing, scorecards). */
   idle: () => Promise<void>;
   env: ServerEnv;
+  /** The signing keys of this app, to mint tokens (e.g. a second-factor session for an admin). */
+  keys: JwtKeys;
   close: () => Promise<void>;
 }
 
@@ -73,6 +75,7 @@ export async function makeTestApp(options: TestOptions = {}): Promise<TestApp> {
   const llm = createLlmGateway(env, db, () => undefined, options.llmProvider ?? mock, {
     retryDelayMs: 0,
   });
+  const keys = await loadJwtKeys(env);
   const app = await buildApp({
     env,
     db,
@@ -81,7 +84,7 @@ export async function makeTestApp(options: TestOptions = {}): Promise<TestApp> {
     store,
     judge,
     llm,
-    keys: await loadJwtKeys(env),
+    keys,
     checks: {},
     breach: options.breach ?? new NoopBreachChecker(),
     ...(options.fetchFn ? { fetchFn: options.fetchFn } : {}),
@@ -97,6 +100,7 @@ export async function makeTestApp(options: TestOptions = {}): Promise<TestApp> {
     mock,
     idle: () => app.ai.jobs.idle(),
     env,
+    keys,
     close: async () => {
       await app.close();
       await db.$client.end();

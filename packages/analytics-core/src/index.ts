@@ -18,3 +18,4 @@ export * from "./contest.js";
 export * from "./flashcards.js";
 export * from "./complexity.js";
 export * from "./scale.js";
+export * from "./integrity.js";

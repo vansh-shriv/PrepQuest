@@ -92,6 +92,8 @@ export const contestParticipants = pgTable(
       .$type<{ blur: number; paste: number }>()
       .notNull()
       .default({ blur: 0, paste: 0 }),
+    /** Set while a confirmed integrity flag stands (X2); the standings leave such a participant out. */
+    disqualifiedAt: timestamp("disqualified_at", { withTimezone: true }),
     ...timestamps,
   },
   (t) => [

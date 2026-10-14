@@ -2,25 +2,26 @@
 
 Phase-by-phase build log. Plan source: `docs/18-ROADMAP-AND-SPRINTS.md`. Each phase ends with lint + typecheck + test green, `CLAUDE.md`/docs updated, and a suggested commit message.
 
-| Phase | Scope                                                                                                                                       | Milestone | Status                |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------- | --------------------- |
-| 0     | Foundation: monorepo, CI, Docker Compose, env validation, health API                                                                        | -         | Done (committed)      |
-| 1     | Design system: tokens, `packages/ui`, sprites, Storybook, 3 themes                                                                          | -         | Done (committed)      |
-| 2     | DB schema v1, auth, app shell                                                                                                               | M0        | Done (committed)      |
-| 2b    | Completion pass: Drizzle ORM, verified-email gate, rate limiting, OAuth, 2FA, breach check, export/deletion, public profiles, Husky, CI e2e | -         | Done (pending commit) |
-| 3     | Problem bank, content pipeline, Monaco editor, admin v0                                                                                     | M1        | Done (committed)      |
-| 4     | Judge (`isolate`), submissions, verdict UI, history/bookmarks/notes                                                                         | M2        | Done (committed)      |
-| 5     | Hints, editorials, XP/streaks, dashboard, sheets                                                                                            | M3        | Done (pending commit) |
-| 6     | AI interview MVP, resume parse, scorecards                                                                                                  | M4        | Done (pending commit) |
-| 7     | Voice, live-coding awareness, AI eval harness                                                                                               | M5        | Done (pending commit) |
-| 8     | Evaluation depth: more interview types, company packs, ideal answers, STAR, speech analytics, question memory                               | M6        | Done (pending commit) |
-| 9     | Analytics and planning: readiness, topic mastery v2, interview trends, time analysis, study plan, daily goals, diagnostic                   | M7        | Done                  |
-| 10    | Learning suite: spaced repetition, CS quizzes, roadmaps, company tracks                                                                     | M8 (part) | Done                  |
-| 11    | SQL practice runner, aptitude items and the online-assessment simulator                                                                     | M8        | Done                  |
-| 12    | Contests: ICPC and points scoring, private contests, live standings, virtual runs                                                           | M9 (part) | Done                  |
-| 13    | Flashcards with offline review sync, shareable reports with preview images                                                                  | M9 (part) | Done                  |
-| 14    | Code review mode, complexity analyzer                                                                                                       | M9 (part) | Done (pending commit) |
-| 15+   | AI card suggestions, integrity, peer mocks, hardening                                                                                       | M10-M12   | Planned               |
+| Phase | Scope                                                                                                                                       | Milestone  | Status                |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------------- |
+| 0     | Foundation: monorepo, CI, Docker Compose, env validation, health API                                                                        | -          | Done (committed)      |
+| 1     | Design system: tokens, `packages/ui`, sprites, Storybook, 3 themes                                                                          | -          | Done (committed)      |
+| 2     | DB schema v1, auth, app shell                                                                                                               | M0         | Done (committed)      |
+| 2b    | Completion pass: Drizzle ORM, verified-email gate, rate limiting, OAuth, 2FA, breach check, export/deletion, public profiles, Husky, CI e2e | -          | Done (pending commit) |
+| 3     | Problem bank, content pipeline, Monaco editor, admin v0                                                                                     | M1         | Done (committed)      |
+| 4     | Judge (`isolate`), submissions, verdict UI, history/bookmarks/notes                                                                         | M2         | Done (committed)      |
+| 5     | Hints, editorials, XP/streaks, dashboard, sheets                                                                                            | M3         | Done (pending commit) |
+| 6     | AI interview MVP, resume parse, scorecards                                                                                                  | M4         | Done (pending commit) |
+| 7     | Voice, live-coding awareness, AI eval harness                                                                                               | M5         | Done (pending commit) |
+| 8     | Evaluation depth: more interview types, company packs, ideal answers, STAR, speech analytics, question memory                               | M6         | Done (pending commit) |
+| 9     | Analytics and planning: readiness, topic mastery v2, interview trends, time analysis, study plan, daily goals, diagnostic                   | M7         | Done                  |
+| 10    | Learning suite: spaced repetition, CS quizzes, roadmaps, company tracks                                                                     | M8 (part)  | Done                  |
+| 11    | SQL practice runner, aptitude items and the online-assessment simulator                                                                     | M8         | Done                  |
+| 12    | Contests: ICPC and points scoring, private contests, live standings, virtual runs                                                           | M9 (part)  | Done                  |
+| 13    | Flashcards with offline review sync, shareable reports with preview images                                                                  | M9 (part)  | Done                  |
+| 14    | Code review mode, complexity analyzer                                                                                                       | M9 (part)  | Done                  |
+| 15    | Integrity: similarity and behaviour review with appeals                                                                                     | M10 (part) | Done (pending commit) |
+| 16+   | System design canvas, AI card suggestions, peer mocks, hardening                                                                            | M10-M12    | Planned               |
 
 ## Phase 0 - Foundation
 
@@ -469,3 +470,32 @@ Decisions / gotchas:
 Deferred:
 
 - Compare mode (your code against the editorial and a peer-style version), reusing the review for interview code-quality scoring (E1), generators for exponential and recursive solutions (sizes up to about 25), memory growth fitting, AI flashcard suggestions (X6, next phase).
+
+## Phase 15 - Integrity: similarity and behaviour review (milestone M10, first part)
+
+Sprint 10 is split in two. This phase builds plagiarism and AI-assist detection with a review queue and appeals (X2). The system design canvas (C3) moves to the next phase.
+
+Done:
+
+- **Similarity (`analytics-core/integrity.ts`, pure):** code is lexed into normalised tokens (comments and whitespace dropped; every name `I`, number `N`, string `S`; keywords and operators kept) for Python, C++ and Java, then fingerprinted by winnowing (5-token k-grams, window 4). `similarity` is the share of the smaller program's fingerprints found in the other, ignoring hashes that come from the starter code. A flag needs at least 0.85 (medium) or 0.95 (high). Programs under 60 tokens or 15 fingerprints are "trivial" and never compared (the false-positive guard).
+- **Behaviour:** the paste and window-blur counts the contest bar already records (`contest_participants.integrity`). 4 or more pastes is low, 10 or more medium; 15 or more blurs is low, 40 or more medium. They are weak: a match plus such a signal raises the severity one level and lists the reason for the reviewer.
+- **AI style:** `aiStyleMarker` (many long explanatory comments on short code) is shown only next to paste flags as "a weak marker, not evidence on its own". It never makes a flag.
+- **Scan:** `POST /admin/integrity/scan {contestSlug}` compares each learner's latest accepted contest solution per problem and language, all pairs, and checks every participant's counts. It is repeatable: a second scan refreshes flags still waiting and leaves reviewed ones alone.
+- **Review queue (`/integrity`):** reviewers, moderators and admins see flags ordered by waiting, then severity; a flag shows both programs side by side with matching lines highlighted (mapped back from token ranges), the counts and the aggravating signals. Decisions: confirm, dismiss, escalate (a reason of at least 5 characters is required and audited in `admin_audit_log`). An escalated flag is decided by an admin only.
+- **Consequence:** only a confirmed flag has an effect: the participant gets `disqualified_at` and leaves the contest standings; dismissing it later (or an accepted appeal) puts them back. No automatic penalty exists.
+- **Learner side:** a learner hears nothing while a flag is open. After a decision, Settings shows the outcome and the reviewer's reason (never the evidence and never the other learner), and a confirmed decision can be appealed once with a written statement; the reviewer decides again. The contest page has "How fair play works", listing exactly what is monitored. Practice problems are never reviewed.
+- **API:** module `integrity`: `POST /admin/integrity/scan`, `GET /admin/integrity/flags` (`?status=&contest=`), `GET/PATCH /admin/integrity/flags/:id`, `GET /me/integrity`, `POST /me/integrity/:id/appeal`.
+- **Database:** migrations 0029 and 0030 (trigger): `integrity_flags` (unique per participant and kind), `contest_participants.disqualified_at`.
+- **Tests:** analytics-core 15 new (220; the labelled set is the 20 reference solutions: renamed and re-commented copies in Python, C++ and Java must score 0.9 or more, no pair of unrelated solutions may reach the flag threshold, and different approaches to one problem are not flagged), API 18 new, web 7 new (99), e2e `integrity.spec.ts` (6, real judge: two matching accepted contest solutions, scan, side-by-side review, confirm, standings, appeal, overturn). `makeTestApp` now exposes `keys` so tests can mint a two-factor token for a moderator or admin.
+
+Decisions / gotchas:
+
+- Many honest solutions to easy problems look alike, so very short programs are skipped rather than flagged; a Two Sum answer is too short to compare. The threshold is for copies, not for people who found the same textbook method; that judgement is the reviewer's.
+- Cross-language translations are not compared, and neither are solutions to different problems.
+- Matching against known public solutions and the editorial is not built: editorial code is visible to learners in practice and would mostly produce noise.
+- Scanning is started by a reviewer for now; running it when a contest ends is a small addition for the hardening phase.
+- Interview-mode signals (very low latency perfect answers, spoken explanation against code) are not built.
+
+Deferred:
+
+- Automatic scan after a contest, comparison against known public solutions, interview-mode signals, moderator account suspension from a confirmed flag, appeal notifications by email, a contest rules page with the same text as the in-contest note.

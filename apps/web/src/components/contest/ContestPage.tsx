@@ -118,6 +118,25 @@ export function ContestPage() {
         </p>
       </div>
 
+      <details className="text-sm" data-testid="fair-play">
+        <summary className="cursor-pointer underline">How fair play works</summary>
+        <div className="mt-2 grid gap-1">
+          <p className="m-0">What is looked at, and only this:</p>
+          <ul className="m-0 pl-5">
+            <li>
+              How close your accepted solutions are to other participants' (names, numbers, comments
+              and spacing are ignored; very short answers are not compared).
+            </li>
+            <li>How often you pasted and how often the contest window lost focus.</li>
+          </ul>
+          <p className="m-0">
+            These are signals for a person to look at, never a verdict. Nothing changes for you
+            until a reviewer confirms it, and you will be told why and can appeal once from
+            Settings. Practice problems are never reviewed this way.
+          </p>
+        </div>
+      </details>
+
       <Window title={phaseHeadline(contest.phase, left)} tone="sun">
         <div className="grid gap-3">
           {contest.description && <Markdown>{contest.description}</Markdown>}

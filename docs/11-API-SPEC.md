@@ -618,3 +618,12 @@ A scorecard needs a finished interview with a ready scorecard (409 otherwise); a
 - `GET|PUT /code-review/settings`: `{strictness}`.
 - `POST /submissions/:id/complexity` body `{claimed}`: 202, status `running`. 422 when the problem has no `scale.json` or the code did not compile, 409 while the judge is busy.
 - `GET /submissions/:id/complexity`: `{supported, analysis}`; the analysis is finished lazily when the judge run is over.
+
+## Phase 15 additions (as built)
+
+- `POST /admin/integrity/scan` `{contestSlug}`: moderator, reviewer or admin (admin and moderator tokens need two-factor). Returns participants, pairs compared and flags created or refreshed.
+- `GET /admin/integrity/flags?status=&contest=`: queue (`{items, open}`), waiting first, then by severity.
+- `GET /admin/integrity/flags/:id`: detail with both programs and the matching lines.
+- `PATCH /admin/integrity/flags/:id` `{decision: confirm|dismiss|escalate, note}`: audited; 403 when a non-admin decides an escalated flag, 409 when escalating a decided flag.
+- `GET /me/integrity`: the learner's decided flags (outcome, reason, `canAppeal`), no evidence.
+- `POST /me/integrity/:id/appeal` `{text}`: once, for a confirmed flag of one's own.

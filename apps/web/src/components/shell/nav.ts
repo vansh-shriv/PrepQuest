@@ -1,5 +1,5 @@
 import type { SpriteName } from "@prepquest/ui";
-import { CONTENT_ROLES, type UserRole } from "@prepquest/shared";
+import { CONTENT_ROLES, INTEGRITY_REVIEW_ROLES, type UserRole } from "@prepquest/shared";
 
 export interface NavItem {
   href: string;
@@ -27,11 +27,16 @@ export const NAV_ITEMS: NavItem[] = [
 
 const ADMIN_ITEM: NavItem = { href: "/admin/problems", label: "Admin", icon: "admin" };
 
-/** Navigation for a role: content editors, reviewers and admins also get the Admin section. */
+const INTEGRITY_ITEM: NavItem = { href: "/integrity", label: "Fair play", icon: "magnifier" };
+
+/** Navigation for a role: content roles get Admin, reviewers, moderators and admins get Fair play. */
 export function navItemsFor(role: UserRole | undefined): NavItem[] {
-  return role && (CONTENT_ROLES as readonly string[]).includes(role)
-    ? [...NAV_ITEMS, ADMIN_ITEM]
-    : NAV_ITEMS;
+  const extra: NavItem[] = [];
+  if (role && (CONTENT_ROLES as readonly string[]).includes(role)) extra.push(ADMIN_ITEM);
+  if (role && (INTEGRITY_REVIEW_ROLES as readonly string[]).includes(role)) {
+    extra.push(INTEGRITY_ITEM);
+  }
+  return extra.length > 0 ? [...NAV_ITEMS, ...extra] : NAV_ITEMS;
 }
 
 /** Pages that use the whole viewport (no centered column, no padding), e.g. the problem workspace. */
