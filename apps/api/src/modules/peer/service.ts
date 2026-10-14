@@ -24,7 +24,9 @@ import {
   feedbackNudges,
   leftover,
   noShowDue,
+  cleanSuggestions,
   peerClock,
+  suggestionAllowed,
   reputation,
   type PeerOffer,
   type PeerSide,
@@ -49,13 +51,23 @@ import {
   type PeerSessionDetail,
   type PeerSessionItem,
   type PeerSessionState,
+  type PeerSuggestionsDto,
+  peerSuggestionsSchema,
   type PeerTopicValue,
 } from "@prepquest/shared";
+
+import {
+  PEER_SUGGEST_SYSTEM,
+  PEER_SUGGEST_PROMPT_VERSION,
+  buildPeerSuggestPrompt,
+} from "@prepquest/prompts";
+import type { AiContext } from "../ai-context.js";
 
 // Peer mock interviews (X1): availability, matching, invites, the session lifecycle with its two halves,
 // feedback, reputation and safety. Rules are in analytics-core/peer.ts; this module loads and stores.
 // A live room with audio and a shared editor is not part of this phase: the session is the schedule, the
-// roles, the question card, the interviewer's panel and the clock.
+// roles, the question card, the interviewer's panel and the clock. The live room (socket channel, shared
+// editor and drawing, audio signalling) is in gateway.ts and room.ts; this module answers who may enter.
 
 const MIN = 60_000;
 const DAY = 86_400_000;
@@ -761,6 +773,7 @@ async function detail(
     panel,
     questions,
     consent: { you: youConsent, partner: partnerConsent, both: youConsent && partnerConsent },
+    youJoined: joined !== null,
     canOpen:
       (state === "scheduled" || state === "live") &&
       canOpen(s.scheduledAt.getTime(), s.minutes, now.getTime()),
@@ -1001,4 +1014,132 @@ export async function calendar(
     url: `${baseUrl}/peer/${s.id}`,
     stampedAt: now.getTime(),
   });
+}
+
+// ---------------------------------------------------------------- the live room
+
+/** Whether this person may be in the room right now: a member of a live session. Returns the side. */
+export async function roomAccess(
+  db: Database,
+  userId: string,
+  id: string,
+  now: Date,
+): Promise<{ side: PeerSide; partnerId: string }> {
+  await closeOverdue(db, userId, now);
+  const s = await load(db, userId, id);
+  if (s.state !== "live")
+    throw new AppError("CONFLICT", 409, "The room is open only while the session is running.");
+  const side = sideOf(s, userId);
+  if (!(side === "a" ? s.aJoinedAt : s.bJoinedAt))
+    throw new AppError("CONFLICT", 409, "Open the room first.");
+  return { side, partnerId: partnerId(s, userId) };
+}
+
+/** The state of a session, for the room's sweep; null when it does not exist. */
+export async function sessionState(
+  db: Database,
+  id: string,
+  now: Date,
+): Promise<PeerSessionState | null> {
+  const [row] = await db.select().from(peerSessions).where(eq(peerSessions.id, id));
+  if (!row) return null;
+  if (
+    row.state === "live" &&
+    now.getTime() >=
+      (row.startedAt ?? row.scheduledAt).getTime() + row.minutes * MIN + LATE_COMPLETE_MS
+  ) {
+    await closeOverdue(db, row.aUser, now);
+    return "completed";
+  }
+  return row.state as PeerSessionState;
+}
+
+/**
+ * Follow-up prompts for the interviewer, written from the question and the code on the shared editor.
+ * Only the current half's interviewer may ask, at most once every 20 seconds and 12 times a session;
+ * the model never sees audio or a transcript, and what comes back is cleaned in code.
+ */
+export async function suggest(
+  ctx: AiContext,
+  userId: string,
+  id: string,
+  code: { text: string; language: string | null },
+  now: Date,
+): Promise<PeerSuggestionsDto> {
+  const { db } = ctx;
+  const s = await load(db, userId, id);
+  if (s.state !== "live" || !s.startedAt)
+    throw new AppError("CONFLICT", 409, "Suggestions are available while the session is running.");
+  const c = peerClock({
+    startedAt: s.startedAt.getTime(),
+    now: now.getTime(),
+    minutes: s.minutes,
+    firstCandidate: s.firstCandidate as PeerSide,
+  });
+  if (c.candidate === sideOf(s, userId))
+    throw new AppError("FORBIDDEN", 403, "Suggestions are only for the interviewer.");
+  const verdict = suggestionAllowed(
+    { count: s.suggestCount, lastAt: s.suggestAt?.getTime() ?? null },
+    now.getTime(),
+  );
+  if (!verdict.ok)
+    throw new AppError(
+      "RATE_LIMITED",
+      429,
+      verdict.reason === "cap"
+        ? "You have used all the suggestions for this session."
+        : `Give it a moment: another suggestion in ${Math.ceil(verdict.waitMs / 1000)} seconds.`,
+    );
+  // claim the slot atomically so two quick clicks cannot both go through
+  const [claimed] = await db
+    .update(peerSessions)
+    .set({ suggestCount: s.suggestCount + 1, suggestAt: now })
+    .where(and(eq(peerSessions.id, id), eq(peerSessions.suggestCount, s.suggestCount)))
+    .returning();
+  if (!claimed) throw new AppError("CONFLICT", 409, "Another request was just made. Try again.");
+
+  const q = (await questionContent(db, s.questions))[c.questionIndex];
+  if (!q) throw new AppError("CONFLICT", 409, "There is no question for this half.");
+  const shown = [...q.panel.followups, ...s.suggested];
+  try {
+    const { value } = await ctx.llm.json(
+      {
+        task: "peer_suggest",
+        modelClass: "light",
+        system: PEER_SUGGEST_SYSTEM,
+        messages: [
+          {
+            role: "user",
+            content: buildPeerSuggestPrompt({
+              title: q.view.title,
+              statement: q.view.statementMd,
+              language: code.language,
+              code: code.text.slice(0, 6000),
+              alreadyAsked: shown.slice(-12),
+            }),
+          },
+        ],
+        maxTokens: 700,
+        effort: "low",
+        userId,
+        sessionId: id,
+        promptVersion: PEER_SUGGEST_PROMPT_VERSION,
+      },
+      peerSuggestionsSchema,
+    );
+    const items = cleanSuggestions(value.items, shown);
+    await db
+      .update(peerSessions)
+      .set({ suggested: [...s.suggested, ...items.map((i) => i.text)].slice(-40) })
+      .where(eq(peerSessions.id, id));
+    return { items, remaining: Math.max(0, 12 - claimed.suggestCount) };
+  } catch (err) {
+    // the model failed: give the slot back so a failure costs nothing
+    await db
+      .update(peerSessions)
+      .set({ suggestCount: s.suggestCount, suggestAt: s.suggestAt })
+      .where(eq(peerSessions.id, id));
+    ctx.log.warn({ err: String(err), sessionId: id }, "peer suggestions failed");
+    throw new AppError("AI_UNAVAILABLE", 503, "Suggestions are not available right now.");
+  }
 }

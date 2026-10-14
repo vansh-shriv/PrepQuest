@@ -181,3 +181,5 @@ Bug bash, content improvements, user-requested features, portfolio write-up/blog
 **Status:** Sprint 10 is complete. Phase 17 added the drawing board to the HLD interview (interviewer sees it, scorecard cites it, review shows it). Next: peer mocks (Sprint 11) or the remaining small items (AI card suggestions).
 
 **Status:** Phase 18 built the peer mock platform without live media (X1 part 1). Phase 19 adds the live room: audio, shared editor and whiteboard.
+
+**Status:** Phase 19 added the peer live room (audio, shared editor, whiteboard, interviewer suggestions). Sprint 11 is complete (milestone M11). Next: Sprint 12 hardening and the remaining small items (AI card suggestions, a consented session summary, reminders).

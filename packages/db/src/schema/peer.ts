@@ -81,6 +81,12 @@ export const peerSessions = pgTable(
     /** Each person's own consent to an AI summary; both are needed for any analysis. */
     aConsentAi: boolean("a_consent_ai").notNull().default(false),
     bConsentAi: boolean("b_consent_ai").notNull().default(false),
+    /** The shared editor and drawing (a Yjs update, base64), saved while people work and when the room closes. */
+    roomState: text("room_state"),
+    /** Interviewer suggestions asked for so far, when the last was, and what was already offered. */
+    suggestCount: smallint("suggest_count").notNull().default(0),
+    suggestAt: timestamp("suggest_at", { withTimezone: true }),
+    suggested: jsonb("suggested").$type<string[]>().notNull().default([]),
     ...timestamps,
   },
   (t) => [

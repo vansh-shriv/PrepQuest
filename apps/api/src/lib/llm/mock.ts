@@ -606,6 +606,44 @@ const DESIGN_AREA: Record<string, string> = {
   empty: "missing_components",
 };
 
+/** Follow-up prompts for a peer interviewer: scripted from whether the editor has code yet. */
+function peerSuggest(req: LlmRequest) {
+  const user = firstUser(req);
+  const empty = user.includes("(the editor is empty)");
+  const asked = user.split("ALREADY ASKED:")[1] ?? "";
+  const items = empty
+    ? [
+        {
+          text: "Before you write anything, tell me how you would approach this.",
+          why: "Checks they plan before coding.",
+        },
+        {
+          text: "What are the inputs, and which edge cases come to mind first?",
+          why: "Checks that they clarify the problem.",
+        },
+        {
+          text: "What is the simplest correct solution, and what would make it slow?",
+          why: "Checks for a baseline and its cost.",
+        },
+      ]
+    : [
+        {
+          text: "Walk me through your code with a small example, line by line.",
+          why: "Checks they can trace their own code.",
+        },
+        {
+          text: "What happens with an empty input or a single element?",
+          why: "Checks edge cases.",
+        },
+        {
+          text: "What is the time and space complexity, and can either be improved?",
+          why: "Checks analysis and trade-offs.",
+        },
+        { text: "How would you test this before submitting it?", why: "Checks testing habits." },
+      ];
+  return { items: items.filter((i) => !asked.includes(i.text)) };
+}
+
 /** A deterministic design review: scores from how much is filled in, findings from the automatic checks. */
 function designReview(req: LlmRequest) {
   const user = firstUser(req);
@@ -700,6 +738,7 @@ export class MockProvider implements LlmProvider {
     else if (req.task === "annotations") text = JSON.stringify(annotations(req));
     else if (req.task === "code_review") text = JSON.stringify(codeReview(req));
     else if (req.task === "design_review") text = JSON.stringify(designReview(req));
+    else if (req.task === "peer_suggest") text = JSON.stringify(peerSuggest(req));
     else text = words(lastUser(req).replace(/<[^>]+>/g, " "), 120);
     if (opts.onDelta) {
       for (let i = 0; i < text.length; i += 12) opts.onDelta(text.slice(i, i + 12));

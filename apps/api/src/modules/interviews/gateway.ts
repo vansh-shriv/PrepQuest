@@ -1,5 +1,4 @@
-import type { FastifyInstance } from "fastify";
-import { Server, type Socket } from "socket.io";
+import type { Socket } from "socket.io";
 import {
   AppError,
   bargeInSchema,
@@ -7,6 +6,7 @@ import {
   interviewMessageSchema,
 } from "@prepquest/shared";
 import type { Kv } from "../../lib/kv.js";
+import type { Realtime } from "../../lib/realtime.js";
 import type { AiContext } from "../ai-context.js";
 import type { ServerEvent } from "./bus.js";
 import type { InterviewEngine } from "./engine.js";
@@ -28,18 +28,13 @@ function failure(err: unknown) {
  * connection to one user and session. Everything the client sees is a bus event; the server owns the
  * clock, so reconnecting never resets anything and `sync` simply replays the persisted turns.
  */
-export function attachInterviewGateway(
-  app: FastifyInstance,
-  deps: { ctx: AiContext; engine: InterviewEngine; kv: Kv; origins: string[] },
-): void {
-  let io: Server | undefined;
-  app.addHook("onReady", async () => {
-    io = new Server(app.server, {
-      path: "/ws",
-      cors: { origin: deps.origins, credentials: true },
-      // 10 KB is enough for a message; code snapshots go over REST
-      maxHttpBufferSize: 64 * 1024,
-    });
+export function attachInterviewGateway(deps: {
+  ctx: AiContext;
+  engine: InterviewEngine;
+  kv: Kv;
+  realtime: Realtime;
+}): void {
+  deps.realtime.use((io) => {
     const ns = io.of("/interview");
 
     ns.use(async (socket, next) => {
@@ -133,8 +128,5 @@ export function attachInterviewGateway(
         socket.disconnect(true);
       }
     });
-  });
-  app.addHook("onClose", async () => {
-    await new Promise<void>((resolve) => (io ? io.close(() => resolve()) : resolve()));
   });
 }

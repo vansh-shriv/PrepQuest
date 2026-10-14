@@ -19,6 +19,9 @@ import { interviewRoutes } from "./modules/interviews/routes.js";
 import { MemoryBus } from "./modules/interviews/bus.js";
 import { InterviewEngine } from "./modules/interviews/engine.js";
 import { attachInterviewGateway } from "./modules/interviews/gateway.js";
+import { createRealtime } from "./lib/realtime.js";
+import { attachPeerGateway } from "./modules/peer/gateway.js";
+import { RoomHub } from "./modules/peer/room.js";
 import type { AiContext } from "./modules/ai-context.js";
 import { resumeRoutes } from "./modules/resumes/routes.js";
 import { BackgroundRunner } from "./lib/jobs.js";
@@ -77,6 +80,7 @@ declare module "fastify" {
     ai: AiContext;
     /** The interview orchestrator; `main.ts` runs its timer sweep. */
     interviews: InterviewEngine;
+    peerRooms: RoomHub;
   }
 }
 
@@ -235,6 +239,8 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(resumeRoutes, { prefix: "/v1", ctx: ai });
   const engine = new InterviewEngine(ai, new MemoryBus());
   app.decorate("interviews", engine);
+  const rooms = new RoomHub(ai);
+  app.decorate("peerRooms", rooms);
   await app.register(interviewRoutes, { prefix: "/v1", ctx: ai, engine, kv });
   await app.register(analyticsRoutes, { prefix: "/v1", db });
   await app.register(planningRoutes, { prefix: "/v1", ctx: ai });
@@ -243,7 +249,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(shareRoutes, { prefix: "/v1", ctx: ai });
   await app.register(designRoutes, { prefix: "/v1", ctx: ai });
   await app.register(integrityRoutes, { prefix: "/v1", ctx: ai });
-  await app.register(peerRoutes, { prefix: "/v1", ctx: ai });
+  await app.register(peerRoutes, { prefix: "/v1", ctx: ai, kv, rooms });
   await app.register(codeReviewRoutes, {
     prefix: "/v1",
     ctx: { ai, sub: { db, queue: deps.judge, limiter: ctx.limiter } },
@@ -254,7 +260,9 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(contestRoutes, { prefix: "/v1", ctx: ai });
   await app.register(roadmapRoutes, { prefix: "/v1", ctx: ai });
   await app.register(trackRoutes, { prefix: "/v1", ctx: ai });
-  attachInterviewGateway(app, { ctx: ai, engine, kv, origins: env.CORS_ORIGINS.split(",") });
+  const realtime = createRealtime(app, env.CORS_ORIGINS.split(","));
+  attachInterviewGateway({ ctx: ai, engine, kv, realtime });
+  attachPeerGateway({ ctx: ai, kv, realtime, rooms });
   await app.register(adminRoutes, {
     prefix: "/v1",
     ctx: { db, store: deps.store, allowSelfPublish: env.ALLOW_SELF_PUBLISH },

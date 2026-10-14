@@ -253,6 +253,13 @@
       "when": 1791985220621,
       "tag": "0035_lame_karma",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1791995901641,
+      "tag": "0036_clumsy_speedball",
+      "breakpoints": true
     }
   ]
 }

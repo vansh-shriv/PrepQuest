@@ -23,8 +23,9 @@ Phase-by-phase build log. Plan source: `docs/18-ROADMAP-AND-SPRINTS.md`. Each ph
 | 15    | Integrity: similarity and behaviour review with appeals                                                                                     | M10 (part) | Done                  |
 | 16    | System design canvas with AI review and reference designs                                                                                   | M10 (part) | Done                  |
 | 17    | Drawing board in the system design interview                                                                                                | M10        | Done                  |
-| 18    | Peer mocks, part 1: matching, invites, sessions, feedback, reputation and safety                                                            | M11 (part) | Done (pending commit) |
-| 19+   | Peer mocks live room (audio, shared editor), AI card suggestions, hardening                                                                 | M11-M12    | Planned               |
+| 18    | Peer mocks, part 1: matching, invites, sessions, feedback, reputation and safety                                                            | M11 (part) | Done                  |
+| 19    | Peer mocks, part 2: live room with audio, shared editor, whiteboard and interviewer suggestions                                             | M11        | Done (pending commit) |
+| 20+   | AI card suggestions, session summary with consent, reminders, hardening                                                                     | M12        | Planned               |
 
 ## Phase 0 - Foundation
 
@@ -590,3 +591,33 @@ Decisions / gotchas:
 Deferred (Phase 19):
 
 - WebRTC audio and optional video with coturn, a Yjs shared editor and a shared whiteboard, interviewer suggestions in real time, the AI summary of a consented session, reminders by email, reschedule, reputation shown in a leaderboard-free way on profiles, and a review queue for reports.
+
+## Phase 19 - Peer mock interviews, part 2: the live room (milestone M11, second part)
+
+The room that goes with the sessions of Phase 18 (X1): audio, a shared code editor, a shared whiteboard and private follow-up suggestions for the interviewer. Sprint 11 is now complete.
+
+Done:
+
+- **Socket channel (`/peer` namespace on the existing `/ws` Socket.IO server):** `lib/realtime.ts` now owns the one server and each feature attaches a namespace (the interview gateway was moved onto it). A single-use ticket (`POST /peer/sessions/:id/room-ticket`, 60 s, stored in the key-value store) binds a socket to one person and one session. Only a member of a running session who has opened the room gets in (`409` before that), and the connection is checked again every 5 seconds: when the session ends the room says `room.ended` and closes.
+- **Shared document (Yjs):** one CRDT document per live session holds the code (`code`), the language (`meta`) and the drawing (`strokes`). The server (`peer/room.ts`, `RoomHub`) keeps its own copy so a late joiner or a reconnecting browser gets everything, refuses an update over 48 KB or a document over 512 KB (`analytics-core/peer-room.ts acceptUpdate`), saves to `peer_sessions.room_state` every 10 seconds and when the room empties, and loads it back. Edits made while offline are sent after reconnecting and merge.
+- **Shared editor (web):** Monaco bound to the shared text by our own small binding (`features/peer/room/text-sync.ts`: diff on local change, delta to precise edits on remote change, LF line endings for both); a plain text box takes over if Monaco cannot load. The language is shared. No remote cursors yet.
+- **Whiteboard (web):** strokes in a fixed 1000x600 board space, pen and eraser, five token colours, three widths, "Undo mine" and "Clear the board" (`features/peer/room/strokes.ts`, pure). Strokes from the network are validated before they are drawn. Capped at 600 strokes of 1200 points.
+- **Audio:** WebRTC straight between the two browsers, never through the server. Signalling (offer, answer, candidate, hang-up) is relayed over the socket after validation and a limit of 300 a minute (`rtc.signal`). `features/peer/room/call.ts` is the "perfect negotiation" pattern with an injected connection (unit tested with a fake): the lower user id is polite. Nothing opens the microphone until the person presses "Join the audio"; an offer that arrives earlier waits (`PendingSignals`) and shows "is calling". Mute switches the track; leaving tells the partner and releases the microphone. `GET /peer/sessions/:id/rtc-config` returns STUN servers and, when `PEER_TURN_URLS` and `PEER_TURN_SECRET` are set, TURN credentials valid for one hour (`lib/turn.ts`: username `expiry:userId`, password the HMAC-SHA1 of it, coturn `use-auth-secret`).
+- **Interviewer suggestions:** `POST /peer/sessions/:id/suggestions`, the current half's interviewer only (`403` for the candidate). The model (`peer_suggest`, light class, prompt `packages/prompts/src/peer.ts`) sees the question and the code in the editor, never audio or a transcript; the answer is cleaned in code (`cleanSuggestions`: at least 12 characters, no repeats of each other or of the panel's follow-ups or earlier suggestions, at most 4, 240 characters). One request every 20 seconds and 12 a session; the slot is claimed atomically and given back if the model fails. Three new columns hold the count, the time and what was offered.
+- **Ops:** `docker compose --profile peer up -d coturn` (TURN relay; private, loopback and link-local addresses are refused as relay targets). New env: `PEER_STUN_URLS`, `PEER_TURN_URLS`, `PEER_TURN_SECRET`.
+- **Web:** the session page shows "Live room" once the person has opened it: connection and partner presence, audio controls, a Code/Whiteboard switch and (interviewer) "Suggest follow-ups". The button now says "Open the room" until you have opened it yourself.
+- **Database:** migration 0036 adds `room_state`, `suggest_count`, `suggest_at`, `suggested` to `peer_sessions` (no new table).
+- **Tests:** analytics-core 6 new (255), API `peer-room.test.ts` 16 (full API suite 670), web 25 new (139: text sync 7, call 10, strokes 8), e2e `peer-room.spec.ts` (5: two browsers in one room, code and board sync both ways, a connected audio call with mute and leave using Chrome's fake microphone, interviewer-only suggestions and the room closing for both).
+
+Decisions / gotchas:
+
+- Audio is not recorded or relayed; the server only sees signalling. There is still no AI analysis of a session, so consent stays stored and unused.
+- Remote cursors, per-user undo for the code and presence of the other person's selection are not built. Ctrl+Z in the editor can undo a partner's text because remote edits are ordinary model edits.
+- The server drops a doc update it cannot apply; a client that exceeds the caps just sees its edit refused (the ack carries `UPDATE_REFUSED`).
+- A room is held in memory by one API process. With several API instances a session needs sticky routing, or a Redis adapter and a shared document store (Phase 20 hardening).
+- e2e moves a booked session to "now" with a direct SQL update (`e2e/db.ts`, uses `E2E_DATABASE_URL` or `DATABASE_URL` or the `.env.example` default) because the server clock cannot be moved from a browser.
+- Chrome's mDNS host candidates are enough for two browsers on one machine; the e2e call test needs no STUN or TURN reachability.
+
+Deferred (Phase 20 and later):
+
+- A consented AI summary of a session, reminders by email, reschedule, a review queue for reports, remote cursors in the shared editor, a Redis adapter for several API instances, optional video, AI card suggestions and hardening (Sprint 12).

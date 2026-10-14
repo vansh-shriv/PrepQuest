@@ -223,3 +223,5 @@ Org entity (college/company) with members, private contests, private sheets, and
 7. ADR-007: Deterministic scheduling for study plans, LLM only for narrative.
 8. ADR-008: Structured JSON outputs with evidence requirement for scorecards.
    Store ADRs in `/docs/adr/NNN-title.md` using the standard Context/Decision/Consequences template.
+
+Phase 19 note: the `/peer` WebSocket namespace is built. It shares the `/ws` Socket.IO server with `/interview` (created in `lib/realtime.ts`). It relays the shared Yjs document and the audio call signals; audio itself is WebRTC between the browsers. One API process holds a room in memory; scaling beyond one instance needs sticky sessions or a Redis adapter plus a shared document store.

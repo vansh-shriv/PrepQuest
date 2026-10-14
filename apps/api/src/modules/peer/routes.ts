@@ -9,7 +9,12 @@ import {
   peerFeedbackSchema,
   peerReportSchema,
 } from "@prepquest/shared";
+import { randomBytes } from "node:crypto";
+import type { Kv } from "../../lib/kv.js";
+import { rtcConfig } from "../../lib/turn.js";
 import { parse } from "../../lib/validate.js";
+import { peerTicketKey } from "./gateway.js";
+import type { RoomHub } from "./room.js";
 import type { AiContext } from "../ai-context.js";
 import * as svc from "./service.js";
 
@@ -17,7 +22,12 @@ const idParams = z.object({ id: z.string().uuid() });
 const tokenParams = z.object({ token: z.string().min(10).max(200) });
 
 /** Peer mock interviews (X1). Everything needs a signed-in, verified user: partners see each other. */
-export const peerRoutes: FastifyPluginAsync<{ ctx: AiContext }> = async (app, { ctx }) => {
+const TICKET_TTL_SEC = 60;
+
+export const peerRoutes: FastifyPluginAsync<{ ctx: AiContext; kv: Kv; rooms: RoomHub }> = async (
+  app,
+  { ctx, kv, rooms },
+) => {
   app.addHook("preHandler", app.authenticate);
   app.addHook("preHandler", app.requireVerifiedEmail);
   const uid = (req: { auth?: { userId: string } }) => req.auth!.userId;
@@ -120,6 +130,27 @@ export const peerRoutes: FastifyPluginAsync<{ ctx: AiContext }> = async (app, { 
       parse(peerFeedbackSchema, req.body),
     ),
   );
+  // the live room: a single-use ticket for the socket, the call servers, and the interviewer's suggestions
+  app.post("/peer/sessions/:id/room-ticket", async (req) => {
+    const { id } = parse(idParams, req.params);
+    await svc.roomAccess(ctx.db, uid(req), id, ctx.now());
+    await ctx.limiter.enforce(`peer-ticket:${uid(req)}`, 60, 3600, "room connections");
+    const ticket = randomBytes(24).toString("base64url");
+    await kv.set(peerTicketKey(ticket), `${uid(req)}:${id}`, TICKET_TTL_SEC);
+    return { wsTicket: ticket };
+  });
+  app.get("/peer/sessions/:id/rtc-config", async (req, reply) => {
+    noStore(reply);
+    const { id } = parse(idParams, req.params);
+    await svc.roomAccess(ctx.db, uid(req), id, ctx.now());
+    return rtcConfig(ctx.env, uid(req), ctx.now());
+  });
+  app.post("/peer/sessions/:id/suggestions", async (req, reply) => {
+    noStore(reply);
+    const { id } = parse(idParams, req.params);
+    await svc.roomAccess(ctx.db, uid(req), id, ctx.now());
+    return svc.suggest(ctx, uid(req), id, await rooms.code(id), ctx.now());
+  });
   app.get("/peer/sessions/:id/calendar.ics", async (req, reply) => {
     const ics = await svc.calendar(
       ctx.db,

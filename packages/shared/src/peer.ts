@@ -145,6 +145,8 @@ export interface PeerSessionDetail extends PeerSessionItem {
   questions: PeerQuestionView[] | null;
   consent: { you: boolean; partner: boolean; both: boolean };
   canOpen: boolean;
+  /** This person has opened the room (the live room needs it). */
+  youJoined: boolean;
   canReportNoShow: boolean;
   canCancel: boolean;
   feedbackFromPartner: { ratings: Record<string, number>; comments: string } | null;

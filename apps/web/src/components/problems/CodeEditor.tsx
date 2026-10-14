@@ -18,7 +18,7 @@ const css = (name: string) =>
   getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
 /** Builds the editor theme from the design tokens, so Cream, Night and Contrast stay in sync. */
-function applyTheme(monaco: Monaco) {
+export function applyTheme(monaco: Monaco) {
   const theme = document.documentElement.getAttribute("data-theme");
   const color = (token: string) => toHex(css(token));
   monaco.editor.defineTheme("prepquest", {

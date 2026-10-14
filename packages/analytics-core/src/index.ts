@@ -21,3 +21,4 @@ export * from "./scale.js";
 export * from "./integrity.js";
 export * from "./design.js";
 export * from "./peer.js";
+export * from "./peer-room.js";

@@ -678,3 +678,7 @@ New tables: `question_bank` (slug, category cs/behavioral/hld/lld, topic, compet
 ## Phase 18 additions (as built)
 
 `peer_availability` (`user_id`, `starts_at`, `ends_at`, `prefs` jsonb with topics, level and language), `peer_sessions` (`a_user`, `b_user`, `scheduled_at`, `minutes`, `topic`, `difficulty`, `source` match|invite, `state` scheduled|live|completed|cancelled|no_show, `first_candidate`, `questions` jsonb of two refs, `started_at`, `a_joined_at`, `b_joined_at`, `ended_at`, `cancelled_by`, `no_show_user`, `a_consent_ai`, `b_consent_ai`), `peer_invites` (`owner_id`, `token_hash`, `topic`, `difficulty`, `minutes`, `scheduled_at`, `expires_at`, `revoked_at`, `session_id`), `peer_feedback` (unique per session and author), `peer_blocks` (unique pair) and `peer_reports`. `peer_reputation` is not a table: it is computed from sessions and feedback. All have `updated_at` triggers (migration 0034).
+
+## Phase 19 additions (as built)
+
+`peer_sessions` gains `room_state` (text, the Yjs document as base64, nullable), `suggest_count` (smallint, default 0), `suggest_at` (timestamptz, nullable) and `suggested` (jsonb array of strings, default `[]`). Migration 0036; no new table, so no new trigger.

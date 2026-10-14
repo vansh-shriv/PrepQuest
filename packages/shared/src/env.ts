@@ -73,6 +73,11 @@ export const serverEnvSchema = z.object({
   RL_RESUMES_PER_DAY: z.coerce.number().int().positive().default(10),
   FF_VOICE: bool,
   FF_PEER: bool,
+  // --- Peer room (X1): audio goes peer to peer; a STUN server is enough for most networks, a TURN server for the rest ---
+  PEER_STUN_URLS: z.string().default("stun:stun.l.google.com:19302"),
+  PEER_TURN_URLS: z.string().default(""),
+  /** coturn `static-auth-secret`: the API signs short-lived TURN credentials with it. */
+  PEER_TURN_SECRET: z.string().default(""),
   FF_CONTESTS: bool,
   FF_CANVAS: bool,
 });

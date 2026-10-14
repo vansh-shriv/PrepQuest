@@ -65,6 +65,36 @@ services:
     volumes:
       - ./.data/objects:/data/objects:ro
 
+  # TURN relay for peer mock audio (X1). STUN alone connects most pairs; this carries the rest. Start it with
+  #   docker compose --profile peer up -d coturn
+  # and set PEER_TURN_URLS=turn:localhost:3478 and PEER_TURN_SECRET to the same secret as below.
+  # The API signs short-lived credentials with the secret (use-auth-secret); nothing is stored. Private and
+  # loopback addresses are refused as relay targets, so the relay cannot be used to reach the internal network.
+  coturn:
+    profiles: ["peer"]
+    image: coturn/coturn:4.6
+    command:
+      - -n
+      - --log-file=stdout
+      - --realm=prepquest.local
+      - --use-auth-secret
+      - --static-auth-secret=${PEER_TURN_SECRET:-dev-turn-secret-change-me}
+      - --fingerprint
+      - --no-cli
+      - --no-multicast-peers
+      - --min-port=49160
+      - --max-port=49200
+      - --denied-peer-ip=0.0.0.0-0.255.255.255
+      - --denied-peer-ip=10.0.0.0-10.255.255.255
+      - --denied-peer-ip=127.0.0.0-127.255.255.255
+      - --denied-peer-ip=169.254.0.0-169.254.255.255
+      - --denied-peer-ip=172.16.0.0-172.31.255.255
+      - --denied-peer-ip=192.168.0.0-192.168.255.255
+    ports:
+      - "3478:3478/udp"
+      - "3478:3478/tcp"
+      - "49160-49200:49160-49200/udp"
+
 volumes:
   pgdata:
   s3data:

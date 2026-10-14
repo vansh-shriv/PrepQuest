@@ -329,3 +329,7 @@ Layers built: code similarity (winnowing over normalised tokens, starter code ig
 ## As built (Phase 18): X1 peer mocks, part 1
 
 Matching (shared topic and enough common time, level, language, rating and no-show history), invite by link, two halves with a swap and one question each, the interviewer's private panel, a server clock, per-person AI consent, feedback with coaching nudges and reciprocal reveal, reputation (nothing judged before three sessions), no-show reports, block and report, and an ICS calendar file. Not built yet: WebRTC audio and video, the shared editor and whiteboard, real-time interviewer suggestions, the consented AI summary, reminders and rescheduling.
+
+## As built (Phase 19): X1 peer mocks, part 2
+
+The live room: WebRTC audio between the two browsers (STUN, and TURN credentials when a relay is configured), a shared Monaco editor and a shared whiteboard on one Yjs document, a timer and the question card from Phase 18, and private follow-up suggestions for the current half's interviewer, written from the question and the code only. Nothing is recorded; no AI analysis of the audio exists. The 300 ms edit-sync criterion is not measured: an edit is one socket message to the server and one to the partner, and the e2e test only shows it arrives, not how fast. Not built: video, remote cursors, the AI summary, several API instances.

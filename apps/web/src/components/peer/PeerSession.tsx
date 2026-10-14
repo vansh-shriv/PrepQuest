@@ -11,14 +11,17 @@ import {
 } from "@prepquest/shared";
 import { STATE_TEXT, clockText, reputationText, whenLabel } from "@/features/peer/peer-view";
 import { api, apiDownload, ApiError } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 import { FormError } from "../auth/AuthCard";
 import { Markdown } from "../problems/Markdown";
+import { PeerRoom } from "./room/PeerRoom";
 
 const POLL_MS = 5000;
 const msg = (err: unknown, fallback: string) => (err instanceof ApiError ? err.message : fallback);
 
 /** `/peer/[id]`: one peer session: roles, the clock, the question card, the interviewer's panel, feedback. */
 export function PeerSession({ id }: { id: string }) {
+  const { user } = useAuth();
   const [s, setS] = useState<PeerSessionDetail | null>(null);
   const [missing, setMissing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -124,8 +127,8 @@ export function PeerSession({ id }: { id: string }) {
                 {s.youAreFirstCandidate
                   ? "You are the candidate first."
                   : "You are the interviewer first."}{" "}
-                The room opens 10 minutes before the start. Meet on your own video call; the
-                question and the clock are here.
+                The room opens 10 minutes before the start. It has the audio call, the shared code,
+                a whiteboard, the question and the clock.
               </p>
             )}
             {clock && (
@@ -143,7 +146,7 @@ export function PeerSession({ id }: { id: string }) {
             <div className="flex flex-wrap gap-2">
               {s.canOpen && (
                 <Button onClick={() => void post("open")}>
-                  {s.state === "live" ? "Rejoin" : "Open the room"}
+                  {s.state === "live" && s.youJoined ? "Rejoin" : "Open the room"}
                 </Button>
               )}
               {s.state === "live" && (
@@ -167,6 +170,10 @@ export function PeerSession({ id }: { id: string }) {
             </div>
           </div>
         </Window>
+      )}
+
+      {s.state === "live" && s.youJoined && user && (
+        <PeerRoom s={s} userId={user.id} onEnded={() => void load()} />
       )}
 
       {s.state === "live" && s.question && (

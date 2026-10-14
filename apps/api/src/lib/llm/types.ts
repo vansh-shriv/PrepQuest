@@ -15,7 +15,8 @@ export type LlmTask =
   | "jd_analysis"
   | "qgen"
   | "code_review"
-  | "design_review";
+  | "design_review"
+  | "peer_suggest";
 
 export interface LlmMessage {
   role: "user" | "assistant";
