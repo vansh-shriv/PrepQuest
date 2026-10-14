@@ -674,3 +674,7 @@ New tables: `question_bank` (slug, category cs/behavioral/hld/lld, topic, compet
 ## Phase 16 additions (as built)
 
 `system_design_prompts` (`slug` unique, `kind` hld|lld, `title`, `statement_md`, `requirement_hints` jsonb, `reference` jsonb with layers v1 to v3 each holding a title, a description and a canvas, `difficulty` 1 to 3, `tags`, `status`). `design_canvases` (`user_id`, `prompt_id`, `session_id` unused so far, `canvas` jsonb of components and connections, `panel` jsonb of requirements, API, data model, notes and calculator inputs, `version` bumped on every save, `review_status` none|pending|ready|failed, `ai_review` jsonb with the version it read, `review_error`). Both have `updated_at` triggers (migration 0032).
+
+## Phase 18 additions (as built)
+
+`peer_availability` (`user_id`, `starts_at`, `ends_at`, `prefs` jsonb with topics, level and language), `peer_sessions` (`a_user`, `b_user`, `scheduled_at`, `minutes`, `topic`, `difficulty`, `source` match|invite, `state` scheduled|live|completed|cancelled|no_show, `first_candidate`, `questions` jsonb of two refs, `started_at`, `a_joined_at`, `b_joined_at`, `ended_at`, `cancelled_by`, `no_show_user`, `a_consent_ai`, `b_consent_ai`), `peer_invites` (`owner_id`, `token_hash`, `topic`, `difficulty`, `minutes`, `scheduled_at`, `expires_at`, `revoked_at`, `session_id`), `peer_feedback` (unique per session and author), `peer_blocks` (unique pair) and `peer_reports`. `peer_reputation` is not a table: it is computed from sessions and feedback. All have `updated_at` triggers (migration 0034).

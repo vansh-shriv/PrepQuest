@@ -281,3 +281,5 @@ In-app bell + optional email/push: contest reminders, SRS due, goal reminders, s
 Phase 16 note: the system design workspace is at `/system-design/:id` (the list at `/system-design`), because `/design` is the UI showcase page.
 
 Phase 17 note: the interview room of a system design round is a split view, chat on the left and the drawing board on the right (a switch on mobile); the review of that round has a "Your drawing" tab.
+
+Phase 18 note: peer mocks are at `/peer` (windows, search, invites, sessions), `/peer/:id` (the session) and `/peer/join/:token` (an invite link). The live room of screen 25 comes in Phase 19.

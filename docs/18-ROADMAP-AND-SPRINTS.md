@@ -179,3 +179,5 @@ Bug bash, content improvements, user-requested features, portfolio write-up/blog
 **Status:** Sprint 10 is finished. Phase 16 built system design practice (C3): canvas, side panel, AI review and layered reference designs. Using the canvas inside the HLD interview and LLD mode are still to do.
 
 **Status:** Sprint 10 is complete. Phase 17 added the drawing board to the HLD interview (interviewer sees it, scorecard cites it, review shows it). Next: peer mocks (Sprint 11) or the remaining small items (AI card suggestions).
+
+**Status:** Phase 18 built the peer mock platform without live media (X1 part 1). Phase 19 adds the live room: audio, shared editor and whiteboard.

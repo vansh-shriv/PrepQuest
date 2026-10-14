@@ -15,3 +15,4 @@ export * from "./sharing.js";
 export * from "./code-review.js";
 export * from "./integrity.js";
 export * from "./design.js";
+export * from "./peer.js";

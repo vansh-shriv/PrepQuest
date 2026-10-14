@@ -15,6 +15,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/reviews", label: "Reviews", icon: "sparkle" },
   { href: "/interview", label: "Interview", icon: "chat" },
   { href: "/system-design", label: "Design", icon: "folder" },
+  { href: "/peer", label: "Peers", icon: "chat" },
   { href: "/quizzes", label: "Quizzes", icon: "quiz" },
   { href: "/flashcards", label: "Cards", icon: "coin" },
   { href: "/sql", label: "SQL", icon: "magnifier" },

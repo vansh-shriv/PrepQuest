@@ -232,6 +232,27 @@
       "when": 1791959909940,
       "tag": "0032_triggers_phase16",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1791985100503,
+      "tag": "0033_puzzling_madripoor",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1791985109189,
+      "tag": "0034_triggers_phase18",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1791985220621,
+      "tag": "0035_lame_karma",
+      "breakpoints": true
     }
   ]
 }

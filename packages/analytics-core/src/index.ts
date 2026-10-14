@@ -20,3 +20,4 @@ export * from "./complexity.js";
 export * from "./scale.js";
 export * from "./integrity.js";
 export * from "./design.js";
+export * from "./peer.js";

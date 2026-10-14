@@ -22,8 +22,9 @@ Phase-by-phase build log. Plan source: `docs/18-ROADMAP-AND-SPRINTS.md`. Each ph
 | 14    | Code review mode, complexity analyzer                                                                                                       | M9 (part)  | Done                  |
 | 15    | Integrity: similarity and behaviour review with appeals                                                                                     | M10 (part) | Done                  |
 | 16    | System design canvas with AI review and reference designs                                                                                   | M10 (part) | Done                  |
-| 17    | Drawing board in the system design interview                                                                                                | M10        | Done (pending commit) |
-| 18+   | AI card suggestions, peer mocks, hardening                                                                                                  | M11-M12    | Planned               |
+| 17    | Drawing board in the system design interview                                                                                                | M10        | Done                  |
+| 18    | Peer mocks, part 1: matching, invites, sessions, feedback, reputation and safety                                                            | M11 (part) | Done (pending commit) |
+| 19+   | Peer mocks live room (audio, shared editor), AI card suggestions, hardening                                                                 | M11-M12    | Planned               |
 
 ## Phase 0 - Foundation
 
@@ -556,3 +557,36 @@ Decisions / gotchas:
 Deferred:
 
 - Proactive drawing reactions (the interviewer asking about a new component unprompted), a drawing replay slider, LLD mode with its own diagram, sharing a design, and everything listed under Phase 16 that is not about the interview.
+
+## Phase 18 - Peer mock interviews, part 1 (milestone M11, first part)
+
+Sprint 11 is split in two phases. This one builds everything about peer mocks except the live media: scheduling, matching, invite links, roles and the clock, the question card and the interviewer's panel, feedback, reputation and safety (X1). The live room (WebRTC audio, a shared editor and whiteboard) is Phase 19.
+
+Done:
+
+- **Rules (`analytics-core/peer.ts`, pure):** `bestMatch` (a shared topic and enough common time, never the same person or a blocked one, a lead time of 30 minutes; score from level distance, language, partner rating and past no-shows; stable ties), `leftover` (what remains of a window after a session), `peerClock` (first half, swap, second half, over; who is candidate and interviewer), `canOpen` (10 minutes early until the end), `noShowDue` (15 minutes), `reputation` (rating pulled to a prior, nothing judged before 3 booked sessions, labels new, reliable, mixed, unreliable), `feedbackNudges` (short, no specifics, uniform ratings), `buildIcs` (escaped, folded, with a 15 minute reminder).
+- **Database:** migrations 0033 to 0035: `peer_availability`, `peer_sessions` (state, first candidate, two questions, per-person AI consent and join times), `peer_invites` (hash only), `peer_feedback`, `peer_blocks`, `peer_reports`, with `updated_at` triggers. Reputation is computed from sessions and feedback on read, not stored.
+- **API (module `peer`, verified email required):**
+  - Windows: `GET/POST /peer/availability`, `DELETE /peer/availability/:id` (40 minutes to 8 hours, 20 open).
+  - Matching: `POST /peer/match` books the best partner, uses both windows up atomically and keeps what is left (10 searches a day); it picks two questions from the problems (DSA) or the question bank (CS, system design, behavioural).
+  - Invites: `GET/POST /peer/invites`, `DELETE /peer/invites/:id`, `GET /peer/invites/:token`, `POST /peer/invites/:token/accept`; the token is shown once, a used, revoked or expired link is a plain 404, and it stops working at the start time.
+  - Sessions: `GET /peer/sessions`, `GET /peer/sessions/:id`, then `consent`, `open`, `complete`, `cancel`, `no-show`, `feedback` and `calendar.ics` under it.
+  - Safety: `GET /peer/reputation`, `POST /peer/report`, `GET/POST /peer/blocks`, `DELETE /peer/blocks/:userId`.
+- **Roles and fairness:** each half has one candidate and one interviewer and they swap at half time. Nobody sees a question before the session is running; the candidate sees only the statement, the interviewer also gets a private panel (reference approaches, follow-ups, checklist) for the current half only. After the session both questions are listed. The partner's feedback is revealed only after you have sent yours.
+- **No-shows:** the partner is reported from inside the room, 15 minutes after the start, and only when the reporter opened the room and the partner never did. It counts in the partner's record only.
+- **Consent:** each person's AI consent is stored separately; `consent.both` is the only thing a future analysis may read. No AI analysis exists yet, so nothing is recorded or analysed.
+- **Safety:** a report goes to people who review it and changes nothing by itself; a block cancels sessions that have not started and keeps both people out of each other's matches and invites.
+- **Web:** `/peer` (reputation line, sessions, windows form, find a partner, invite links with copy, paste an invite, blocked people), `/peer/[id]` (roles, clock polled every 5 s, question card, panel, consent, calendar download, feedback with nudges and "Send it as it is", report and block) and `/peer/join/[token]`; "Peers" in the navigation.
+- **Tests:** analytics-core 10 new (249), API 22 new (`peer.test.ts`), web 5 new (114), e2e `peer.spec.ts` (6).
+
+Decisions / gotchas:
+
+- Calls happen on the partners' own video tool for now. Matching asks for availability and does not ask the other person to accept: a match books the session at once and either can cancel before the start.
+- A cancel carries no penalty yet; only reported no-shows count.
+- Clock-driven behaviour (opening, the swap, no-shows, closing a forgotten session after a 15 minute grace period) is covered by API tests that move `t.app.ai.now`; Playwright cannot move the server clock.
+- e2e windows are placed on a random day 4 to 21 days ahead so the shared dev database's old windows do not pair with them.
+- Tests clear the in-memory key-value store between cases because the match limit is per day.
+
+Deferred (Phase 19):
+
+- WebRTC audio and optional video with coturn, a Yjs shared editor and a shared whiteboard, interviewer suggestions in real time, the AI summary of a consented session, reminders by email, reschedule, reputation shown in a leaderboard-free way on profiles, and a review queue for reports.

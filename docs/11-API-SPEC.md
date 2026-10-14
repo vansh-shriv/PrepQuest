@@ -640,3 +640,7 @@ A scorecard needs a finished interview with a ready scorecard (409 otherwise); a
 - `POST /interviews/:id/events` accepts `{kind: "canvas", canvas}` for a round with a drawing board (422 for other rounds or an invalid drawing); unchanged and blank boards are ignored.
 - `GET /interviews/:id/design`: `{canvas, offsetMs, findings[]}` for the latest drawing (404 when the round has no board).
 - Session and template DTOs have `usesCanvas`.
+
+## Phase 18 additions (as built)
+
+All need a verified email. `GET|POST /peer/availability`, `DELETE /peer/availability/:id`; `POST /peer/match {minutes: 40|60|90}` (201 with the session, 409 `NO_AVAILABILITY`, 404 `NO_MATCH`, 409 `SESSION_CONFLICT`); `GET|POST /peer/invites`, `DELETE /peer/invites/:id`, `GET /peer/invites/:token`, `POST /peer/invites/:token/accept`; `GET /peer/sessions`, `GET /peer/sessions/:id`, `POST /peer/sessions/:id/{consent,open,complete,cancel,no-show,feedback}`, `GET /peer/sessions/:id/calendar.ics`; `GET /peer/reputation`; `POST /peer/report`; `GET|POST /peer/blocks`, `DELETE /peer/blocks/:userId`. Feedback answers `{saved: false, nudges}` until the sender confirms when it is vague. The WebSocket `/peer` channel is not built yet.
